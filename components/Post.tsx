@@ -40,6 +40,10 @@ export const PostSkeleton: React.FC = () => (
 
 const reactions = [
     { name: 'Me gusta', icon: ThumbsUpIcon, color: 'text-z-primary', textColor: 'text-z-primary' },
+    { name: 'Me divierte', icon: LaughIcon, color: 'text-yellow-500', textColor: 'text-yellow-500' },
+    { name: 'Me sorprende', icon: WowIcon, color: 'text-yellow-400', textColor: 'text-yellow-400' },
+    { name: 'Me enoja', icon: AngryIcon, color: 'text-red-500', textColor: 'text-red-500' },
+    { name: 'No me gusta', icon: ThumbsDownIcon, color: 'text-z-text-secondary dark:text-z-text-secondary-dark', textColor: 'text-z-text-secondary dark:text-z-text-secondary-dark' },
 ];
 
 interface PostProps {
@@ -60,7 +64,7 @@ const Comment: React.FC<{ comment: CommentType }> = ({ comment }) => (
 
 const Post: React.FC<PostProps> = ({ post, index, addNotification }) => {
   const { user } = useAuth();
-  const [isLiked, setIsLiked] = useState(false);
+  const [currentReaction, setCurrentReaction] = useState<string | null>(null);
   const [likeCount, setLikeCount] = useState(0);
   const [comments, setComments] = useState<CommentType[]>([]);
   const [commentsCount, setCommentsCount] = useState(0);
@@ -68,6 +72,7 @@ const Post: React.FC<PostProps> = ({ post, index, addNotification }) => {
   const [newComment, setNewComment] = useState('');
   const [showAllComments, setShowAllComments] = useState(false);
   const commentInputRef = React.useRef<HTMLInputElement>(null);
+  const [showReactionPicker, setShowReactionPicker] = useState(false);
   
   const mediaCount = post.media?.length || 0;
   const author = post.fanpage || post.user;
@@ -83,13 +88,16 @@ const Post: React.FC<PostProps> = ({ post, index, addNotification }) => {
         if (likesData !== null) setLikeCount(likesData);
 
         if(user) {
-             const { data: userLike, error: userLikeError } = await supabase
+             const { data: userReaction, error: userReactionError } = await supabase
                 .from('likes')
-                .select('*')
+                .select('reaction_type')
                 .eq('post_id', post.id)
                 .eq('user_id', user.id)
                 .maybeSingle();
-            if(userLike) setIsLiked(true);
+
+            if(userReaction) {
+                setCurrentReaction(userReaction.reaction_type);
+            }
         }
 
         // Fetch comments
@@ -121,11 +129,14 @@ const Post: React.FC<PostProps> = ({ post, index, addNotification }) => {
   }, [post.id, user]);
 
 
-  const handleLikeToggle = async () => {
+  const handleReaction = async (reactionName: string) => {
     if (!user) return;
-    
-    if (isLiked) {
-        // Unlike
+    setShowReactionPicker(false);
+
+    const isUnreacting = currentReaction === reactionName;
+
+    if (isUnreacting) {
+        // Un-react
         const { error } = await supabase
             .from('likes')
             .delete()
@@ -133,17 +144,29 @@ const Post: React.FC<PostProps> = ({ post, index, addNotification }) => {
             .eq('user_id', user.id);
         
         if (!error) {
-            setIsLiked(false);
+            setCurrentReaction(null);
             setLikeCount(prev => prev - 1);
         }
-    } else {
-        // Like
+    } else if (currentReaction) {
+        // Change reaction
         const { error } = await supabase
             .from('likes')
-            .insert({ post_id: post.id, user_id: user.id });
+            .update({ reaction_type: reactionName })
+            .eq('post_id', post.id)
+            .eq('user_id', user.id);
+        
+        if (!error) {
+            setCurrentReaction(reactionName);
+            addNotification(`ha reaccionado a la publicación de ${author.name}`, user, post.content);
+        }
+    } else {
+        // New reaction
+        const { error } = await supabase
+            .from('likes')
+            .insert({ post_id: post.id, user_id: user.id, reaction_type: reactionName });
 
         if (!error) {
-            setIsLiked(true);
+            setCurrentReaction(reactionName);
             setLikeCount(prev => prev + 1);
             addNotification(`ha reaccionado a la publicación de ${author.name}`, user, post.content);
         }
@@ -189,8 +212,8 @@ const Post: React.FC<PostProps> = ({ post, index, addNotification }) => {
   };
 
   const displayedComments = showAllComments ? comments : comments.slice(0, 2);
-  const currentReaction = isLiked ? reactions[0] : null;
-  const ReactionIcon = currentReaction?.icon || ThumbsUpIcon;
+  const selectedReaction = reactions.find(r => r.name === currentReaction);
+  const ReactionIcon = selectedReaction?.icon || ThumbsUpIcon;
 
   return (
     <div 
@@ -261,10 +284,21 @@ const Post: React.FC<PostProps> = ({ post, index, addNotification }) => {
       <div className="p-1 flex justify-around text-z-text-secondary dark:text-z-text-secondary-dark">
          <div 
             className="relative flex-1"
+            onMouseEnter={() => setShowReactionPicker(true)}
+            onMouseLeave={() => setShowReactionPicker(false)}
          >
-            <div onClick={handleLikeToggle} className={`flex items-center justify-center space-x-2 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-z-hover-dark cursor-pointer transition-colors group ${currentReaction ? currentReaction.textColor : ''}`}>
+            {showReactionPicker && (
+                <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 flex space-x-1 bg-z-bg-secondary dark:bg-z-bg-secondary-dark p-1.5 rounded-full shadow-lg border dark:border-z-border-dark animate-fadeIn" style={{ animationDuration: '0.2s' }}>
+                    {reactions.map(reaction => (
+                        <div key={reaction.name} onClick={() => handleReaction(reaction.name)} className="cursor-pointer transform hover:scale-125 transition-transform p-1" title={reaction.name}>
+                            <reaction.icon className={`h-8 w-8 ${reaction.color}`} />
+                        </div>
+                    ))}
+                </div>
+            )}
+            <div onClick={() => handleReaction(currentReaction || 'Me gusta')} className={`flex items-center justify-center space-x-2 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-z-hover-dark cursor-pointer transition-colors group ${selectedReaction ? selectedReaction.textColor : ''}`}>
                 <ReactionIcon className="h-6 w-6" />
-                <span className={`font-medium group-hover:text-z-text-primary dark:group-hover:text-z-text-primary-dark transition-colors ${currentReaction ? currentReaction.textColor : ''}`}>{isLiked ? 'Te gusta' : 'Me gusta'}</span>
+                <span className={`font-medium group-hover:text-z-text-primary dark:group-hover:text-z-text-primary-dark transition-colors ${selectedReaction ? selectedReaction.textColor : ''}`}>{selectedReaction ? selectedReaction.name : 'Me gusta'}</span>
             </div>
          </div>
          <div onClick={() => commentInputRef.current?.focus()} className="flex-1 flex items-center justify-center space-x-2 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-z-hover-dark cursor-pointer transition-colors group">

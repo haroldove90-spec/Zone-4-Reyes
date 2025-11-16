@@ -92,7 +92,7 @@ const MainLayout: React.FC = () => {
                 type,
                 format,
                 group_id,
-                user:profiles (id, name, avatar_url)
+                user:profiles!user_id(id, name, avatar_url)
             `)
             .order('created_at', { ascending: false });
 
@@ -175,7 +175,7 @@ const MainLayout: React.FC = () => {
     const { data, error } = await supabase
       .from('posts')
       .insert(postData)
-      .select('*, user:profiles (id, name, avatar_url)')
+      .select('*, user:profiles!user_id(id, name, avatar_url)')
       .single();
 
     if (error) {
