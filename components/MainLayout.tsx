@@ -112,7 +112,7 @@ const MainLayout: React.FC = () => {
                 type,
                 format,
                 group_id,
-                user:profiles(id, name, avatar_url)
+                profiles(id, name, avatar_url)
             `)
             .order('created_at', { ascending: false });
 
@@ -121,8 +121,8 @@ const MainLayout: React.FC = () => {
         // Map Supabase response to app's Post type
         const fetchedPosts: Post[] = data.map((p: any) => {
             const group = p.group_id ? FAKE_GROUPS.find(g => g.id === p.group_id) : undefined;
-            const postUser = p.user 
-                ? { id: p.user.id, name: p.user.name, avatarUrl: p.user.avatar_url } 
+            const postUser = p.profiles 
+                ? { id: p.profiles.id, name: p.profiles.name, avatarUrl: p.profiles.avatar_url } 
                 : { id: 'unknown', name: 'Usuario Desconocido', avatarUrl: 'https://static.vecteezy.com/system/resources/thumbnails/009/292/244/small/default-avatar-icon-of-social-media-user-vector.jpg' };
 
             return {
