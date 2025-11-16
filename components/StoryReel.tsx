@@ -15,23 +15,24 @@ const StoryCard: React.FC<{ story?: Story; isCreate?: boolean }> = ({ story, isC
   const currentUserAvatar = "https://picsum.photos/id/1/200/300";
 
   return (
-    <div className="relative h-52 w-32 rounded-xl shadow-lg cursor-pointer overflow-hidden group">
+    <div className="relative h-56 w-36 rounded-xl shadow-md cursor-pointer overflow-hidden group flex-shrink-0">
       {isCreate ? (
-        <>
-          <img src={currentUserAvatar} alt="Create Story" className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />
-          <div className="absolute inset-0 bg-black/10"></div>
-          <div className="absolute bottom-0 w-full h-1/4 bg-z-bg-secondary text-center flex flex-col justify-end pb-2">
-             <div className="absolute -top-5 left-1/2 -translate-x-1/2 w-10 h-10 bg-z-light-blue rounded-full flex items-center justify-center border-4 border-z-bg-secondary group-hover:bg-blue-600 transition-colors">
+        <div className="h-full w-full flex flex-col">
+          <div className="h-3/5 w-full overflow-hidden">
+            <img src={currentUserAvatar} alt="Create Story" className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />
+          </div>
+          <div className="h-2/5 w-full bg-z-bg-secondary dark:bg-z-bg-secondary-dark text-center flex flex-col justify-end pb-2 relative">
+             <div className="absolute -top-5 left-1/2 -translate-x-1/2 w-10 h-10 bg-z-primary rounded-full flex items-center justify-center border-4 border-z-bg-secondary dark:border-z-bg-secondary-dark group-hover:bg-blue-600 transition-colors">
                <PlusIcon className="h-6 w-6 text-white" />
              </div>
-             <span className="text-sm font-semibold text-z-text-primary">Create Story</span>
+             <span className="text-sm font-semibold text-z-text-primary dark:text-z-text-primary-dark">Create Story</span>
           </div>
-        </>
+        </div>
       ) : (
         story && <>
           <img src={story.imageUrl} alt={story.user.name} className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
-          <img src={story.user.avatarUrl} alt={story.user.name} className="absolute top-3 left-3 h-9 w-9 rounded-full border-[3px] border-z-light-blue" />
+          <img src={story.user.avatarUrl} alt={story.user.name} className="absolute top-3 left-3 h-9 w-9 rounded-full border-[3px] border-z-primary" />
           <span className="absolute bottom-2 left-0 right-0 px-2 text-white font-semibold text-sm truncate">{story.user.name}</span>
         </>
       )}
@@ -42,7 +43,7 @@ const StoryCard: React.FC<{ story?: Story; isCreate?: boolean }> = ({ story, isC
 const StoryReel: React.FC = () => {
   return (
     <div className="py-6">
-      <div className="flex space-x-3 overflow-x-auto pb-4 scrollbar-hide">
+      <div className="flex space-x-3 overflow-x-auto pb-4 -mx-4 px-4">
         <StoryCard isCreate={true} />
         {stories.map((story) => (
           <StoryCard key={story.id} story={story} />

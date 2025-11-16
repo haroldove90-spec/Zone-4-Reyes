@@ -2,10 +2,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import Header from './components/Header';
 import LeftSidebar from './components/LeftSidebar';
-import RightSidebar from './components/RightSidebar';
 import Feed from './components/Feed';
+import RightSidebar from './components/RightSidebar';
 import { Post } from './types';
 import { generateSocialFeed } from './services/geminiService';
+import { ThemeProvider } from './contexts/ThemeContext';
 
 const App: React.FC = () => {
   const [posts, setPosts] = useState<Post[]>([]);
@@ -25,14 +26,16 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="bg-z-bg-primary min-h-screen">
-      <Header />
-      <div className="flex">
-        <LeftSidebar />
-        <Feed posts={posts} onAddPost={handleAddPost} />
-        <RightSidebar />
+    <ThemeProvider>
+      <div className="min-h-screen">
+        <Header />
+        <div className="flex">
+          <LeftSidebar />
+          <Feed posts={posts} onAddPost={handleAddPost} />
+          <RightSidebar />
+        </div>
       </div>
-    </div>
+    </ThemeProvider>
   );
 };
 

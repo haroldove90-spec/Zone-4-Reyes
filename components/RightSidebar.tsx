@@ -12,20 +12,20 @@ const contacts = [
 ];
 
 const ContactItem: React.FC<{ name: string; avatarUrl: string }> = ({ name, avatarUrl }) => (
-  <div className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-100 cursor-pointer">
+  <div className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-z-hover-dark cursor-pointer">
     <div className="relative">
       <img src={avatarUrl} alt={name} className="h-8 w-8 rounded-full" />
-      <div className="absolute bottom-0 right-0 bg-green-500 w-2.5 h-2.5 rounded-full border-2 border-z-bg-primary"></div>
+      <div className="absolute bottom-0 right-0 bg-green-500 w-2.5 h-2.5 rounded-full border-2 border-z-bg-secondary dark:border-z-bg-primary-dark"></div>
     </div>
-    <span className="font-semibold text-z-text-primary hidden lg:inline">{name}</span>
+    <span className="font-semibold text-z-text-primary dark:text-z-text-primary-dark hidden lg:inline">{name}</span>
   </div>
 );
 
 const RightSidebar: React.FC = () => {
   return (
-    <aside className="hidden lg:block w-1/5 pt-6 px-4 fixed right-0 h-full">
+    <aside className="hidden lg:block w-72 pt-16 px-4 fixed right-0 h-full">
       <div className="flex flex-col space-y-2">
-        <h2 className="text-z-text-secondary font-semibold text-lg">Contacts</h2>
+        <h2 className="text-z-text-secondary dark:text-z-text-secondary-dark font-semibold text-lg mb-2">Contacts</h2>
         {contacts.map((contact) => (
           <ContactItem key={contact.name} name={contact.name} avatarUrl={contact.avatarUrl} />
         ))}
