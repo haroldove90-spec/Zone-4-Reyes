@@ -3,6 +3,9 @@ import ReactDOM from 'react-dom/client';
 import App from './App';
 import { AuthProvider } from './contexts/AuthContext';
 
+/*
+// El registro del Service Worker causa un error 404 porque sw.js no está presente en el resultado de la compilación.
+// Esto es probablemente un problema de configuración de la compilación. Se deshabilita temporalmente para evitar errores.
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/sw.js').then(registration => {
@@ -12,6 +15,7 @@ if ('serviceWorker' in navigator) {
     });
   });
 }
+*/
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {
