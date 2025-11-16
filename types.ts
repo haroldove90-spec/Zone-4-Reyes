@@ -31,6 +31,7 @@ export interface Post {
   likes: number;
   commentsCount: number;
   comments: Comment[];
+  type?: 'standard' | 'report';
 }
 
 export interface Notification {

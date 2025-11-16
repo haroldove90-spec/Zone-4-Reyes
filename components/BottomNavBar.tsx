@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { HomeIcon, UsersIcon, ClapperboardIcon, StoreIcon } from './icons';
+import { HomeIcon, UsersIcon, StoreIcon, AlertTriangleIcon } from './icons';
 
 interface BottomNavBarProps {
     navigate: (path: string) => void;
@@ -12,7 +12,7 @@ const BottomNavBar: React.FC<BottomNavBarProps> = ({ navigate, activePath }) => 
   const navItems = [
     { name: 'Inicio', path: 'feed', icon: HomeIcon },
     { name: 'Amigos', path: 'friends', icon: UsersIcon },
-    { name: 'Videos', path: 'videos', icon: ClapperboardIcon },
+    { name: 'Denuncia', path: 'report', icon: AlertTriangleIcon },
     { name: 'Marketplace', path: 'marketplace', icon: StoreIcon },
   ];
 
@@ -37,7 +37,7 @@ const BottomNavBar: React.FC<BottomNavBarProps> = ({ navigate, activePath }) => 
               title={name}
             >
               <div className="relative w-full flex justify-center">
-                 <Icon className="h-7 w-7" />
+                 <Icon className={`h-7 w-7 ${isActive ? '' : ''}`} />
                  {isActive && (
                     <div className="absolute -top-4 h-1 w-1/2 bg-z-primary rounded-full"></div>
                  )}

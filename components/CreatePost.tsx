@@ -5,9 +5,11 @@ import { useAuth } from '../contexts/AuthContext';
 
 interface CreatePostProps {
   onAddPost: (post: Post) => void;
+  postType?: 'standard' | 'report';
+  placeholder?: string;
 }
 
-const CreatePost: React.FC<CreatePostProps> = ({ onAddPost }) => {
+const CreatePost: React.FC<CreatePostProps> = ({ onAddPost, postType, placeholder }) => {
   const [input, setInput] = useState('');
   const [mediaPreviews, setMediaPreviews] = useState<Media[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -62,6 +64,8 @@ const CreatePost: React.FC<CreatePostProps> = ({ onAddPost }) => {
       likes: 0,
       commentsCount: 0,
       comments: [],
+      // FIX: Use nullish coalescing operator to provide a default value for postType, ensuring type correctness.
+      type: postType ?? 'standard',
     };
     onAddPost(newPost);
     setInput('');
@@ -85,7 +89,7 @@ const CreatePost: React.FC<CreatePostProps> = ({ onAddPost }) => {
               setInput(e.target.value);
               if (error) setError(null);
             }}
-            placeholder={`¿Qué estás pensando, ${user.name}?`}
+            placeholder={placeholder || `¿Qué estás pensando, ${user.name}?`}
             className={`w-full bg-z-bg-primary dark:bg-z-hover-dark rounded-2xl px-4 py-2.5 text-z-text-primary dark:text-z-text-primary-dark focus:outline-none placeholder:text-z-text-secondary dark:placeholder:text-z-text-secondary-dark hover:bg-gray-200 dark:hover:bg-z-bg-secondary-dark/60 transition-colors resize-none ${error ? 'ring-2 ring-red-500' : ''}`}
             rows={input || mediaPreviews.length > 0 ? 3 : 1}
           />

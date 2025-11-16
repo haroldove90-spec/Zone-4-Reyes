@@ -12,6 +12,18 @@ const FAKE_POSTS: Post[] = [
       likes: 128,
       commentsCount: 12,
       comments: [],
+      type: 'standard',
+    },
+    {
+      id: "report-1",
+      user: { name: "Vecino Preocupado", avatarUrl: "https://picsum.photos/id/40/200" },
+      timestamp: "hace 30m",
+      content: "Se reporta una fuga de agua importante en la esquina de Av. Principal y Calle 2. ¡Las autoridades ya fueron notificadas pero se recomienda tomar precauciones! #FugaDeAgua #ReyesIztacala",
+      media: [{ type: 'image', url: "https://picsum.photos/id/119/800/600" }],
+      likes: 45,
+      commentsCount: 8,
+      comments: [],
+      type: 'report',
     },
     {
       id: "2",
@@ -22,6 +34,7 @@ const FAKE_POSTS: Post[] = [
       likes: 256,
       commentsCount: 34,
       comments: [],
+      type: 'standard',
     },
     {
       id: "3",
@@ -31,6 +44,7 @@ const FAKE_POSTS: Post[] = [
       likes: 98,
       commentsCount: 22,
       comments: [],
+      type: 'standard',
     }
 ];
 
@@ -100,6 +114,7 @@ export const generateSocialFeed = async (): Promise<Post[]> => {
         ...p,
         media: p.imageUrl ? [{ type: 'image', url: p.imageUrl }] : [],
         imageUrl: undefined, // remove old property
+        type: 'standard',
     }));
     
     return adaptedPosts;

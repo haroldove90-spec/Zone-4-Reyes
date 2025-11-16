@@ -15,6 +15,7 @@ import SettingsPage from '../pages/SettingsPage';
 import AdminDashboardPage from '../pages/AdminDashboardPage';
 import MyPages from '../pages/MyPages';
 import CreateFanpage from '../pages/CreateFanpage';
+import CitizenReportPage from '../pages/CitizenReportPage';
 import { useAuth } from '../contexts/AuthContext';
 
 const MOCK_FANPAGES: Fanpage[] = [
@@ -107,11 +108,13 @@ const MainLayout: React.FC = () => {
               return <MyPages myPages={fanpages.filter(p => p.ownerEmail === user?.email)} navigate={navigate} />;
           case 'create-fanpage':
               return <CreateFanpage onAddPage={handleAddPage} navigate={navigate} />;
+          case 'report':
+              return <CitizenReportPage reportPosts={posts.filter(p => p.type === 'report')} onAddPost={handleAddPost} />;
           case 'admin':
-              return user?.isAdmin ? <AdminDashboardPage /> : <Feed posts={posts} onAddPost={handleAddPost} loading={loading} addNotification={addNotification} />;
+              return user?.isAdmin ? <AdminDashboardPage /> : <Feed posts={posts.filter(p => p.type !== 'report')} onAddPost={handleAddPost} loading={loading} addNotification={addNotification} />;
           case 'feed':
           default:
-              return <Feed posts={posts} onAddPost={handleAddPost} loading={loading} addNotification={addNotification} />;
+              return <Feed posts={posts.filter(p => p.type !== 'report')} onAddPost={handleAddPost} loading={loading} addNotification={addNotification} />;
       }
   }
 
