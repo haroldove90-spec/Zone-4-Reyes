@@ -19,42 +19,50 @@ self.addEventListener('install', event => {
 });
 
 self.addEventListener('fetch', event => {
-  // Let the browser handle requests for scripts and other resources that might change frequently.
-  if (event.request.url.includes('/@vite/') || event.request.url.includes('index.tsx')) {
+  // Let the browser handle requests for scripts, other resources that might change frequently,
+  // and all requests to Supabase to prevent auth issues.
+  if (
+    event.request.url.includes('/@vite/') || 
+    event.request.url.includes('index.tsx') ||
+    event.request.url.includes('supabase.co')
+  ) {
     return;
   }
 
-  event.respondWith(
-    caches.match(event.request)
-      .then(response => {
-        // Cache hit - return response
-        if (response) {
-          return response;
-        }
-
-        // Clone the request to use it both for fetching and caching
-        const fetchRequest = event.request.clone();
-
-        return fetch(fetchRequest).then(
-          response => {
-            // Check if we received a valid response
-            if (!response || response.status !== 200 || response.type !== 'basic') {
-              return response;
-            }
-
-            // Clone the response to use it both for browser and cache
-            const responseToCache = response.clone();
-
-            caches.open(CACHE_NAME)
-              .then(cache => {
-                cache.put(event.request, responseToCache);
-              });
-
+  // For other GET requests, use a cache-first strategy.
+  if (event.request.method === 'GET') {
+    event.respondWith(
+      caches.match(event.request)
+        .then(response => {
+          // Cache hit - return response
+          if (response) {
             return response;
           }
-        );
-      })
-  );
+
+          // Clone the request to use it both for fetching and caching
+          const fetchRequest = event.request.clone();
+
+          return fetch(fetchRequest).then(
+            response => {
+              // Check if we received a valid response to cache
+              if (!response || response.status !== 200) {
+                return response;
+              }
+
+              // Clone the response to use it both for browser and cache
+              const responseToCache = response.clone();
+
+              caches.open(CACHE_NAME)
+                .then(cache => {
+                  cache.put(event.request, responseToCache);
+                });
+
+              return response;
+            }
+          );
+        })
+    );
+  }
 });
 
 

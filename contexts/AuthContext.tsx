@@ -30,42 +30,74 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+const formatProfile = (profileData: any, supabaseUser: SupabaseUser): AuthUser => ({
+    id: supabaseUser.id,
+    email: supabaseUser.email!,
+    name: profileData.name,
+    avatarUrl: profileData.avatar_url,
+    bio: profileData.bio,
+    coverUrl: profileData.cover_url,
+    nickname: profileData.nickname,
+    age: profileData.age,
+    location: profileData.location,
+    website: profileData.website,
+    friendsCount: profileData.friends_count,
+    isAdmin: profileData.is_admin,
+});
+
+
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const getSession = async () => {
-        const { data: { session } } = await supabase.auth.getSession();
-        setSession(session);
-        if (session) {
-            const { data: profile } = await supabase
-                .from('profiles')
-                .select('*')
-                .eq('id', session.user.id)
-                .single();
-            setUser(profile ? { ...session.user, ...profile } : null);
+    const checkSession = async () => {
+        try {
+            const { data: { session } } = await supabase.auth.getSession();
+            setSession(session);
+            if (session?.user) {
+                const { data: profile, error } = await supabase
+                    .from('profiles')
+                    .select('*')
+                    .eq('id', session.user.id)
+                    .single();
+                if (error) throw error;
+                if (profile) {
+                    setUser(formatProfile(profile, session.user));
+                }
+            }
+        } catch (error) {
+            console.error("Error in initial session fetch:", error);
+            setUser(null);
+        } finally {
+            setLoading(false);
         }
-        setLoading(false);
     };
 
-    getSession();
+    checkSession();
 
     const { data: authListener } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
         setSession(session);
-        if (session) {
-            const { data: profile } = await supabase
-                .from('profiles')
-                .select('*')
-                .eq('id', session.user.id)
-                .single();
-            setUser(profile ? { id: session.user.id, email: session.user.email!, ...profile } : null);
+        if (session?.user) {
+            try {
+                const { data: profile, error } = await supabase
+                    .from('profiles')
+                    .select('*')
+                    .eq('id', session.user.id)
+                    .single();
+                if (error) throw error;
+                if(profile) {
+                    setUser(formatProfile(profile, session.user));
+                }
+            } catch (error) {
+                 console.error("Error fetching profile on auth state change:", error);
+                 setUser(null);
+            }
         } else {
             setUser(null);
         }
-        setLoading(false);
       }
     );
 
