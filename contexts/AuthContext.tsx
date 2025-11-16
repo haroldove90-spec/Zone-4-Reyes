@@ -53,7 +53,7 @@ const getUserProfile = async (supabaseUser: SupabaseUser): Promise<AuthUser | nu
             .from('profiles')
             .select('*')
             .eq('id', supabaseUser.id)
-            .signal(controller.signal)
+            .abortSignal(controller.signal)
             .single();
 
         clearTimeout(timeout);
