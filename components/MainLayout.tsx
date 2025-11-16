@@ -91,6 +91,7 @@ const MainLayout: React.FC = () => {
                 media,
                 type,
                 format,
+                group_id,
                 user:profiles (id, name, avatar_url)
             `)
             .order('created_at', { ascending: false });
@@ -98,18 +99,22 @@ const MainLayout: React.FC = () => {
         if (error) throw error;
         
         // Map Supabase response to app's Post type
-        const fetchedPosts: Post[] = data.map((p: any) => ({
-            id: p.id.toString(),
-            timestamp: new Date(p.created_at).toLocaleString(),
-            content: p.content,
-            media: p.media,
-            type: p.type,
-            format: p.format,
-            user: { name: p.user.name, avatarUrl: p.user.avatar_url },
-            likes: 0, // Should be fetched separately or with a join
-            commentsCount: 0, // Should be fetched separately
-            comments: []
-        }));
+        const fetchedPosts: Post[] = data.map((p: any) => {
+            const group = p.group_id ? FAKE_GROUPS.find(g => g.id === p.group_id) : undefined;
+            return {
+                id: p.id.toString(),
+                timestamp: new Date(p.created_at).toLocaleString(),
+                content: p.content,
+                media: p.media,
+                type: p.type,
+                format: p.format,
+                user: { name: p.user.name, avatarUrl: p.user.avatar_url },
+                likes: 0, // Should be fetched separately or with a join
+                commentsCount: 0, // Should be fetched separately
+                comments: [],
+                group: group ? { id: group.id, name: group.name } : undefined,
+            };
+        });
 
         setPosts(fetchedPosts);
 
@@ -124,12 +129,11 @@ const MainLayout: React.FC = () => {
     fetchPosts();
   }, [fetchPosts]);
 
-  const handleAddPost = async (content: string, mediaFiles: File[], postType: 'standard' | 'report' = 'standard') => {
+  const handleAddPost = async (content: string, mediaFiles: File[], postType: 'standard' | 'report' = 'standard', group?: { id: string; name: string }) => {
     if (!user) return;
 
     let mediaToUpload: Media[] = [];
 
-    // Upload media files to Supabase Storage
     for (const file of mediaFiles) {
         const fileExt = file.name.split('.').pop();
         const fileName = `${user.id}/${Date.now()}.${fileExt}`;
@@ -140,7 +144,7 @@ const MainLayout: React.FC = () => {
         
         if (uploadError) {
             console.error('Error uploading file:', uploadError);
-            continue;
+            throw uploadError;
         }
 
         const { data: { publicUrl } } = supabase.storage
@@ -153,21 +157,26 @@ const MainLayout: React.FC = () => {
         });
     }
 
-    // Insert post into Supabase database
+    const postData: { [key: string]: any } = { 
+      user_id: user.id, 
+      content,
+      media: mediaToUpload.length > 0 ? mediaToUpload : null,
+      type: postType,
+      format: 'post'
+    };
+    if (group) {
+        postData.group_id = group.id;
+    }
+
     const { data, error } = await supabase
       .from('posts')
-      .insert({ 
-        user_id: user.id, 
-        content,
-        media: mediaToUpload.length > 0 ? mediaToUpload : null,
-        type: postType,
-        format: 'post' // Assuming 'post' for now, reels would be different
-      })
+      .insert(postData)
       .select('*, user:profiles (id, name, avatar_url)')
       .single();
 
     if (error) {
         console.error('Error creating post:', error);
+        throw error;
     } else if (data) {
         const newPost: Post = {
             id: data.id.toString(),
@@ -179,12 +188,13 @@ const MainLayout: React.FC = () => {
             user: { name: data.user.name, avatarUrl: data.user.avatar_url },
             likes: 0,
             commentsCount: 0,
-            comments: []
+            comments: [],
+            group: group,
         };
         setPosts(prevPosts => [newPost, ...prevPosts]);
         if (currentPath.startsWith('profile')) {
             navigate('profile');
-        } else {
+        } else if (!currentPath.startsWith('group/')) {
             window.scrollTo(0, 0);
         }
     }
@@ -229,7 +239,7 @@ const MainLayout: React.FC = () => {
               return <GroupsPage navigate={navigate} groups={groups} />;
           case 'group':
               const group = groups.find(g => g.id === param);
-              return group ? <GroupDetailPage group={group} posts={posts.filter(p => p.group?.id === param)} onAddPost={() => {}} /> : <div>Grupo no encontrado</div>;
+              return group ? <GroupDetailPage group={group} posts={posts.filter(p => p.group?.id === param)} onAddPost={handleAddPost} /> : <div>Grupo no encontrado</div>;
           case 'create-group':
                 return <CreateGroupPage onAddGroup={handleAddGroup} navigate={navigate} />;
           case 'events':

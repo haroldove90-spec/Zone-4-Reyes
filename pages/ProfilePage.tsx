@@ -17,7 +17,7 @@ const Spinner: React.FC = () => (
 
 interface ProfilePageProps {
     userPosts: PostType[];
-    onAddPost: (content: string, mediaFiles: File[], postType?: 'standard' | 'report') => Promise<void>;
+    onAddPost: (content: string, mediaFiles: File[], postType?: 'standard' | 'report', group?: { id: string; name: string }) => Promise<void>;
     navigate: (page: string) => void;
 }
 

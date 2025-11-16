@@ -10,12 +10,13 @@ interface Preview {
 }
 
 interface CreatePostProps {
-  onAddPost: (content: string, mediaFiles: File[], postType?: 'standard' | 'report') => Promise<void>;
+  onAddPost: (content: string, mediaFiles: File[], postType?: 'standard' | 'report', group?: { id: string; name: string }) => Promise<void>;
   postType?: 'standard' | 'report';
   placeholder?: string;
+  group?: { id: string; name: string };
 }
 
-const CreatePost: React.FC<CreatePostProps> = ({ onAddPost, postType, placeholder }) => {
+const CreatePost: React.FC<CreatePostProps> = ({ onAddPost, postType, placeholder, group }) => {
   const [input, setInput] = useState('');
   const [previews, setPreviews] = useState<Preview[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -58,7 +59,7 @@ const CreatePost: React.FC<CreatePostProps> = ({ onAddPost, postType, placeholde
     const mediaFiles = previews.map(p => p.file);
 
     try {
-        await onAddPost(input, mediaFiles, postType);
+        await onAddPost(input, mediaFiles, postType, group);
         setInput('');
         setPreviews([]);
         if (fileInputRef.current) {

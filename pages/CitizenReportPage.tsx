@@ -7,7 +7,7 @@ import { AlertTriangleIcon } from '../components/icons';
 
 interface CitizenReportPageProps {
     reportPosts: PostType[];
-    onAddPost: (post: PostType) => void;
+    onAddPost: (content: string, mediaFiles: File[], postType?: 'standard' | 'report') => Promise<void>;
 }
 
 const CitizenReportPage: React.FC<CitizenReportPageProps> = ({ reportPosts, onAddPost }) => {

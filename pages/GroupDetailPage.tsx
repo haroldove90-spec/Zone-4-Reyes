@@ -7,7 +7,7 @@ import Post from '../components/Post';
 interface GroupDetailPageProps {
   group: Group;
   posts: PostType[];
-  onAddPost: (post: PostType) => void;
+  onAddPost: (content: string, mediaFiles: File[], postType?: 'standard' | 'report', group?: { id: string; name: string }) => Promise<void>;
 }
 
 const GroupDetailPage: React.FC<GroupDetailPageProps> = ({ group, posts, onAddPost }) => {
@@ -24,7 +24,8 @@ const GroupDetailPage: React.FC<GroupDetailPageProps> = ({ group, posts, onAddPo
             </div>
             <div className="p-4">
                 <CreatePost 
-                    onAddPost={(newPost) => onAddPost({...newPost, group: { id: group.id, name: group.name }})}
+                    onAddPost={onAddPost}
+                    group={{ id: group.id, name: group.name }}
                     placeholder={`Escribe algo en ${group.name}...`}
                 />
                 <div className="mt-6">

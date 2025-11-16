@@ -24,7 +24,7 @@ const Spinner: React.FC = () => (
 
 interface FeedProps {
     posts: PostType[];
-    onAddPost: (post: PostType) => void;
+    onAddPost: (content: string, mediaFiles: File[], postType?: 'standard' | 'report') => Promise<void>;
     loading: boolean;
     addNotification: (text: string, user: User, postContent?: string) => void;
 }
