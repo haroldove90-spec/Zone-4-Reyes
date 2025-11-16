@@ -1,6 +1,6 @@
-
 import React from 'react';
 import { UsersIcon, ClapperboardIcon, StoreIcon } from './icons';
+import { useAuth } from '../contexts/AuthContext';
 
 interface SidebarItemProps {
   Icon: React.ElementType;
@@ -20,10 +20,12 @@ const SidebarItem: React.FC<SidebarItemProps> = ({ Icon, title, avatarUrl }) => 
 );
 
 const LeftSidebar: React.FC = () => {
+  const { user } = useAuth();
+
   return (
     <aside className="hidden lg:block w-20 xl:w-80 pt-14 px-4 fixed h-full">
       <nav className="flex flex-col space-y-2">
-        <SidebarItem avatarUrl="https://picsum.photos/id/1/200" title="My Profile" Icon={UsersIcon} />
+        {user && <SidebarItem avatarUrl={user.avatarUrl} title={user.name} Icon={UsersIcon} />}
         <SidebarItem Icon={UsersIcon} title="Friends" />
         <SidebarItem Icon={ClapperboardIcon} title="Watch" />
         <SidebarItem Icon={StoreIcon} title="Marketplace" />
