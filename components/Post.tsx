@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Post as PostType, Comment as CommentType, User } from '../types';
 import { 
     ThumbsUpIcon, MessageSquareIcon, Share2Icon, MoreHorizontalIcon,
-    ThumbsDownIcon, LaughIcon, WowIcon, AngryIcon 
+    ThumbsDownIcon, LaughIcon, WowIcon, AngryIcon, SendIcon 
 } from './icons';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -176,15 +176,20 @@ const Post: React.FC<PostProps> = ({ post, index, addNotification }) => {
         )}
         <div className="flex items-center space-x-2 mt-4">
             <img src={user?.avatarUrl} alt="Tu avatar" className="h-8 w-8 rounded-full" loading="lazy" />
-            <form onSubmit={handleAddComment} className="flex-1">
+            <form onSubmit={handleAddComment} className="flex-1 relative flex items-center">
                  <input
                     ref={commentInputRef}
                     type="text"
                     value={newComment}
                     onChange={(e) => setNewComment(e.target.value)}
                     placeholder="Escribe un comentario..."
-                    className="w-full bg-z-bg-primary dark:bg-z-hover-dark rounded-full px-4 py-2 text-z-text-primary dark:text-z-text-primary-dark focus:outline-none placeholder:text-z-text-secondary dark:placeholder:text-z-text-secondary-dark"
+                    className="w-full bg-z-bg-primary dark:bg-z-hover-dark rounded-full pl-4 pr-10 py-2 text-z-text-primary dark:text-z-text-primary-dark focus:outline-none placeholder:text-z-text-secondary dark:placeholder:text-z-text-secondary-dark"
                 />
+                {newComment && (
+                    <button type="submit" className="absolute right-2 text-z-primary hover:text-z-dark-blue p-1 rounded-full transition-colors">
+                        <SendIcon className="w-5 h-5" />
+                    </button>
+                )}
             </form>
         </div>
       </div>
