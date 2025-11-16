@@ -4,6 +4,24 @@ export interface User {
   avatarUrl: string;
 }
 
+export interface Group {
+  id: string;
+  name: string;
+  description: string;
+  memberCount: number;
+  coverUrl: string;
+  avatarUrl: string;
+  isPrivate: boolean;
+}
+
+export interface Product {
+  id: string;
+  name:string;
+  price: string;
+  imageUrl: string;
+  seller: User;
+}
+
 export interface Story {
   id: string;
   user: User;
@@ -32,6 +50,9 @@ export interface Post {
   commentsCount: number;
   comments: Comment[];
   type?: 'standard' | 'report';
+  format?: 'post' | 'reel';
+  group?: { id: string; name: string };
+  fanpage?: { id: string; name: string; avatarUrl: string; };
 }
 
 export interface Notification {

@@ -1,6 +1,19 @@
 
 import { GoogleGenAI, Type } from "@google/genai";
-import { Post } from '../types';
+import { Post, Group, Product, User } from '../types';
+
+export const FAKE_GROUPS: Group[] = [
+    { id: 'g1', name: 'Vecinos de Reyes Iztacala', description: 'Un grupo para conectar con tus vecinos, compartir noticias y organizar eventos locales.', memberCount: 254, coverUrl: 'https://picsum.photos/id/1016/1600/400', avatarUrl: 'https://picsum.photos/id/101/200', isPrivate: false },
+    { id: 'g2', name: 'Amantes del Cine y Series', description: 'Para discutir los últimos estrenos, teorías de fans y clásicos del cine.', memberCount: 88, coverUrl: 'https://picsum.photos/id/122/1600/400', avatarUrl: 'https://picsum.photos/id/211/200', isPrivate: true },
+];
+
+const FAKE_SELLER: User = { name: 'Tiendita Local', avatarUrl: 'https://picsum.photos/id/75/200' };
+export const FAKE_PRODUCTS: Product[] = [
+    { id: 'prod1', name: 'Café de grano premium', price: '$250 MXN', imageUrl: 'https://picsum.photos/id/30/400/400', seller: FAKE_SELLER },
+    { id: 'prod2', name: 'Artesanía hecha a mano', price: '$400 MXN', imageUrl: 'https://picsum.photos/id/48/400/400', seller: FAKE_SELLER },
+    { id: 'prod3', name: 'Playera con diseño local', price: '$300 MXN', imageUrl: 'https://picsum.photos/id/54/400/400', seller: FAKE_SELLER },
+    { id: 'prod4', name: 'Libro de autor local', price: '$150 MXN', imageUrl: 'https://picsum.photos/id/24/400/400', seller: FAKE_SELLER },
+];
 
 const FAKE_POSTS: Post[] = [
     {
@@ -13,6 +26,32 @@ const FAKE_POSTS: Post[] = [
       commentsCount: 12,
       comments: [],
       type: 'standard',
+      format: 'post',
+    },
+    {
+      id: "reel-1",
+      user: { name: "Sofia Reel", avatarUrl: "https://picsum.photos/id/1012/200" },
+      timestamp: "hace 3h",
+      content: "Un pequeño clip del atardecer de hoy. ¡Mágico! ✨ #atardecer #reel",
+      media: [{ type: 'video', url: "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4" }],
+      likes: 345,
+      commentsCount: 25,
+      comments: [],
+      type: 'standard',
+      format: 'reel',
+    },
+    {
+      id: "fanpage-post-1",
+      user: { name: "Juan Pérez", avatarUrl: "https://picsum.photos/id/1011/200" },
+      timestamp: "hace 4h",
+      content: "¡Nuestro nuevo Frappé de Caramelo ya está aquí! Ven a probarlo a El Rincón del Café. ☕️",
+      media: [{ type: 'image', url: "https://picsum.photos/id/225/800/600" }],
+      likes: 95,
+      commentsCount: 18,
+      comments: [],
+      type: 'standard',
+      format: 'post',
+      fanpage: { id: 'fp1', name: 'El Rincón del Café', avatarUrl: 'https://picsum.photos/id/55/200' },
     },
     {
       id: "report-1",
@@ -24,6 +63,7 @@ const FAKE_POSTS: Post[] = [
       commentsCount: 8,
       comments: [],
       type: 'report',
+      format: 'post',
     },
     {
       id: "2",
@@ -35,6 +75,7 @@ const FAKE_POSTS: Post[] = [
       commentsCount: 34,
       comments: [],
       type: 'standard',
+      format: 'post',
     },
     {
       id: "3",
@@ -45,6 +86,7 @@ const FAKE_POSTS: Post[] = [
       commentsCount: 22,
       comments: [],
       type: 'standard',
+      format: 'post',
     }
 ];
 
@@ -115,6 +157,7 @@ export const generateSocialFeed = async (): Promise<Post[]> => {
         media: p.imageUrl ? [{ type: 'image', url: p.imageUrl }] : [],
         imageUrl: undefined, // remove old property
         type: 'standard',
+        format: 'post',
     }));
     
     return adaptedPosts;

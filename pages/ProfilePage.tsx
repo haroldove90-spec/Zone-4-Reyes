@@ -1,10 +1,10 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { Post as PostType } from '../types';
+import { Post as PostType, Fanpage } from '../types';
 import Post from '../components/Post';
 import CreatePost from '../components/CreatePost';
-import { MoreHorizontalIcon, ImagePlusIcon, MapPinIcon, LinkIcon, CakeIcon, UsersIcon, PhotoIcon } from '../components/icons';
+import { MoreHorizontalIcon, ImagePlusIcon, MapPinIcon, LinkIcon, CakeIcon, UsersIcon, PhotoIcon, FlagIcon } from '../components/icons';
 import EditProfileModal from '../components/modals/EditProfileModal';
 
 const Spinner: React.FC = () => (
@@ -61,6 +61,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ userPosts, onAddPost, navigat
     // Mock data for friends and photos
     const friends = Array.from({ length: 9 }, (_, i) => ({ name: `Amigo ${i+1}`, avatarUrl: `https://picsum.photos/id/${10 + i}/200` }));
     const photos = Array.from({ length: 9 }, (_, i) => `https://picsum.photos/id/${20 + i}/200`);
+    const myPages: Partial<Fanpage>[] = [{ name: 'El Rincón del Café', avatarUrl: 'https://picsum.photos/id/55/200' }];
 
     if (loading) {
         return <main className="flex-grow pt-14 lg:ml-20 xl:ml-80 lg:mr-72"><Spinner /></main>;
@@ -111,6 +112,19 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ userPosts, onAddPost, navigat
                                 <li className="flex items-center space-x-3 text-z-text-primary dark:text-z-text-primary-dark"><CakeIcon className="h-5 w-5 text-z-text-secondary"/><span>Tiene <b>{user.age}</b> años</span></li>
                                 <li className="flex items-center space-x-3 text-z-text-primary dark:text-z-text-primary-dark"><LinkIcon className="h-5 w-5 text-z-text-secondary"/><a href={`https://${user.website}`} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline"><b>{user.website}</b></a></li>
                             </ul>
+                        </div>
+
+                         <div className="bg-z-bg-secondary dark:bg-z-bg-secondary-dark rounded-xl shadow-md p-4">
+                            <div className="flex justify-between items-center mb-3">
+                                <h2 className="text-xl font-bold text-z-text-primary dark:text-z-text-primary-dark">Mis Páginas</h2>
+                                <button onClick={() => navigate('my-pages')} className="text-sm text-z-primary hover:underline">Ver todas</button>
+                            </div>
+                            <div className="flex space-x-3 items-center p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-z-hover-dark cursor-pointer" onClick={() => navigate('my-pages')}>
+                                <div className="p-2 bg-gray-200 dark:bg-z-border-dark rounded-full">
+                                    <FlagIcon className="h-6 w-6" />
+                                </div>
+                                <span>Administrar tus páginas</span>
+                            </div>
                         </div>
 
                         <div className="bg-z-bg-secondary dark:bg-z-bg-secondary-dark rounded-xl shadow-md p-4">

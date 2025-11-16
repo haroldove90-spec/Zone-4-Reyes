@@ -44,6 +44,7 @@ const Post: React.FC<PostProps> = ({ post, index, addNotification }) => {
   const reactionTimeout = React.useRef<number>();
   
   const mediaCount = post.media?.length || 0;
+  const author = post.fanpage || post.user;
 
   const handleReactionSelect = (reactionName: string) => {
     if (selectedReaction === reactionName) {
@@ -57,7 +58,7 @@ const Post: React.FC<PostProps> = ({ post, index, addNotification }) => {
       }
       setSelectedReaction(reactionName);
       if(user) {
-        addNotification(`ha reaccionado a la publicación de ${post.user.name}`, user, post.content);
+        addNotification(`ha reaccionado a la publicación de ${author.name}`, user, post.content);
       }
     }
     setShowReactions(false);
@@ -75,13 +76,13 @@ const Post: React.FC<PostProps> = ({ post, index, addNotification }) => {
     };
     setComments(prev => [...prev, commentToAdd]);
     setNewComment('');
-    addNotification(`ha comentado la publicación de ${post.user.name}: "${newComment}"`, user, post.content);
+    addNotification(`ha comentado la publicación de ${author.name}: "${newComment}"`, user, post.content);
   };
 
   const handleShare = () => {
     if (navigator.share) {
       navigator.share({
-        title: `Publicación de ${post.user.name}`,
+        title: `Publicación de ${author.name}`,
         text: post.content,
         url: window.location.href,
       })
@@ -104,9 +105,9 @@ const Post: React.FC<PostProps> = ({ post, index, addNotification }) => {
       <div className="p-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <img src={post.user.avatarUrl} alt={post.user.name} className="h-10 w-10 rounded-full" loading="lazy" />
+            <img src={author.avatarUrl} alt={author.name} className="h-10 w-10 rounded-full" loading="lazy" />
             <div>
-              <p className="font-bold text-z-text-primary dark:text-z-text-primary-dark">{post.user.name}</p>
+              <p className="font-bold text-z-text-primary dark:text-z-text-primary-dark">{author.name}</p>
               <p className="text-sm text-z-text-secondary dark:text-z-text-secondary-dark">{post.timestamp}</p>
             </div>
           </div>
