@@ -172,7 +172,6 @@ const MainLayout: React.FC = () => {
         postData.group_id = group.id;
     }
 
-    // Step 1: Insert the post and get its raw data
     const { data: newPostData, error: insertError } = await supabase
       .from('posts')
       .insert(postData)
@@ -181,24 +180,11 @@ const MainLayout: React.FC = () => {
 
     if (insertError) {
         console.error('Error creating post:', insertError);
-        throw insertError;
+        throw insertError; // Throw error to be caught by the calling component
     }
 
     if (newPostData) {
-        // Step 2: Fetch the author's profile data separately to avoid join ambiguity
-        const { data: profileData, error: profileError } = await supabase
-            .from('profiles')
-            .select('id, name, avatar_url')
-            .eq('id', newPostData.user_id)
-            .single();
-
-        if (profileError) {
-            console.error('Error fetching profile for new post:', profileError);
-        }
-
-        const postUser = profileData 
-            ? { id: profileData.id, name: profileData.name, avatarUrl: profileData.avatar_url }
-            : { id: user.id, name: user.name, avatarUrl: user.avatarUrl }; // Fallback to current user from auth context
+        const postUser = { id: user.id, name: user.name, avatarUrl: user.avatarUrl };
 
         const newPost: Post = {
             id: newPostData.id.toString(),
@@ -262,7 +248,6 @@ const MainLayout: React.FC = () => {
               return <GroupsPage navigate={navigate} groups={groups} />;
           case 'group':
               const group = groups.find(g => g.id === param);
-              // Fix: Pass handleAddPost instead of the undefined onAddPost.
               return group ? <GroupDetailPage group={group} posts={posts.filter(p => p.group?.id === param)} onAddPost={handleAddPost} /> : <div>Grupo no encontrado</div>;
           case 'create-group':
                 return <CreateGroupPage onAddGroup={handleAddGroup} navigate={navigate} />;
