@@ -14,10 +14,12 @@ interface CreatePostProps {
   postType?: 'standard' | 'report';
   placeholder?: string;
   group?: { id: string; name: string };
+  isNewUser?: boolean;
 }
 
-const CreatePost: React.FC<CreatePostProps> = ({ onAddPost, postType, placeholder, group }) => {
-  const [input, setInput] = useState('');
+const CreatePost: React.FC<CreatePostProps> = ({ onAddPost, postType, placeholder, group, isNewUser }) => {
+  const welcomeMessage = "¡Es hora de tomar tu trono digital! Disfruta la experiencia.\n\nTu Equipo de Zone4Reyes.";
+  const [input, setInput] = useState(isNewUser ? welcomeMessage : '');
   const [previews, setPreviews] = useState<Preview[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -65,9 +67,9 @@ const CreatePost: React.FC<CreatePostProps> = ({ onAddPost, postType, placeholde
         if (fileInputRef.current) {
           fileInputRef.current.value = "";
         }
-    } catch (error) {
+    } catch (error: any) {
         console.error("Failed to create post:", error);
-        setError("No se pudo crear la publicación. Inténtalo de nuevo.");
+        setError(error.message || "No se pudo crear la publicación. Inténtalo de nuevo.");
     } finally {
         setIsSubmitting(false);
     }

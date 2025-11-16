@@ -12,11 +12,11 @@ const StorySkeleton: React.FC = () => {
 };
 
 const initialStories: Story[] = [
-  { id: '1', user: { name: 'Jane Smith', avatarUrl: 'https://picsum.photos/id/1025/200' }, imageUrl: 'https://picsum.photos/id/103/200/300' },
-  { id: '2', user: { name: 'John Doe', avatarUrl: 'https://picsum.photos/id/1011/200' }, imageUrl: 'https://picsum.photos/id/104/200/300' },
-  { id: '3', user: { name: 'Alice Johnson', avatarUrl: 'https://picsum.photos/id/1027/200' }, imageUrl: 'https://picsum.photos/id/105/200/300' },
-  { id: '4', user: { name: 'Bob Williams', avatarUrl: 'https://picsum.photos/id/103/200' }, imageUrl: 'https://picsum.photos/id/106/200/300' },
-  { id: '5', user: { name: 'Charlie Brown', avatarUrl: 'https://picsum.photos/id/1040/200' }, imageUrl: 'https://picsum.photos/id/107/200/300' },
+  { id: '1', user: { id: 'u2', name: 'Jane Smith', avatarUrl: 'https://picsum.photos/id/1025/200' }, imageUrl: 'https://picsum.photos/id/103/200/300' },
+  { id: '2', user: { id: 'u3', name: 'John Doe', avatarUrl: 'https://picsum.photos/id/1011/200' }, imageUrl: 'https://picsum.photos/id/104/200/300' },
+  { id: '3', user: { id: 'u4', name: 'Alice Johnson', avatarUrl: 'https://picsum.photos/id/1027/200' }, imageUrl: 'https://picsum.photos/id/105/200/300' },
+  { id: '4', user: { id: 'u5', name: 'Bob Williams', avatarUrl: 'https://picsum.photos/id/103/200' }, imageUrl: 'https://picsum.photos/id/106/200/300' },
+  { id: '5', user: { id: 'u6', name: 'Charlie Brown', avatarUrl: 'https://picsum.photos/id/1040/200' }, imageUrl: 'https://picsum.photos/id/107/200/300' },
 ];
 
 const StoryCard: React.FC<{ story?: Story; isCreate?: boolean; onClick?: () => void; }> = ({ story, isCreate = false, onClick }) => {
@@ -69,7 +69,7 @@ const StoryReel: React.FC<StoryReelProps> = ({ loading = false }) => {
       reader.onloadend = () => {
         const newStory: Story = {
           id: new Date().toISOString(),
-          user: { name: user.name, avatarUrl: user.avatarUrl },
+          user: { id: user.id, name: user.name, avatarUrl: user.avatarUrl },
           imageUrl: reader.result as string,
         };
         setStories(prevStories => [newStory, ...prevStories]);

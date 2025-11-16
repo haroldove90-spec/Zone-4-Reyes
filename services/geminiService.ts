@@ -7,7 +7,7 @@ export const FAKE_GROUPS: Group[] = [
     { id: 'g2', name: 'Amantes del Cine y Series', description: 'Para discutir los últimos estrenos, teorías de fans y clásicos del cine.', memberCount: 88, coverUrl: 'https://picsum.photos/id/122/1600/400', avatarUrl: 'https://picsum.photos/id/211/200', isPrivate: true },
 ];
 
-const FAKE_SELLER: User = { name: 'Tiendita Local', avatarUrl: 'https://picsum.photos/id/75/200' };
+const FAKE_SELLER: User = { id: 'seller1', name: 'Tiendita Local', avatarUrl: 'https://picsum.photos/id/75/200' };
 export const FAKE_PRODUCTS: Product[] = [
     { id: 'prod1', name: 'Café de grano premium', price: '$250 MXN', imageUrl: 'https://picsum.photos/id/30/400/400', seller: FAKE_SELLER },
     { id: 'prod2', name: 'Artesanía hecha a mano', price: '$400 MXN', imageUrl: 'https://picsum.photos/id/48/400/400', seller: FAKE_SELLER },
@@ -15,7 +15,7 @@ export const FAKE_PRODUCTS: Product[] = [
     { id: 'prod4', name: 'Libro de autor local', price: '$150 MXN', imageUrl: 'https://picsum.photos/id/24/400/400', seller: FAKE_SELLER },
 ];
 
-const FAKE_USER_ORGANIZER: User = { name: 'Comité Vecinal', avatarUrl: 'https://picsum.photos/id/88/200'};
+const FAKE_USER_ORGANIZER: User = { id: 'organizer1', name: 'Comité Vecinal', avatarUrl: 'https://picsum.photos/id/88/200'};
 const FAKE_FANPAGE_ORGANIZER: Fanpage = { id: 'fp1', name: 'El Rincón del Café', category: 'Cafetería', bio: '', ownerEmail: '', avatarUrl: 'https://picsum.photos/id/55/200', coverUrl: ''};
 
 export const FAKE_EVENTS: Event[] = [

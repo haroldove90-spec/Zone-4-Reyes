@@ -95,15 +95,15 @@ const Post: React.FC<PostProps> = ({ post, index, addNotification }) => {
         // Fetch comments
         const { data: commentsData, count: commentsCountData, error: commentsError } = await supabase
             .from('comments')
-            .select('*, profile:profiles(name, avatar_url)', { count: 'exact' })
+            .select('*, profile:profiles(id, name, avatar_url)', { count: 'exact' })
             .eq('post_id', post.id)
             .order('created_at', { ascending: true });
 
         if (commentsData) {
             const formattedComments: CommentType[] = commentsData.map((c: any) => {
                 const commentUser = c.profile 
-                    ? { name: c.profile.name, avatarUrl: c.profile.avatar_url } 
-                    : { name: 'Usuario Desconocido', avatarUrl: 'https://static.vecteezy.com/system/resources/thumbnails/009/292/244/small/default-avatar-icon-of-social-media-user-vector.jpg' };
+                    ? { id: c.profile.id, name: c.profile.name, avatarUrl: c.profile.avatar_url } 
+                    : { id: 'unknown', name: 'Usuario Desconocido', avatarUrl: 'https://static.vecteezy.com/system/resources/thumbnails/009/292/244/small/default-avatar-icon-of-social-media-user-vector.jpg' };
                 
                 return {
                     id: c.id,
@@ -157,13 +157,13 @@ const Post: React.FC<PostProps> = ({ post, index, addNotification }) => {
     const { data, error } = await supabase
         .from('comments')
         .insert({ post_id: post.id, user_id: user.id, text: newComment })
-        .select('*, profile:profiles(name, avatar_url)')
+        .select('*, profile:profiles(id, name, avatar_url)')
         .single();
     
     if (!error && data) {
          const commentToAdd: CommentType = {
             id: data.id,
-            user: { name: data.profile.name, avatarUrl: data.profile.avatar_url },
+            user: { id: data.profile.id, name: data.profile.name, avatarUrl: data.profile.avatar_url },
             text: data.text,
             timestamp: new Date(data.created_at).toLocaleString()
         };

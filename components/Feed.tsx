@@ -11,9 +11,10 @@ interface FeedProps {
     onAddPost: (content: string, mediaFiles: File[], postType?: 'standard' | 'report', group?: { id: string; name: string }) => Promise<void>;
     loading: boolean;
     addNotification: (text: string, user: User, postContent?: string) => void;
+    isNewUser?: boolean;
 }
 
-const Feed: React.FC<FeedProps> = ({ posts, onAddPost, loading, addNotification }) => {
+const Feed: React.FC<FeedProps> = ({ posts, onAddPost, loading, addNotification, isNewUser }) => {
   const [activeFilter, setActiveFilter] = useState<'all' | 'pages'>('all');
 
   const filteredPosts = activeFilter === 'pages'
@@ -26,7 +27,7 @@ const Feed: React.FC<FeedProps> = ({ posts, onAddPost, loading, addNotification 
         <MobileSearch />
         <StoryReel loading={loading} />
         <div className="mb-6">
-          <CreatePost onAddPost={onAddPost} />
+          <CreatePost onAddPost={onAddPost} isNewUser={isNewUser} />
         </div>
 
         {/* Feed Filters */}

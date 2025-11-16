@@ -6,7 +6,7 @@ import { MoreHorizontalIcon, SearchIcon, SendIcon } from './icons';
 const initialConversations: Conversation[] = [
     {
         id: '1',
-        user: { name: 'John Doe', avatarUrl: 'https://picsum.photos/id/1011/200' },
+        user: { id: 'u3', name: 'John Doe', avatarUrl: 'https://picsum.photos/id/1011/200' },
         messages: [
             { id: 'm1', text: '¡Hola! ¿Cómo estás?', timestamp: '10:30 AM', sender: 'other' },
             { id: 'm2', text: '¡Hola John! Todo bien por aquí, ¿y tú?', timestamp: '10:31 AM', sender: 'me' },
@@ -15,13 +15,13 @@ const initialConversations: Conversation[] = [
     },
     {
         id: '2',
-        user: { name: 'Jane Smith', avatarUrl: 'https://picsum.photos/id/1025/200' },
+        user: { id: 'u2', name: 'Jane Smith', avatarUrl: 'https://picsum.photos/id/1025/200' },
         messages: [{ id: 'm3', text: 'Te envié el documento que pediste.', timestamp: 'Ayer', sender: 'other' }],
         unreadCount: 1
     },
     {
         id: '3',
-        user: { name: 'Alice Johnson', avatarUrl: 'https://picsum.photos/id/1027/200' },
+        user: { id: 'u4', name: 'Alice Johnson', avatarUrl: 'https://picsum.photos/id/1027/200' },
         messages: [{ id: 'm4', text: 'Nos vemos mañana en la reunión.', timestamp: 'Ayer', sender: 'other' }],
         unreadCount: 2
     },

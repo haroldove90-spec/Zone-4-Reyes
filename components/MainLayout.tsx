@@ -47,7 +47,7 @@ const MainLayout: React.FC = () => {
   const addNotification = useCallback((text: string, user: User, postContent?: string) => {
     const newNotification: Notification = {
         id: new Date().toISOString(),
-        user: { name: user.name, avatarUrl: user.avatarUrl },
+        user: { id: user.id, name: user.name, avatarUrl: user.avatarUrl },
         text,
         timestamp: 'Justo ahora',
         read: false,
@@ -102,8 +102,8 @@ const MainLayout: React.FC = () => {
         const fetchedPosts: Post[] = data.map((p: any) => {
             const group = p.group_id ? FAKE_GROUPS.find(g => g.id === p.group_id) : undefined;
             const postUser = p.user 
-                ? { name: p.user.name, avatarUrl: p.user.avatar_url } 
-                : { name: 'Usuario Desconocido', avatarUrl: 'https://static.vecteezy.com/system/resources/thumbnails/009/292/244/small/default-avatar-icon-of-social-media-user-vector.jpg' };
+                ? { id: p.user.id, name: p.user.name, avatarUrl: p.user.avatar_url } 
+                : { id: 'unknown', name: 'Usuario Desconocido', avatarUrl: 'https://static.vecteezy.com/system/resources/thumbnails/009/292/244/small/default-avatar-icon-of-social-media-user-vector.jpg' };
 
             return {
                 id: p.id.toString(),
@@ -189,7 +189,7 @@ const MainLayout: React.FC = () => {
             media: data.media,
             type: data.type,
             format: data.format,
-            user: { name: data.user.name, avatarUrl: data.user.avatar_url },
+            user: { id: data.user.id, name: data.user.name, avatarUrl: data.user.avatar_url },
             likes: 0,
             commentsCount: 0,
             comments: [],
@@ -222,7 +222,7 @@ const MainLayout: React.FC = () => {
       
       switch(path) {
           case 'profile':
-              return <ProfilePage userPosts={posts.filter(p => p.user.name === user?.name)} onAddPost={handleAddPost} navigate={navigate} />;
+              return <ProfilePage userPosts={posts.filter(p => p.user && user && p.user.id === user.id)} onAddPost={handleAddPost} navigate={navigate} />;
           case 'friends':
               return <FriendsPage />;
           case 'ads':
@@ -257,7 +257,8 @@ const MainLayout: React.FC = () => {
               return user?.isAdmin ? <AdminDashboardPage fanpages={fanpages}/> : <Feed posts={posts.filter(p => p.type !== 'report' && p.format !== 'reel')} onAddPost={handleAddPost} loading={loading} addNotification={addNotification} />;
           case 'feed':
           default:
-              return <Feed posts={posts.filter(p => p.type !== 'report' && p.format !== 'reel')} onAddPost={handleAddPost} loading={loading} addNotification={addNotification} />;
+              const isNewUser = user ? posts.filter(p => p.user && p.user.id === user.id).length === 0 && !loading : false;
+              return <Feed posts={posts.filter(p => p.type !== 'report' && p.format !== 'reel')} onAddPost={handleAddPost} loading={loading} addNotification={addNotification} isNewUser={isNewUser} />;
       }
   }
 
