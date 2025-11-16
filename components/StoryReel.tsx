@@ -1,9 +1,9 @@
-
-import React from 'react';
+import React, { useState, useRef } from 'react';
 import { Story } from '../types';
 import { PlusIcon } from './icons';
+import { useAuth } from '../contexts/AuthContext';
 
-const stories: Story[] = [
+const initialStories: Story[] = [
   { id: '1', user: { name: 'Jane Smith', avatarUrl: 'https://picsum.photos/id/1025/200' }, imageUrl: 'https://picsum.photos/id/103/200/300' },
   { id: '2', user: { name: 'John Doe', avatarUrl: 'https://picsum.photos/id/1011/200' }, imageUrl: 'https://picsum.photos/id/104/200/300' },
   { id: '3', user: { name: 'Alice Johnson', avatarUrl: 'https://picsum.photos/id/1027/200' }, imageUrl: 'https://picsum.photos/id/105/200/300' },
@@ -11,11 +11,12 @@ const stories: Story[] = [
   { id: '5', user: { name: 'Charlie Brown', avatarUrl: 'https://picsum.photos/id/1040/200' }, imageUrl: 'https://picsum.photos/id/107/200/300' },
 ];
 
-const StoryCard: React.FC<{ story?: Story; isCreate?: boolean }> = ({ story, isCreate = false }) => {
-  const currentUserAvatar = "https://picsum.photos/id/1/200/300";
+const StoryCard: React.FC<{ story?: Story; isCreate?: boolean; onClick?: () => void; }> = ({ story, isCreate = false, onClick }) => {
+  const { user } = useAuth();
+  const currentUserAvatar = user?.avatarUrl || "https://picsum.photos/id/1/200/300";
 
   return (
-    <div className="relative h-56 w-36 rounded-xl shadow-md cursor-pointer overflow-hidden group flex-shrink-0 transition-transform duration-300 ease-in-out hover:scale-[1.03]">
+    <div onClick={onClick} className="relative h-56 w-36 rounded-xl shadow-md cursor-pointer overflow-hidden group flex-shrink-0 transition-transform duration-300 ease-in-out hover:scale-[1.03]">
       {isCreate ? (
         <div className="h-full w-full flex flex-col">
           <div className="h-3/5 w-full overflow-hidden">
@@ -41,10 +42,45 @@ const StoryCard: React.FC<{ story?: Story; isCreate?: boolean }> = ({ story, isC
 };
 
 const StoryReel: React.FC = () => {
+  const { user } = useAuth();
+  const [stories, setStories] = useState<Story[]>(initialStories);
+  const storyInputRef = useRef<HTMLInputElement>(null);
+
+  const handleCreateStoryClick = () => {
+    storyInputRef.current?.click();
+  };
+
+  const handleStoryFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file && user) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const newStory: Story = {
+          id: new Date().toISOString(),
+          user: { name: user.name, avatarUrl: user.avatarUrl },
+          imageUrl: reader.result as string,
+        };
+        setStories(prevStories => [newStory, ...prevStories]);
+      };
+      reader.readAsDataURL(file);
+    }
+    if (e.target) {
+        e.target.value = '';
+    }
+  };
+
+
   return (
     <div className="py-6">
+      <input
+        type="file"
+        ref={storyInputRef}
+        className="hidden"
+        accept="image/*"
+        onChange={handleStoryFileChange}
+      />
       <div className="flex space-x-3 overflow-x-auto pb-4 -mx-4 px-4">
-        <StoryCard isCreate={true} />
+        <StoryCard isCreate={true} onClick={handleCreateStoryClick} />
         {stories.map((story) => (
           <StoryCard key={story.id} story={story} />
         ))}

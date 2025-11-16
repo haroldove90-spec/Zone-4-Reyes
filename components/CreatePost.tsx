@@ -102,7 +102,7 @@ const CreatePost: React.FC<CreatePostProps> = ({ onAddPost, postType, placeholde
                 {media.type === 'image' ? (
                   <img src={media.url} alt="Vista previa" className="rounded-lg w-full h-full object-cover" />
                 ) : (
-                  <video src={media.url} className="rounded-lg w-full h-full object-cover" />
+                  <video src={media.url} controls className="rounded-lg w-full h-full object-cover" />
                 )}
                 <button type="button" onClick={() => removePreview(media.url)} className="absolute top-1 right-1 bg-gray-800/60 text-white rounded-full h-6 w-6 flex items-center justify-center font-bold text-lg hover:bg-gray-800 transition-colors">&times;</button>
               </div>
