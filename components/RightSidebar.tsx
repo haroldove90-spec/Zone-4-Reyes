@@ -14,7 +14,7 @@ const contacts = [
 const ContactItem: React.FC<{ name: string; avatarUrl: string }> = ({ name, avatarUrl }) => (
   <div className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-z-hover-dark cursor-pointer transition-colors duration-200">
     <div className="relative">
-      <img src={avatarUrl} alt={name} className="h-8 w-8 rounded-full" />
+      <img src={avatarUrl} alt={name} className="h-8 w-8 rounded-full" loading="lazy" />
       <div className="absolute bottom-0 right-0 bg-green-500 w-2.5 h-2.5 rounded-full border-2 border-z-bg-secondary dark:border-z-bg-primary-dark"></div>
     </div>
     <span className="font-semibold text-z-text-primary dark:text-z-text-primary-dark hidden lg:inline">{name}</span>

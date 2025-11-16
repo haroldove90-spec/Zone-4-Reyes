@@ -11,7 +11,7 @@ interface PostProps {
 
 const Comment: React.FC<{ comment: CommentType }> = ({ comment }) => (
     <div className="flex items-start space-x-2 mt-2">
-        <img src={comment.user.avatarUrl} alt={comment.user.name} className="h-8 w-8 rounded-full" />
+        <img src={comment.user.avatarUrl} alt={comment.user.name} className="h-8 w-8 rounded-full" loading="lazy" />
         <div className="bg-gray-100 dark:bg-z-hover-dark rounded-xl p-2 px-3 text-sm">
             <p className="font-bold text-z-text-primary dark:text-z-text-primary-dark">{comment.user.name}</p>
             <p className="text-z-text-primary dark:text-z-text-primary-dark">{comment.text}</p>
@@ -71,7 +71,7 @@ const Post: React.FC<PostProps> = ({ post, index }) => {
       <div className="p-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <img src={post.user.avatarUrl} alt={post.user.name} className="h-10 w-10 rounded-full" />
+            <img src={post.user.avatarUrl} alt={post.user.name} className="h-10 w-10 rounded-full" loading="lazy" />
             <div>
               <p className="font-bold text-z-text-primary dark:text-z-text-primary-dark">{post.user.name}</p>
               <p className="text-sm text-z-text-secondary dark:text-z-text-secondary-dark">{post.timestamp}</p>
@@ -86,7 +86,7 @@ const Post: React.FC<PostProps> = ({ post, index }) => {
 
       {(post.imageUrl || post.imagePreviewUrl) && (
         <div className="bg-black">
-          <img src={post.imagePreviewUrl || post.imageUrl} alt="Contenido de la publicación" className="w-full h-auto max-h-[70vh] object-contain" />
+          <img src={post.imagePreviewUrl || post.imageUrl} alt="Contenido de la publicación" className="w-full h-auto max-h-[70vh] object-contain" loading="lazy" />
         </div>
       )}
 
@@ -127,7 +127,7 @@ const Post: React.FC<PostProps> = ({ post, index }) => {
             </button>
         )}
         <div className="flex items-center space-x-2 mt-4">
-            <img src={user?.avatarUrl} alt="Tu avatar" className="h-8 w-8 rounded-full" />
+            <img src={user?.avatarUrl} alt="Tu avatar" className="h-8 w-8 rounded-full" loading="lazy" />
             <form onSubmit={handleAddComment} className="flex-1">
                  <input
                     ref={commentInputRef}

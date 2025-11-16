@@ -43,7 +43,7 @@ const LoginPage: React.FC = () => {
     <div className="min-h-screen flex flex-col items-center justify-center bg-z-bg-primary dark:bg-z-bg-primary-dark p-4 animate-fadeIn">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-            <img src="https://appdesignmex.com/Zone4Reyes.png" alt="Logo" className="h-[40px] mx-auto mb-4" />
+            <img src="https://appdesignmex.com/Zone4Reyes.png" alt="Logo" className="h-[40px] mx-auto mb-4" loading="lazy" />
             <h1 className="text-3xl font-bold text-z-text-primary dark:text-z-text-primary-dark">Reyes Iztacala</h1>
             <p className="text-z-text-secondary dark:text-z-text-secondary-dark">La Red social oficial</p>
         </div>
@@ -88,30 +88,13 @@ const LoginPage: React.FC = () => {
               Iniciar Sesión
             </button>
           </form>
-
-          <div className="relative my-6">
-            <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-300 dark:border-z-border-dark"></div>
-            </div>
-            <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-z-bg-secondary dark:bg-z-bg-secondary-dark text-z-text-secondary dark:text-z-text-secondary-dark">O continuar con</span>
-            </div>
-           </div>
-
-           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-             <button className="w-full flex items-center justify-center space-x-2 bg-white dark:bg-z-bg-secondary-dark border border-gray-300 dark:border-z-border-dark font-medium py-2.5 px-4 rounded-lg hover:bg-gray-50 dark:hover:bg-z-hover-dark transition-colors">
-                <GoogleIcon className="h-5 w-5" />
-                <span className="text-z-text-primary dark:text-z-text-primary-dark">Google</span>
-             </button>
-              <button className="w-full flex items-center justify-center space-x-2 bg-black text-white font-medium py-2.5 px-4 rounded-lg hover:bg-gray-800 dark:hover:brightness-125 transition-all">
-                <AppleIcon className="h-5 w-5" />
-                <span>Apple</span>
-             </button>
-           </div>
-
         </div>
+
         <p className="text-center text-sm text-z-text-secondary dark:text-z-text-secondary-dark mt-6">
             ¿No tienes una cuenta? <a href="#" className="font-medium text-z-primary hover:underline">Regístrate</a>
+        </p>
+        <p className="text-center text-xs text-z-text-secondary dark:text-z-text-secondary-dark mt-4">
+            (Admin: usa <b>admin@example.com</b> con cualquier contraseña para acceder al dashboard.)
         </p>
       </div>
     </div>

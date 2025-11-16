@@ -50,3 +50,13 @@ export interface Conversation {
     messages: ChatMessage[];
     unreadCount: number;
 }
+
+export interface Fanpage {
+    id: string;
+    name: string;
+    category: string;
+    avatarUrl: string;
+    coverUrl: string;
+    bio: string;
+    ownerEmail: string;
+}

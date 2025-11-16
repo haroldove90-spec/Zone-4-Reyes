@@ -30,7 +30,7 @@ const NotificationsPanel: React.FC = () => {
             <div className="py-2 max-h-96 overflow-y-auto">
                 {notificationsData.map((notification, index) => (
                     <div key={index} className="flex items-start p-3 space-x-3 hover:bg-gray-100 dark:hover:bg-z-hover-dark cursor-pointer transition-colors">
-                        <img src={notification.user.avatarUrl} alt={notification.user.name} className="h-14 w-14 rounded-full"/>
+                        <img src={notification.user.avatarUrl} alt={notification.user.name} className="h-14 w-14 rounded-full" loading="lazy"/>
                         <div className="flex-1">
                             <p className="text-sm text-z-text-primary dark:text-z-text-primary-dark">
                                 <span className="font-bold">{notification.user.name}</span> {notification.text}

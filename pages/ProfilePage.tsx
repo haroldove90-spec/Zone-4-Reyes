@@ -1,11 +1,18 @@
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { Post as PostType } from '../types';
 import Post from '../components/Post';
 import CreatePost from '../components/CreatePost';
 import { MoreHorizontalIcon, ImagePlusIcon, MapPinIcon, LinkIcon, CakeIcon, UsersIcon, PhotoIcon } from '../components/icons';
 import EditProfileModal from '../components/modals/EditProfileModal';
+
+const Spinner: React.FC = () => (
+    <div className="flex justify-center items-center p-10">
+        <div className="w-12 h-12 border-4 border-z-primary/30 border-t-z-primary rounded-full animate-spin"></div>
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } } .animate-spin { animation: spin 1s linear infinite; }`}</style>
+    </div>
+);
 
 interface ProfilePageProps {
     userPosts: PostType[];
@@ -15,7 +22,17 @@ interface ProfilePageProps {
 const ProfilePage: React.FC<ProfilePageProps> = ({ userPosts, onAddPost }) => {
     const { user, updateUser } = useAuth();
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [loading, setLoading] = useState(true);
     const coverPhotoInputRef = useRef<HTMLInputElement>(null);
+
+    useEffect(() => {
+        setLoading(true);
+        // Simulate loading user data and posts
+        const timer = setTimeout(() => {
+            setLoading(false);
+        }, 1200);
+        return () => clearTimeout(timer);
+    }, [user]);
 
     const handleCoverPhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -28,12 +45,15 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ userPosts, onAddPost }) => {
         }
     };
 
-    if (!user) return null;
-    
     // Mock data for friends and photos
     const friends = Array.from({ length: 9 }, (_, i) => ({ name: `Amigo ${i+1}`, avatarUrl: `https://picsum.photos/id/${10 + i}/200` }));
     const photos = Array.from({ length: 9 }, (_, i) => `https://picsum.photos/id/${20 + i}/200`);
 
+    if (loading) {
+        return <main className="flex-grow pt-14 lg:ml-20 xl:ml-80 lg:mr-72"><Spinner /></main>;
+    }
+    
+    if (!user) return null;
 
     return (
         <main className="flex-grow pt-14 lg:ml-20 xl:ml-80 lg:mr-72 overflow-x-hidden">
@@ -41,7 +61,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ userPosts, onAddPost }) => {
                 <div className="bg-z-bg-secondary dark:bg-z-bg-secondary-dark shadow-md">
                     {/* Cover Photo */}
                     <div className="relative h-48 md:h-64 lg:h-80 group">
-                        <img src={user.coverUrl} alt="Foto de portada" className="w-full h-full object-cover"/>
+                        <img src={user.coverUrl} alt="Foto de portada" className="w-full h-full object-cover" loading="lazy"/>
                         <input type="file" ref={coverPhotoInputRef} onChange={handleCoverPhotoChange} className="hidden" accept="image/*" />
                         <button onClick={() => coverPhotoInputRef.current?.click()} className="absolute bottom-4 right-4 bg-white/80 dark:bg-black/50 hover:bg-white dark:hover:bg-black text-z-text-primary dark:text-z-text-primary-dark font-semibold py-2 px-4 rounded-md flex items-center space-x-2 transition-colors opacity-0 group-hover:opacity-100">
                            <ImagePlusIcon className="h-5 w-5"/> <span>Editar foto de portada</span>
@@ -51,7 +71,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ userPosts, onAddPost }) => {
                     {/* Profile Info */}
                     <div className="p-4 flex flex-col sm:flex-row items-center sm:items-end -mt-16 sm:-mt-8 space-y-4 sm:space-y-0 sm:space-x-6 border-b dark:border-z-border-dark pb-4">
                         <div className="relative group">
-                            <img src={user.avatarUrl} alt="Avatar del usuario" className="w-40 h-40 rounded-full border-4 border-z-bg-secondary dark:border-z-bg-secondary-dark"/>
+                            <img src={user.avatarUrl} alt="Avatar del usuario" className="w-40 h-40 rounded-full border-4 border-z-bg-secondary dark:border-z-bg-secondary-dark" loading="lazy"/>
                              <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity">
                                 <ImagePlusIcon className="h-8 w-8 text-white"/>
                             </div>
@@ -88,7 +108,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ userPosts, onAddPost }) => {
                             <div className="grid grid-cols-3 gap-2">
                                 {friends.map(friend => (
                                     <div key={friend.name}>
-                                        <img src={friend.avatarUrl} alt={friend.name} className="rounded-lg w-full aspect-square object-cover"/>
+                                        <img src={friend.avatarUrl} alt={friend.name} className="rounded-lg w-full aspect-square object-cover" loading="lazy"/>
                                         <p className="text-xs font-semibold mt-1 text-z-text-primary dark:text-z-text-primary-dark truncate">{friend.name}</p>
                                     </div>
                                 ))}
@@ -102,7 +122,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ userPosts, onAddPost }) => {
                             </div>
                             <div className="grid grid-cols-3 gap-2">
                                 {photos.map((photo, i) => (
-                                     <img key={i} src={photo} alt={`Foto ${i}`} className="rounded-lg w-full aspect-square object-cover"/>
+                                     <img key={i} src={photo} alt={`Foto ${i}`} className="rounded-lg w-full aspect-square object-cover" loading="lazy"/>
                                 ))}
                             </div>
                         </div>

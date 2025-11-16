@@ -47,7 +47,7 @@ const FriendsPage: React.FC = () => {
                             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                                 {requests.map(req => (
                                     <div key={req.name} className="bg-z-bg-primary dark:bg-z-hover-dark p-3 rounded-lg flex items-center space-x-3">
-                                        <img src={req.avatarUrl} alt={req.name} className="h-16 w-16 rounded-lg object-cover" />
+                                        <img src={req.avatarUrl} alt={req.name} className="h-16 w-16 rounded-lg object-cover" loading="lazy" />
                                         <div className="flex-grow">
                                             <p className="font-bold text-z-text-primary dark:text-z-text-primary-dark">{req.name}</p>
                                             <div className="flex space-x-2 mt-2">
@@ -70,7 +70,7 @@ const FriendsPage: React.FC = () => {
                         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
                             {friends.map(friend => (
                                 <div key={friend.name} className="text-center">
-                                    <img src={friend.avatarUrl} alt={friend.name} className="h-24 w-24 rounded-lg object-cover mx-auto" />
+                                    <img src={friend.avatarUrl} alt={friend.name} className="h-24 w-24 rounded-lg object-cover mx-auto" loading="lazy" />
                                     <p className="mt-2 font-semibold text-z-text-primary dark:text-z-text-primary-dark text-sm">{friend.name}</p>
                                 </div>
                             ))}

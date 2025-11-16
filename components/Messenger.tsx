@@ -27,6 +27,12 @@ const initialConversations: Conversation[] = [
     },
 ];
 
+const Spinner: React.FC = () => (
+    <div className="flex justify-center items-center p-4 h-full">
+        <div className="w-8 h-8 border-4 border-z-primary/30 border-t-z-primary rounded-full animate-spin"></div>
+    </div>
+);
+
 interface MessengerProps {
     onClose: () => void;
     unreadCount: number;
@@ -34,10 +40,19 @@ interface MessengerProps {
 }
 
 const Messenger: React.FC<MessengerProps> = ({ onClose, unreadCount, setUnreadCount }) => {
-    const [conversations, setConversations] = useState(initialConversations);
+    const [conversations, setConversations] = useState<Conversation[]>([]);
+    const [loading, setLoading] = useState(true);
     const [activeConversation, setActiveConversation] = useState<Conversation | null>(null);
     const [newMessage, setNewMessage] = useState('');
     const messagesEndRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        setLoading(true);
+        setTimeout(() => {
+            setConversations(initialConversations);
+            setLoading(false);
+        }, 1000);
+    }, []);
 
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'auto' });
@@ -97,10 +112,10 @@ const Messenger: React.FC<MessengerProps> = ({ onClose, unreadCount, setUnreadCo
                     </div>
                     {/* Conversation List */}
                     <div className="w-full overflow-y-auto">
-                        {conversations.map(conv => (
+                        {loading ? <Spinner /> : conversations.map(conv => (
                             <div key={conv.id} onClick={() => setActiveConversation(conv)} className="flex items-center p-2 space-x-3 hover:bg-gray-100 dark:hover:bg-z-hover-dark cursor-pointer">
                                 <div className="relative">
-                                    <img src={conv.user.avatarUrl} alt={conv.user.name} className="h-12 w-12 rounded-full" />
+                                    <img src={conv.user.avatarUrl} alt={conv.user.name} className="h-12 w-12 rounded-full" loading="lazy" />
                                     <div className="absolute bottom-0 right-0 bg-green-500 w-3 h-3 rounded-full border-2 border-z-bg-secondary dark:border-z-bg-secondary-dark"></div>
                                 </div>
                                 <div className="flex-1 overflow-hidden">
@@ -118,7 +133,7 @@ const Messenger: React.FC<MessengerProps> = ({ onClose, unreadCount, setUnreadCo
                         <>
                             <div className="flex items-center p-3 border-b dark:border-z-border-dark flex-shrink-0">
                                  <button onClick={() => setActiveConversation(null)} className="md:hidden mr-2 text-z-text-primary dark:text-z-text-primary-dark font-bold">&lt;</button>
-                                <img src={activeConversation.user.avatarUrl} alt={activeConversation.user.name} className="h-10 w-10 rounded-full" />
+                                <img src={activeConversation.user.avatarUrl} alt={activeConversation.user.name} className="h-10 w-10 rounded-full" loading="lazy" />
                                 <p className="ml-3 font-bold text-z-text-primary dark:text-z-text-primary-dark">{activeConversation.user.name}</p>
                             </div>
                             <div className="flex-grow p-3 overflow-y-auto">
@@ -139,7 +154,7 @@ const Messenger: React.FC<MessengerProps> = ({ onClose, unreadCount, setUnreadCo
                                     placeholder="Escribe un mensaje..."
                                     className="flex-1 w-full bg-z-bg-primary dark:bg-z-hover-dark rounded-full px-4 py-2 focus:outline-none"
                                 />
-                                <button type="submit" className="p-2 rounded-full text-z-primary hover:bg-blue-100 dark:hover:bg-z-hover-dark transition-colors">
+                                <button type="submit" disabled={!newMessage.trim()} className="p-2 rounded-full text-z-primary hover:bg-blue-100 dark:hover:bg-z-hover-dark transition-colors disabled:text-gray-400 dark:disabled:text-gray-600 disabled:hover:bg-transparent dark:disabled:hover:bg-transparent">
                                     <SendIcon className="h-6 w-6"/>
                                 </button>
                             </form>

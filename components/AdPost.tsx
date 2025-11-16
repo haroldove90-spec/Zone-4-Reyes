@@ -8,7 +8,7 @@ const AdPost: React.FC = () => {
             <div className="p-4">
                 <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-3">
-                        <img src="https://picsum.photos/id/55/200" alt="Cafe Local" className="h-10 w-10 rounded-full" />
+                        <img src="https://picsum.photos/id/55/200" alt="Cafe Local" className="h-10 w-10 rounded-full" loading="lazy" />
                         <div>
                             <p className="font-bold text-z-text-primary dark:text-z-text-primary-dark">El Rincón del Café</p>
                             <p className="text-sm text-z-text-secondary dark:text-z-text-secondary-dark">Publicidad</p>
@@ -24,7 +24,7 @@ const AdPost: React.FC = () => {
             </div>
 
             <div className="bg-z-bg-primary dark:bg-z-bg-primary-dark relative">
-                <img src="https://picsum.photos/id/225/800/500" alt="Anuncio de café" className="w-full h-auto max-h-[60vh] object-contain" />
+                <img src="https://picsum.photos/id/225/800/500" alt="Anuncio de café" className="w-full h-auto max-h-[60vh] object-contain" loading="lazy" />
                  <div className="absolute bottom-0 left-0 right-0 bg-black/50 p-3 flex justify-between items-center">
                     <div>
                         <p className="text-white/80 text-xs uppercase">ELRINCONDELCAFE.COM</p>

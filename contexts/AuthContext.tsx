@@ -12,6 +12,7 @@ export interface AuthUser {
   location?: string;
   website?: string;
   friendsCount?: number;
+  isAdmin?: boolean;
 }
 
 interface AuthContextType {
@@ -27,6 +28,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [user, setUser] = useState<AuthUser | null>(null);
 
   const login = (userData: AuthUser) => {
+    const isAdmin = userData.email === 'admin@example.com';
     // Add default bio and cover for the simulation
     const fullUserData: AuthUser = {
         ...userData,
@@ -36,7 +38,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         age: 25,
         location: 'Reyes Iztacala, México',
         website: 'https://appdesignmex.com',
-        friendsCount: 188
+        friendsCount: 188,
+        isAdmin: isAdmin,
     };
     setUser(fullUserData);
   };

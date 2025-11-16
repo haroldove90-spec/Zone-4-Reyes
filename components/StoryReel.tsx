@@ -19,7 +19,7 @@ const StoryCard: React.FC<{ story?: Story; isCreate?: boolean }> = ({ story, isC
       {isCreate ? (
         <div className="h-full w-full flex flex-col">
           <div className="h-3/5 w-full overflow-hidden">
-            <img src={currentUserAvatar} alt="Crear Historia" className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />
+            <img src={currentUserAvatar} alt="Crear Historia" className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" loading="lazy" />
           </div>
           <div className="h-2/5 w-full bg-z-bg-secondary dark:bg-z-bg-secondary-dark text-center flex flex-col justify-end pb-2 relative">
              <div className="absolute -top-5 left-1/2 -translate-x-1/2 w-10 h-10 bg-z-primary rounded-full flex items-center justify-center border-4 border-z-bg-secondary dark:border-z-bg-secondary-dark group-hover:bg-blue-600 transition-colors">
@@ -30,9 +30,9 @@ const StoryCard: React.FC<{ story?: Story; isCreate?: boolean }> = ({ story, isC
         </div>
       ) : (
         story && <>
-          <img src={story.imageUrl} alt={story.user.name} className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />
+          <img src={story.imageUrl} alt={story.user.name} className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" loading="lazy" />
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
-          <img src={story.user.avatarUrl} alt={story.user.name} className="absolute top-3 left-3 h-9 w-9 rounded-full border-[3px] border-z-primary" />
+          <img src={story.user.avatarUrl} alt={story.user.name} className="absolute top-3 left-3 h-9 w-9 rounded-full border-[3px] border-z-primary" loading="lazy" />
           <span className="absolute bottom-2 left-0 right-0 px-2 text-white font-semibold text-sm truncate">{story.user.name}</span>
         </>
       )}

@@ -7,10 +7,10 @@ import NotificationsPanel from './NotificationsPanel';
 import Messenger from './Messenger';
 
 interface HeaderProps {
-  setCurrentPage: (page: string) => void;
+  navigate: (page: string) => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ setCurrentPage }) => {
+const Header: React.FC<HeaderProps> = ({ navigate }) => {
   const { user, logout } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
@@ -53,19 +53,19 @@ const Header: React.FC<HeaderProps> = ({ setCurrentPage }) => {
 
   const handleProfileClick = () => {
     setIsMenuOpen(false);
-    setCurrentPage('profile');
+    navigate('profile');
   };
 
   const handleSettingsClick = () => {
     setIsMenuOpen(false);
-    setCurrentPage('settings');
+    navigate('settings');
   };
 
   return (
     <header className="bg-z-bg-secondary dark:bg-z-bg-secondary-dark shadow-md fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-4 h-14 border-b border-transparent dark:border-z-border-dark">
       {/* Left Section */}
       <div className="flex items-center space-x-4">
-        <img src="https://appdesignmex.com/Zone4Reyes.png" alt="Logo" className="h-[30px] cursor-pointer" onClick={() => setCurrentPage('feed')} />
+        <img src="https://appdesignmex.com/Zone4Reyes.png" alt="Logo" className="h-[30px] cursor-pointer" onClick={() => navigate('feed')} loading="lazy" />
         <div className="relative hidden lg:block">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
             <SearchIcon className="h-5 w-5 text-gray-400 dark:text-z-text-secondary-dark" />
@@ -105,11 +105,12 @@ const Header: React.FC<HeaderProps> = ({ setCurrentPage }) => {
             alt="User Avatar"
             className="h-10 w-10 rounded-full cursor-pointer transition-transform hover:scale-105"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
+            loading="lazy"
           />
           {isMenuOpen && (
              <div className="absolute right-0 mt-2 w-72 bg-z-bg-secondary dark:bg-z-bg-secondary-dark rounded-md shadow-lg py-1 z-50 border dark:border-z-border-dark animate-fadeIn">
                 <div onClick={handleProfileClick} className="p-4 border-b dark:border-z-border-dark flex items-center space-x-3 hover:bg-gray-100 dark:hover:bg-z-hover-dark cursor-pointer rounded-t-md">
-                   <img src={user?.avatarUrl} alt="User Avatar" className="h-14 w-14 rounded-full"/>
+                   <img src={user?.avatarUrl} alt="User Avatar" className="h-14 w-14 rounded-full" loading="lazy"/>
                    <div>
                      <p className="font-bold text-lg text-z-text-primary dark:text-z-text-primary-dark">{user?.name}</p>
                      <p className="text-sm text-z-text-secondary dark:text-z-text-secondary-dark">Ver tu perfil</p>
