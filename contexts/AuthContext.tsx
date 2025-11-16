@@ -46,7 +46,7 @@ const formatProfile = (profileData: any, supabaseUser: SupabaseUser): AuthUser =
 
 const getUserProfile = async (supabaseUser: SupabaseUser): Promise<AuthUser | null> => {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 5000); // 5-second timeout
+    const timeout = setTimeout(() => controller.abort(), 10000); // Increased timeout to 10s
 
     try {
         const { data: profile, error } = await supabase
@@ -59,8 +59,29 @@ const getUserProfile = async (supabaseUser: SupabaseUser): Promise<AuthUser | nu
         clearTimeout(timeout);
 
         if (error) {
-            if (error.name === 'AbortError') {
-                console.warn('Profile fetch timed out.');
+            // "PGRST116" means "0 rows returned". If the profile doesn't exist, create one.
+            if (error.code === 'PGRST116') { 
+                console.warn("Profile not found for user, attempting to create a fallback profile.");
+                const { data: newProfile, error: insertError } = await supabase
+                    .from('profiles')
+                    .insert({
+                        id: supabaseUser.id,
+                        name: supabaseUser.email?.split('@')[0] || `user_${supabaseUser.id.substring(0, 5)}`,
+                        avatar_url: `https://api.dicebear.com/7.x/initials/svg?seed=${supabaseUser.email?.split('@')[0] || supabaseUser.id}`,
+                    })
+                    .select()
+                    .single();
+
+                if (insertError) {
+                    console.error("Failed to create fallback profile:", insertError.message);
+                    return null;
+                }
+                
+                console.log("Fallback profile created successfully.");
+                return newProfile ? formatProfile(newProfile, supabaseUser) : null;
+
+            } else if (error.name === 'AbortError') {
+                console.warn('Profile fetch timed out after 10 seconds.');
             } else {
                 console.error('Error fetching profile:', error.message);
             }
@@ -71,7 +92,7 @@ const getUserProfile = async (supabaseUser: SupabaseUser): Promise<AuthUser | nu
     } catch (e: any) {
         clearTimeout(timeout);
          if (e.name !== 'AbortError') {
-            console.error('Exception fetching profile', e);
+            console.error('Exception while fetching or creating profile', e);
         }
         return null;
     }
