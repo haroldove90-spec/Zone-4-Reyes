@@ -1,6 +1,5 @@
 
 
-
 import React, { useState, useEffect, useCallback } from 'react';
 import Header from './Header';
 import LeftSidebar from './LeftSidebar';
@@ -113,7 +112,7 @@ const MainLayout: React.FC = () => {
                 type,
                 format,
                 group_id,
-                user:profiles!user_id(id, name, avatar_url)
+                user:profiles(id, name, avatar_url)
             `)
             .order('created_at', { ascending: false });
 
