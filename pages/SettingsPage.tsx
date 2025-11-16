@@ -44,24 +44,6 @@ const AccountSettings: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     );
 };
 const NotificationsSettings: React.FC<{ onBack: () => void }> = ({ onBack }) => {
-    const showTestNotification = () => {
-        if ('serviceWorker' in navigator && 'showNotification' in ServiceWorkerRegistration.prototype) {
-            Notification.requestPermission(status => {
-            if (status === 'granted') {
-                navigator.serviceWorker.ready.then(registration => {
-                registration.showNotification('Notificación de Prueba', {
-                    body: '¡Si ves esto, las notificaciones funcionan!',
-                    icon: 'https://appdesignmex.com/iconoreyes.png',
-                    badge: 'https://appdesignmex.com/iconoreyes.png',
-                });
-                });
-            }
-            });
-        } else {
-            alert('Este navegador no soporta notificaciones o la app no está instalada.');
-        }
-    };
-
     return (
         <div>
             <SettingsHeader title="Notificaciones" onBack={onBack} />
@@ -70,14 +52,6 @@ const NotificationsSettings: React.FC<{ onBack: () => void }> = ({ onBack }) => 
                 <SettingToggle title="Comentarios en tus publicaciones" description="Recibir notificaciones por correo." isEnabled={true} />
                 <SettingToggle title="Reacciones a tus publicaciones" description="Recibir notificaciones por correo." isEnabled={false} />
                 <SettingToggle title="Solicitudes de amistad" description="Recibir notificaciones por correo y push." isEnabled={true} />
-            </div>
-            <div className="mt-6 p-3">
-                <p className="text-sm text-z-text-secondary dark:text-z-text-secondary-dark mb-2">
-                    ¿No estás seguro si las notificaciones están funcionando? Presiona el botón para enviar una prueba.
-                </p>
-                <button onClick={showTestNotification} className="w-full bg-z-light-blue text-white font-bold py-2.5 rounded-lg hover:bg-z-dark-blue transition-colors">
-                    Enviar Notificación de Prueba
-                </button>
             </div>
         </div>
     );

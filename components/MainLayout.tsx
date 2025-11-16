@@ -26,7 +26,6 @@ import EventDetailPage from '../pages/EventDetailPage';
 import CreateEventPage from '../pages/CreateEventPage';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../services/supabaseClient';
-import UpdateAvailableBanner from './UpdateAvailableBanner';
 
 const MOCK_FANPAGES: Fanpage[] = [
     { id: 'fp1', name: 'El Rincón del Café', category: 'Cafetería', bio: 'El mejor café de Reyes Iztacala.', ownerEmail: 'admin@example.com', avatarUrl: 'https://picsum.photos/id/55/200', coverUrl: 'https://picsum.photos/id/225/1600/400' },
@@ -44,7 +43,6 @@ const MainLayout: React.FC = () => {
 
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [notificationCount, setNotificationCount] = useState(3); // Start with some fake notifications
-  const [isUpdateAvailable, setIsUpdateAvailable] = useState(false);
 
   const addNotification = useCallback((text: string, user: User, postContent?: string) => {
     const newNotification: AppNotification = {
@@ -75,24 +73,6 @@ const MainLayout: React.FC = () => {
     handleHashChange();
     
     return () => window.removeEventListener('hashchange', handleHashChange);
-  }, []);
-
-  useEffect(() => {
-    const handleUpdate = (event: MessageEvent) => {
-      if (event.data && event.data.type === 'NEW_VERSION_AVAILABLE') {
-        setIsUpdateAvailable(true);
-      }
-    };
-
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.addEventListener('message', handleUpdate);
-    }
-
-    return () => {
-      if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.removeEventListener('message', handleUpdate);
-      }
-    };
   }, []);
 
   const navigate = (path: string) => {
@@ -289,7 +269,6 @@ const MainLayout: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-z-bg-primary dark:bg-z-bg-primary-dark animate-fadeIn">
-      {isUpdateAvailable && <UpdateAvailableBanner onRefresh={() => window.location.reload()} />}
       {currentPath !== 'reels' && <Header navigate={navigate} notificationCount={notificationCount} notifications={notifications} onNotificationsOpen={resetNotificationCount} />}
       <div className="flex">
         {currentPath !== 'reels' && <LeftSidebar navigate={navigate} />}
