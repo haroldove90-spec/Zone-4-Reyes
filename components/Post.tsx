@@ -79,50 +79,57 @@ const Post: React.FC<PostProps> = ({ post, index, addNotification }) => {
   
   useEffect(() => {
     const fetchPostDetails = async () => {
-        // Fetch likes
-        const { count: likesData, error: likesError } = await supabase
-            .from('likes')
-            .select('*', { count: 'exact' })
-            .eq('post_id', post.id);
-
-        if (likesData !== null) setLikeCount(likesData);
-
-        if(user) {
-             const { data: userReaction, error: userReactionError } = await supabase
+        try {
+            // Fetch likes
+            const { count: likesData, error: likesError } = await supabase
                 .from('likes')
-                .select('reaction_type')
-                .eq('post_id', post.id)
-                .eq('user_id', user.id)
-                .maybeSingle();
-
-            if(userReaction) {
-                setCurrentReaction(userReaction.reaction_type);
+                .select('*', { count: 'exact' })
+                .eq('post_id', post.id);
+    
+            if (likesError) throw likesError;
+            if (likesData !== null) setLikeCount(likesData);
+    
+            if(user) {
+                 const { data: userReaction, error: userReactionError } = await supabase
+                    .from('likes')
+                    .select('reaction_type')
+                    .eq('post_id', post.id)
+                    .eq('user_id', user.id)
+                    .maybeSingle();
+    
+                if (userReactionError) throw userReactionError;
+                if(userReaction) {
+                    setCurrentReaction(userReaction.reaction_type);
+                }
             }
+    
+            // Fetch comments
+            const { data: commentsData, count: commentsCountData, error: commentsError } = await supabase
+                .from('comments')
+                .select('*, profile:profiles(id, name, avatar_url)', { count: 'exact' })
+                .eq('post_id', post.id)
+                .order('created_at', { ascending: true });
+    
+            if (commentsError) throw commentsError;
+            if (commentsData) {
+                const formattedComments: CommentType[] = commentsData.map((c: any) => {
+                    const commentUser = c.profile 
+                        ? { id: c.profile.id, name: c.profile.name, avatarUrl: c.profile.avatar_url } 
+                        : { id: 'unknown', name: 'Usuario Desconocido', avatarUrl: 'https://static.vecteezy.com/system/resources/thumbnails/009/292/244/small/default-avatar-icon-of-social-media-user-vector.jpg' };
+                    
+                    return {
+                        id: c.id,
+                        text: c.text,
+                        timestamp: new Date(c.created_at).toLocaleString(),
+                        user: commentUser
+                    };
+                });
+                setComments(formattedComments);
+            }
+            if (commentsCountData !== null) setCommentsCount(commentsCountData);
+        } catch (error) {
+            console.error(`Error fetching details for post ${post.id}:`, error);
         }
-
-        // Fetch comments
-        const { data: commentsData, count: commentsCountData, error: commentsError } = await supabase
-            .from('comments')
-            .select('*, profile:profiles(id, name, avatar_url)', { count: 'exact' })
-            .eq('post_id', post.id)
-            .order('created_at', { ascending: true });
-
-        if (commentsData) {
-            const formattedComments: CommentType[] = commentsData.map((c: any) => {
-                const commentUser = c.profile 
-                    ? { id: c.profile.id, name: c.profile.name, avatarUrl: c.profile.avatar_url } 
-                    : { id: 'unknown', name: 'Usuario Desconocido', avatarUrl: 'https://static.vecteezy.com/system/resources/thumbnails/009/292/244/small/default-avatar-icon-of-social-media-user-vector.jpg' };
-                
-                return {
-                    id: c.id,
-                    text: c.text,
-                    timestamp: new Date(c.created_at).toLocaleString(),
-                    user: commentUser
-                };
-            });
-            setComments(formattedComments);
-        }
-        if (commentsCountData !== null) setCommentsCount(commentsCountData);
     };
 
     fetchPostDetails();
@@ -133,43 +140,44 @@ const Post: React.FC<PostProps> = ({ post, index, addNotification }) => {
     if (!user) return;
     setShowReactionPicker(false);
 
-    const isUnreacting = currentReaction === reactionName;
+    try {
+        const isUnreacting = currentReaction === reactionName;
 
-    if (isUnreacting) {
-        // Un-react
-        const { error } = await supabase
-            .from('likes')
-            .delete()
-            .eq('post_id', post.id)
-            .eq('user_id', user.id);
-        
-        if (!error) {
+        if (isUnreacting) {
+            // Un-react
+            const { error } = await supabase
+                .from('likes')
+                .delete()
+                .eq('post_id', post.id)
+                .eq('user_id', user.id);
+            
+            if (error) throw error;
             setCurrentReaction(null);
             setLikeCount(prev => prev - 1);
-        }
-    } else if (currentReaction) {
-        // Change reaction
-        const { error } = await supabase
-            .from('likes')
-            .update({ reaction_type: reactionName })
-            .eq('post_id', post.id)
-            .eq('user_id', user.id);
-        
-        if (!error) {
+        } else if (currentReaction) {
+            // Change reaction
+            const { error } = await supabase
+                .from('likes')
+                .update({ reaction_type: reactionName })
+                .eq('post_id', post.id)
+                .eq('user_id', user.id);
+            
+            if (error) throw error;
             setCurrentReaction(reactionName);
             addNotification(`ha reaccionado a la publicación de ${author.name}`, user, post.content);
-        }
-    } else {
-        // New reaction
-        const { error } = await supabase
-            .from('likes')
-            .insert({ post_id: post.id, user_id: user.id, reaction_type: reactionName });
+        } else {
+            // New reaction
+            const { error } = await supabase
+                .from('likes')
+                .insert({ post_id: post.id, user_id: user.id, reaction_type: reactionName });
 
-        if (!error) {
+            if (error) throw error;
             setCurrentReaction(reactionName);
             setLikeCount(prev => prev + 1);
             addNotification(`ha reaccionado a la publicación de ${author.name}`, user, post.content);
         }
+    } catch (error) {
+        console.error("Error handling reaction:", error);
     }
   };
   
@@ -177,23 +185,29 @@ const Post: React.FC<PostProps> = ({ post, index, addNotification }) => {
     e.preventDefault();
     if (!newComment.trim() || !user) return;
 
-    const { data, error } = await supabase
-        .from('comments')
-        .insert({ post_id: post.id, user_id: user.id, text: newComment })
-        .select('*, profile:profiles(id, name, avatar_url)')
-        .single();
-    
-    if (!error && data) {
-         const commentToAdd: CommentType = {
-            id: data.id,
-            user: { id: data.profile.id, name: data.profile.name, avatarUrl: data.profile.avatar_url },
-            text: data.text,
-            timestamp: new Date(data.created_at).toLocaleString()
-        };
-        setComments(prev => [...prev, commentToAdd]);
-        setCommentsCount(prev => prev + 1);
-        setNewComment('');
-        addNotification(`ha comentado la publicación de ${author.name}: "${newComment}"`, user, post.content);
+    try {
+        const { data, error } = await supabase
+            .from('comments')
+            .insert({ post_id: post.id, user_id: user.id, text: newComment })
+            .select('*, profile:profiles(id, name, avatar_url)')
+            .single();
+        
+        if (error) throw error;
+        
+        if (data) {
+             const commentToAdd: CommentType = {
+                id: data.id,
+                user: { id: data.profile.id, name: data.profile.name, avatarUrl: data.profile.avatar_url },
+                text: data.text,
+                timestamp: new Date(data.created_at).toLocaleString()
+            };
+            setComments(prev => [...prev, commentToAdd]);
+            setCommentsCount(prev => prev + 1);
+            setNewComment('');
+            addNotification(`ha comentado la publicación de ${author.name}: "${newComment}"`, user, post.content);
+        }
+    } catch (error) {
+        console.error("Error adding comment:", error);
     }
   };
 
