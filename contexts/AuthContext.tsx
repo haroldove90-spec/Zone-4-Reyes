@@ -79,25 +79,18 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const signUp = async ({ name, email, password }) => {
-    const { data, error } = await supabase.auth.signUp({ email, password });
-    if (error) return { user: null, session: null, error };
-    if (data.user) {
-        const { error: profileError } = await supabase.from('profiles').insert({
-            id: data.user.id,
-            name,
-            email,
-            avatar_url: `https://i.pravatar.cc/150?u=${email}`,
-            cover_url: 'https://picsum.photos/id/1018/1600/400',
-            bio: '¡Hola! Estoy usando Zone4Reyes. Es la red social oficial de Reyes Iztacala.',
-            nickname: name.toLowerCase().replace(/\s+/g, '_'),
-            age: 25,
-            location: 'Reyes Iztacala, México',
-            website: 'https://appdesignmex.com',
-            friends_count: 0,
-            is_admin: email === 'admin@example.com'
-        });
-        if(profileError) return { user: null, session: null, error: profileError }
-    }
+    // Pasa el nombre en los metadatos del usuario para que el trigger de la BD pueda acceder a él.
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          name: name,
+        }
+      }
+    });
+
+    // El trigger se encarga de la creación del perfil, por lo que solo devolvemos el resultado de la autenticación.
     return { user: data.user, session: data.session, error };
   };
 
