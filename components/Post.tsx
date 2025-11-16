@@ -1,14 +1,50 @@
 
-import React from 'react';
-import { Post as PostType } from '../types';
+import React, { useState } from 'react';
+import { Post as PostType, Comment as CommentType } from '../types';
 import { ThumbsUpIcon, MessageSquareIcon, Share2Icon, MoreHorizontalIcon } from './icons';
+import { useAuth } from '../contexts/AuthContext';
 
 interface PostProps {
   post: PostType;
   index: number;
 }
 
+const Comment: React.FC<{ comment: CommentType }> = ({ comment }) => (
+    <div className="flex items-start space-x-2 mt-2">
+        <img src={comment.user.avatarUrl} alt={comment.user.name} className="h-8 w-8 rounded-full" />
+        <div className="bg-gray-100 dark:bg-z-hover-dark rounded-xl p-2 px-3 text-sm">
+            <p className="font-bold text-z-text-primary dark:text-z-text-primary-dark">{comment.user.name}</p>
+            <p className="text-z-text-primary dark:text-z-text-primary-dark">{comment.text}</p>
+        </div>
+    </div>
+);
+
 const Post: React.FC<PostProps> = ({ post, index }) => {
+  const { user } = useAuth();
+  const [isLiked, setIsLiked] = useState(false);
+  const [likeCount, setLikeCount] = useState(post.likes);
+  const [comments, setComments] = useState<CommentType[]>(post.comments);
+  const [newComment, setNewComment] = useState('');
+
+  const handleLike = () => {
+    setIsLiked(!isLiked);
+    setLikeCount(prev => isLiked ? prev - 1 : prev + 1);
+  };
+
+  const handleAddComment = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newComment.trim() || !user) return;
+
+    const commentToAdd: CommentType = {
+        id: new Date().toISOString(),
+        user: { name: user.name, avatarUrl: user.avatarUrl },
+        text: newComment,
+        timestamp: 'Justo ahora'
+    };
+    setComments(prev => [...prev, commentToAdd]);
+    setNewComment('');
+  };
+
   return (
     <div 
       className="bg-z-bg-secondary dark:bg-z-bg-secondary-dark rounded-xl shadow-md my-6 border border-transparent dark:border-z-border-dark animate-slideInUp"
@@ -30,9 +66,9 @@ const Post: React.FC<PostProps> = ({ post, index }) => {
         <p className="my-3 text-z-text-primary dark:text-z-text-primary-dark text-[15px] leading-relaxed">{post.content}</p>
       </div>
 
-      {post.imageUrl && (
+      {(post.imageUrl || post.imagePreviewUrl) && (
         <div className="bg-black">
-          <img src={post.imageUrl} alt="Contenido de la publicación" className="w-full h-auto max-h-[60vh] object-contain" />
+          <img src={post.imagePreviewUrl || post.imageUrl} alt="Contenido de la publicación" className="w-full h-auto max-h-[70vh] object-contain" />
         </div>
       )}
 
@@ -41,17 +77,17 @@ const Post: React.FC<PostProps> = ({ post, index }) => {
             <div className="p-1 bg-z-light-blue rounded-full">
                 <ThumbsUpIcon className="h-3 w-3 text-white" />
             </div>
-            <span className="text-sm">{post.likes}</span>
+            <span className="text-sm">{likeCount}</span>
          </div>
-         <span className="text-sm hover:underline cursor-pointer">{post.commentsCount} comentarios</span>
+         <span className="text-sm hover:underline cursor-pointer">{comments.length > 0 ? `${comments.length} comentarios` : ''}</span>
       </div>
 
       <div className="border-t border-gray-200/80 dark:border-z-border-dark mx-4 my-1"></div>
 
       <div className="p-1 flex justify-around text-z-text-secondary dark:text-z-text-secondary-dark">
-         <div className="flex-1 flex items-center justify-center space-x-2 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-z-hover-dark cursor-pointer transition-colors group">
+         <div onClick={handleLike} className={`flex-1 flex items-center justify-center space-x-2 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-z-hover-dark cursor-pointer transition-colors group ${isLiked ? 'text-z-primary' : ''}`}>
             <ThumbsUpIcon className="h-6 w-6" />
-            <span className="font-medium group-hover:text-z-text-primary dark:group-hover:text-z-text-primary-dark transition-colors">Me gusta</span>
+            <span className={`font-medium group-hover:text-z-text-primary dark:group-hover:text-z-text-primary-dark transition-colors ${isLiked ? 'text-z-primary' : ''}`}>Me gusta</span>
          </div>
          <div className="flex-1 flex items-center justify-center space-x-2 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-z-hover-dark cursor-pointer transition-colors group">
             <MessageSquareIcon className="h-6 w-6" />
@@ -61,6 +97,24 @@ const Post: React.FC<PostProps> = ({ post, index }) => {
             <Share2Icon className="h-6 w-6" />
             <span className="font-medium group-hover:text-z-text-primary dark:group-hover:text-z-text-primary-dark transition-colors">Compartir</span>
          </div>
+      </div>
+      
+      <div className="border-t border-gray-200/80 dark:border-z-border-dark mx-4 mt-1"></div>
+      
+      <div className="p-4 pt-2">
+        {comments.map(comment => <Comment key={comment.id} comment={comment}/>)}
+        <div className="flex items-center space-x-2 mt-4">
+            <img src={user?.avatarUrl} alt="Tu avatar" className="h-8 w-8 rounded-full" />
+            <form onSubmit={handleAddComment} className="flex-1">
+                 <input
+                    type="text"
+                    value={newComment}
+                    onChange={(e) => setNewComment(e.target.value)}
+                    placeholder="Escribe un comentario..."
+                    className="w-full bg-z-bg-primary dark:bg-z-hover-dark rounded-full px-4 py-2 text-z-text-primary dark:text-z-text-primary-dark focus:outline-none placeholder:text-z-text-secondary dark:placeholder:text-z-text-secondary-dark"
+                />
+            </form>
+        </div>
       </div>
     </div>
   );

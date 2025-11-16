@@ -1,35 +1,49 @@
+
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 
-interface AuthUser {
+export interface AuthUser {
   name: string;
   avatarUrl: string;
   email: string;
+  bio?: string;
+  coverUrl?: string;
 }
 
 interface AuthContextType {
   user: AuthUser | null;
   login: (userData: AuthUser) => void;
   logout: () => void;
+  updateUser: (newUserData: Partial<AuthUser>) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  // In a real app, you would check localStorage or a cookie for a session token
   const [user, setUser] = useState<AuthUser | null>(null);
 
-  // In a real app, this would involve an API call to your backend
   const login = (userData: AuthUser) => {
-    setUser(userData);
+    // Add default bio and cover for the simulation
+    const fullUserData = {
+        ...userData,
+        bio: '¡Hola! Estoy usando Zone4Reyes. Es la red social oficial de Reyes Iztacala.',
+        coverUrl: 'https://picsum.photos/id/1018/1600/400'
+    };
+    setUser(fullUserData);
   };
 
-  // In a real app, this would clear the session token and call a logout endpoint
   const logout = () => {
     setUser(null);
   };
 
+  const updateUser = (newUserData: Partial<AuthUser>) => {
+    setUser(currentUser => {
+        if (!currentUser) return null;
+        return { ...currentUser, ...newUserData };
+    });
+  };
+
   return (
-    <AuthContext.Provider value={{ user, login, logout }}>
+    <AuthContext.Provider value={{ user, login, logout, updateUser }}>
       {children}
     </AuthContext.Provider>
   );
