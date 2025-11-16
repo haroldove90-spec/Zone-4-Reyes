@@ -71,14 +71,22 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    setLoading(true);
-
     const { data: authListener } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
-        setSession(session);
-        const profile = session?.user ? await getUserProfile(session.user) : null;
-        setUser(profile);
-        setLoading(false);
+        try {
+          setSession(session);
+          if (session?.user) {
+            const profile = await getUserProfile(session.user);
+            setUser(profile);
+          } else {
+            setUser(null);
+          }
+        } catch (error) {
+          console.error("Error handling auth state change:", error);
+          setUser(null);
+        } finally {
+          setLoading(false);
+        }
       }
     );
 

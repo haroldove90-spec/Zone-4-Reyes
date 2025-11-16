@@ -6,7 +6,7 @@ import LoginPage from './components/LoginPage';
 import MainLayout from './components/MainLayout';
 
 const App: React.FC = () => {
-  const { session, loading } = useAuth();
+  const { user, loading } = useAuth();
 
   if (loading) {
     return (
@@ -19,7 +19,7 @@ const App: React.FC = () => {
 
   return (
     <ThemeProvider>
-      {session ? <MainLayout /> : <LoginPage />}
+      {user ? <MainLayout /> : <LoginPage />}
     </ThemeProvider>
   );
 };
