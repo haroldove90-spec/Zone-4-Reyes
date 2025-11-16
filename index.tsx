@@ -3,16 +3,16 @@ import ReactDOM from 'react-dom/client';
 import App from './App';
 import { AuthProvider } from './contexts/AuthContext';
 
-// Re-enable Service Worker for PWA functionality
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js').then(registration => {
-      console.log('ServiceWorker registration successful with scope: ', registration.scope);
-    }, err => {
-      console.log('ServiceWorker registration failed: ', err);
-    });
-  });
-}
+// Service Worker registration is disabled to prevent potential build conflicts.
+// if ('serviceWorker' in navigator) {
+//   window.addEventListener('load', () => {
+//     navigator.serviceWorker.register('/sw.js').then(registration => {
+//       console.log('ServiceWorker registration successful with scope: ', registration.scope);
+//     }, err => {
+//       console.log('ServiceWorker registration failed: ', err);
+//     });
+//   });
+// }
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {
