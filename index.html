@@ -42,6 +42,20 @@
               'z-border-dark': '#3A3B3C',
               'z-hover-dark': '#3A3B3C',
             },
+            animation: {
+              fadeIn: 'fadeIn 0.5s ease-in-out',
+              slideInUp: 'slideInUp 0.5s ease-out',
+            },
+            keyframes: {
+              fadeIn: {
+                '0%': { opacity: '0' },
+                '100%': { opacity: '1' },
+              },
+              slideInUp: {
+                '0%': { opacity: '0', transform: 'translateY(20px)' },
+                '100%': { opacity: '1', transform: 'translateY(0)' },
+              },
+            },
           },
         },
       }

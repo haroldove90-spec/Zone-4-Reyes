@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { UsersIcon, ClapperboardIcon, StoreIcon } from './icons';
 import { useAuth } from '../contexts/AuthContext';
@@ -9,7 +10,7 @@ interface SidebarItemProps {
 }
 
 const SidebarItem: React.FC<SidebarItemProps> = ({ Icon, title, avatarUrl }) => (
-  <div className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-z-hover-dark cursor-pointer">
+  <div className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-z-hover-dark cursor-pointer transition-colors duration-200">
     {avatarUrl ? (
       <img src={avatarUrl} alt={title} className="h-8 w-8 rounded-full" />
     ) : (
@@ -24,7 +25,7 @@ const LeftSidebar: React.FC = () => {
 
   return (
     <aside className="hidden lg:block w-20 xl:w-80 pt-14 px-4 fixed h-full">
-      <nav className="flex flex-col space-y-2">
+      <nav className="flex flex-col space-y-2 mt-4">
         {user && <SidebarItem avatarUrl={user.avatarUrl} title={user.name} Icon={UsersIcon} />}
         <SidebarItem Icon={UsersIcon} title="Amigos" />
         <SidebarItem Icon={ClapperboardIcon} title="Videos" />

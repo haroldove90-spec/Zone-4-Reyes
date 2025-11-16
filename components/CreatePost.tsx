@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Post } from '../types';
 import { VideoIcon, PhotoIcon, SmileIcon } from './icons';
@@ -40,22 +41,22 @@ const CreatePost: React.FC<CreatePostProps> = ({ onAddPost }) => {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder={`¿Qué estás pensando, ${user.name}?`}
-            className="w-full bg-z-bg-primary dark:bg-z-hover-dark rounded-full px-4 py-2.5 text-z-text-primary dark:text-z-text-primary-dark focus:outline-none placeholder:text-z-text-secondary dark:placeholder:text-z-text-secondary-dark hover:bg-gray-200 transition-colors"
+            className="w-full bg-z-bg-primary dark:bg-z-hover-dark rounded-full px-4 py-2.5 text-z-text-primary dark:text-z-text-primary-dark focus:outline-none placeholder:text-z-text-secondary dark:placeholder:text-z-text-secondary-dark hover:bg-gray-200 dark:hover:bg-z-bg-secondary-dark/60 transition-colors"
           />
         </form>
       </div>
       <div className="border-t border-gray-200/80 dark:border-z-border-dark mt-4 pt-3 flex justify-around">
-        <div className="flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-z-hover-dark cursor-pointer w-1/3 justify-center">
+        <div className="flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-z-hover-dark cursor-pointer w-1/3 justify-center transition-colors group">
           <VideoIcon className="h-7 w-7 text-red-500" />
-          <span className="font-medium text-z-text-secondary dark:text-z-text-secondary-dark hidden sm:inline">Video en vivo</span>
+          <span className="font-medium text-z-text-secondary dark:text-z-text-secondary-dark group-hover:text-z-text-primary dark:group-hover:text-z-text-primary-dark hidden sm:inline transition-colors">Video en vivo</span>
         </div>
-        <div className="flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-z-hover-dark cursor-pointer w-1/3 justify-center">
+        <div className="flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-z-hover-dark cursor-pointer w-1/3 justify-center transition-colors group">
           <PhotoIcon className="h-7 w-7 text-green-500" />
-          <span className="font-medium text-z-text-secondary dark:text-z-text-secondary-dark hidden sm:inline">Foto/video</span>
+          <span className="font-medium text-z-text-secondary dark:text-z-text-secondary-dark group-hover:text-z-text-primary dark:group-hover:text-z-text-primary-dark hidden sm:inline transition-colors">Foto/video</span>
         </div>
-        <div className="flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-z-hover-dark cursor-pointer w-1/3 justify-center">
+        <div className="flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-z-hover-dark cursor-pointer w-1/3 justify-center transition-colors group">
           <SmileIcon className="h-7 w-7 text-yellow-500" />
-          <span className="font-medium text-z-text-secondary dark:text-z-text-secondary-dark hidden sm:inline">Sentimiento/actividad</span>
+          <span className="font-medium text-z-text-secondary dark:text-z-text-secondary-dark group-hover:text-z-text-primary dark:group-hover:text-z-text-primary-dark hidden sm:inline transition-colors">Sentimiento/actividad</span>
         </div>
       </div>
     </div>

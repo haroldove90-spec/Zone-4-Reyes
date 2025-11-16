@@ -47,7 +47,7 @@ export const generateSocialFeed = async (): Promise<Post[]> => {
 
     const response = await ai.models.generateContent({
       model: "gemini-2.5-flash",
-      contents: "Genera un array JSON válido de 5 publicaciones de redes sociales realistas en español. Cada publicación debe seguir el esquema proporcionado. Asegúrate de que todos los valores de cadena, especialmente en el campo 'content', estén correctamente escapados para crear un JSON válido. Cada publicación debe tener un id, user (con name y avatarUrl de picsum.photos), timestamp (p. ej., 'hace 2h'), content (una mezcla de actividades, pensamientos y preguntas con hashtags), un imageUrl opcional (de picsum.photos, con 2 de las 5 publicaciones teniendo una cadena vacía para este valor), likes (número aleatorio), commentsCount (número aleatorio), y un array de comments vacío.",
+      contents: "Genera un array JSON válido de 6 publicaciones de redes sociales realistas en español. Cada publicación debe seguir el esquema proporcionado. Asegúrate de que todos los valores de cadena, especialmente en el campo 'content', estén correctamente escapados para crear un JSON válido. Cada publicación debe tener un id, user (con name y avatarUrl de picsum.photos), timestamp (p. ej., 'hace 2h'), content (una mezcla de actividades, pensamientos y preguntas con hashtags), un imageUrl opcional (de picsum.photos, con 2 de las 6 publicaciones teniendo una cadena vacía para este valor), likes (número aleatorio), commentsCount (número aleatorio), y un array de comments vacío.",
       config: {
         responseMimeType: "application/json",
         responseSchema: {

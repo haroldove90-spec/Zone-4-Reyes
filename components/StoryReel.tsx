@@ -15,7 +15,7 @@ const StoryCard: React.FC<{ story?: Story; isCreate?: boolean }> = ({ story, isC
   const currentUserAvatar = "https://picsum.photos/id/1/200/300";
 
   return (
-    <div className="relative h-56 w-36 rounded-xl shadow-md cursor-pointer overflow-hidden group flex-shrink-0">
+    <div className="relative h-56 w-36 rounded-xl shadow-md cursor-pointer overflow-hidden group flex-shrink-0 transition-transform duration-300 ease-in-out hover:scale-[1.03]">
       {isCreate ? (
         <div className="h-full w-full flex flex-col">
           <div className="h-3/5 w-full overflow-hidden">

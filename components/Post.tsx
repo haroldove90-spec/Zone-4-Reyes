@@ -5,11 +5,15 @@ import { ThumbsUpIcon, MessageSquareIcon, Share2Icon, MoreHorizontalIcon } from 
 
 interface PostProps {
   post: PostType;
+  index: number;
 }
 
-const Post: React.FC<PostProps> = ({ post }) => {
+const Post: React.FC<PostProps> = ({ post, index }) => {
   return (
-    <div className="bg-z-bg-secondary dark:bg-z-bg-secondary-dark rounded-xl shadow-md my-6 border border-transparent dark:border-z-border-dark">
+    <div 
+      className="bg-z-bg-secondary dark:bg-z-bg-secondary-dark rounded-xl shadow-md my-6 border border-transparent dark:border-z-border-dark animate-slideInUp"
+      style={{ animationDelay: `${index * 100}ms`, animationFillMode: 'backwards' }}
+    >
       <div className="p-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
@@ -19,7 +23,7 @@ const Post: React.FC<PostProps> = ({ post }) => {
               <p className="text-sm text-z-text-secondary dark:text-z-text-secondary-dark">{post.timestamp}</p>
             </div>
           </div>
-          <div className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-z-hover-dark cursor-pointer">
+          <div className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-z-hover-dark cursor-pointer transition-colors">
              <MoreHorizontalIcon className="h-6 w-6 text-z-text-secondary dark:text-z-text-secondary-dark" />
           </div>
         </div>
@@ -27,7 +31,9 @@ const Post: React.FC<PostProps> = ({ post }) => {
       </div>
 
       {post.imageUrl && (
-        <img src={post.imageUrl} alt="Contenido de la publicación" className="w-full h-auto" />
+        <div className="bg-black">
+          <img src={post.imageUrl} alt="Contenido de la publicación" className="w-full h-auto max-h-[60vh] object-contain" />
+        </div>
       )}
 
       <div className="p-2 px-4 flex justify-between items-center text-z-text-secondary dark:text-z-text-secondary-dark">
@@ -43,17 +49,17 @@ const Post: React.FC<PostProps> = ({ post }) => {
       <div className="border-t border-gray-200/80 dark:border-z-border-dark mx-4 my-1"></div>
 
       <div className="p-1 flex justify-around text-z-text-secondary dark:text-z-text-secondary-dark">
-         <div className="flex-1 flex items-center justify-center space-x-2 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-z-hover-dark cursor-pointer">
+         <div className="flex-1 flex items-center justify-center space-x-2 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-z-hover-dark cursor-pointer transition-colors group">
             <ThumbsUpIcon className="h-6 w-6" />
-            <span className="font-medium">Me gusta</span>
+            <span className="font-medium group-hover:text-z-text-primary dark:group-hover:text-z-text-primary-dark transition-colors">Me gusta</span>
          </div>
-         <div className="flex-1 flex items-center justify-center space-x-2 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-z-hover-dark cursor-pointer">
+         <div className="flex-1 flex items-center justify-center space-x-2 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-z-hover-dark cursor-pointer transition-colors group">
             <MessageSquareIcon className="h-6 w-6" />
-            <span className="font-medium">Comentar</span>
+            <span className="font-medium group-hover:text-z-text-primary dark:group-hover:text-z-text-primary-dark transition-colors">Comentar</span>
          </div>
-         <div className="flex-1 flex items-center justify-center space-x-2 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-z-hover-dark cursor-pointer">
+         <div className="flex-1 flex items-center justify-center space-x-2 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-z-hover-dark cursor-pointer transition-colors group">
             <Share2Icon className="h-6 w-6" />
-            <span className="font-medium">Compartir</span>
+            <span className="font-medium group-hover:text-z-text-primary dark:group-hover:text-z-text-primary-dark transition-colors">Compartir</span>
          </div>
       </div>
     </div>

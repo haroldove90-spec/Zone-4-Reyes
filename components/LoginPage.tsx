@@ -1,6 +1,7 @@
+
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { GoogleIcon, AppleIcon, EnvelopeIcon } from './icons';
+import { GoogleIcon, AppleIcon } from './icons';
 
 const LoginPage: React.FC = () => {
   const { login } = useAuth();
@@ -9,8 +10,6 @@ const LoginPage: React.FC = () => {
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    // This is a mock login. In a real app, you'd validate credentials.
-    // For this demo, any non-empty email will log in.
     if (email) {
       login({ 
         name: email.split('@')[0], 
@@ -21,7 +20,7 @@ const LoginPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-z-bg-primary dark:bg-z-bg-primary-dark p-4">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-z-bg-primary dark:bg-z-bg-primary-dark p-4 animate-fadeIn">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
             <img src="https://appdesignmex.com/Zone4Reyes.png" alt="Logo" className="h-[40px] mx-auto mb-4" />
@@ -41,7 +40,7 @@ const LoginPage: React.FC = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="tu@ejemplo.com"
-                className="w-full bg-z-bg-primary dark:bg-z-hover-dark rounded-md px-4 py-2.5 text-z-text-primary dark:text-z-text-primary-dark focus:outline-none focus:ring-2 focus:ring-z-primary/50"
+                className="w-full bg-z-bg-primary dark:bg-z-hover-dark rounded-md px-4 py-2.5 text-z-text-primary dark:text-z-text-primary-dark focus:outline-none focus:ring-2 focus:ring-z-primary/50 transition-colors"
                 required
               />
             </div>
@@ -55,13 +54,13 @@ const LoginPage: React.FC = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full bg-z-bg-primary dark:bg-z-hover-dark rounded-md px-4 py-2.5 text-z-text-primary dark:text-z-text-primary-dark focus:outline-none focus:ring-2 focus:ring-z-primary/50"
+                className="w-full bg-z-bg-primary dark:bg-z-hover-dark rounded-md px-4 py-2.5 text-z-text-primary dark:text-z-text-primary-dark focus:outline-none focus:ring-2 focus:ring-z-primary/50 transition-colors"
                 required
               />
             </div>
             <button
               type="submit"
-              className="w-full bg-z-primary text-white font-bold py-2.5 px-4 rounded-lg hover:bg-z-dark-blue transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-z-primary dark:focus:ring-offset-z-bg-secondary-dark"
+              className="w-full bg-z-primary text-white font-bold py-2.5 px-4 rounded-lg hover:bg-z-dark-blue transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-z-primary dark:focus:ring-offset-z-bg-secondary-dark transform hover:scale-[1.02]"
             >
               Iniciar Sesión
             </button>
@@ -81,7 +80,7 @@ const LoginPage: React.FC = () => {
                 <GoogleIcon className="h-5 w-5" />
                 <span className="text-z-text-primary dark:text-z-text-primary-dark">Google</span>
              </button>
-              <button className="w-full flex items-center justify-center space-x-2 bg-black text-white font-medium py-2.5 px-4 rounded-lg hover:bg-gray-800 transition-colors">
+              <button className="w-full flex items-center justify-center space-x-2 bg-black text-white font-medium py-2.5 px-4 rounded-lg hover:bg-gray-800 dark:hover:brightness-125 transition-all">
                 <AppleIcon className="h-5 w-5" />
                 <span>Apple</span>
              </button>
