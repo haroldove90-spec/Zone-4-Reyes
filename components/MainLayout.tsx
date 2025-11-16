@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import Header from './Header';
 import LeftSidebar from './LeftSidebar';
@@ -8,7 +7,6 @@ import { Post } from '../types';
 import { generateSocialFeed } from '../services/geminiService';
 import InstallPWA from './InstallPWA';
 import BottomNavBar from './BottomNavBar';
-import MobileSearch from './MobileSearch';
 
 const MainLayout: React.FC = () => {
   const [posts, setPosts] = useState<Post[]>([]);
@@ -30,7 +28,6 @@ const MainLayout: React.FC = () => {
   return (
     <div className="min-h-screen animate-fadeIn">
       <Header />
-      <MobileSearch />
       <div className="flex">
         <LeftSidebar />
         <Feed posts={posts} onAddPost={handleAddPost} />

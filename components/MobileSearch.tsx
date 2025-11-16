@@ -1,10 +1,9 @@
-
 import React from 'react';
 import { SearchIcon, PhotoIcon } from './icons';
 
 const MobileSearch: React.FC = () => {
   return (
-    <div className="lg:hidden sticky top-14 z-40 bg-z-bg-primary dark:bg-z-bg-primary-dark p-2 border-b border-gray-200 dark:border-z-border-dark shadow-sm">
+    <div className="lg:hidden bg-z-bg-primary dark:bg-z-bg-primary-dark p-2 border-b border-gray-200 dark:border-z-border-dark shadow-sm">
       <div className="flex items-center space-x-2">
         <div className="relative flex-grow">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
