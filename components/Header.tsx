@@ -27,7 +27,7 @@ const Header: React.FC = () => {
       {/* Left Section */}
       <div className="flex items-center space-x-4">
         <img src="https://appdesignmex.com/Zone4Reyes.png" alt="Logo" className="h-[30px]" />
-        <div className="relative hidden md:block">
+        <div className="relative hidden lg:block">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
             <SearchIcon className="h-5 w-5 text-gray-400 dark:text-z-text-secondary-dark" />
           </div>
@@ -36,9 +36,6 @@ const Header: React.FC = () => {
             placeholder="Buscar en Zone4Reyes"
             className="bg-z-bg-primary dark:bg-z-hover-dark text-z-text-primary dark:text-z-text-primary-dark rounded-full py-2 pl-10 pr-4 w-60 focus:outline-none focus:ring-2 focus:ring-z-primary/50 transition-colors"
           />
-        </div>
-         <div className="md:hidden p-2.5 bg-z-bg-primary dark:bg-z-bg-secondary-dark rounded-full cursor-pointer hover:bg-gray-200 dark:hover:bg-z-hover-dark transition-transform hover:scale-110">
-            <SearchIcon className="h-5 w-5 text-gray-500 dark:text-z-text-secondary-dark" />
         </div>
       </div>
 

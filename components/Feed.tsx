@@ -12,7 +12,7 @@ interface FeedProps {
 
 const Feed: React.FC<FeedProps> = ({ posts, onAddPost }) => {
   return (
-    <main className="flex-grow pt-14 lg:ml-20 xl:ml-80 lg:mr-72 overflow-x-hidden pb-20 md:pb-0">
+    <main className="flex-grow pt-28 lg:pt-14 lg:ml-20 xl:ml-80 lg:mr-72 overflow-x-hidden pb-20 md:pb-0">
       <div className="max-w-xl lg:max-w-2xl xl:max-w-3xl mx-auto px-4">
         <StoryReel />
         <div className="mb-6">
