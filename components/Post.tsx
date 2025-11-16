@@ -100,12 +100,18 @@ const Post: React.FC<PostProps> = ({ post, index, addNotification }) => {
             .order('created_at', { ascending: true });
 
         if (commentsData) {
-            const formattedComments: CommentType[] = commentsData.map((c: any) => ({
-                id: c.id,
-                text: c.text,
-                timestamp: new Date(c.created_at).toLocaleString(),
-                user: { name: c.profile.name, avatarUrl: c.profile.avatar_url }
-            }));
+            const formattedComments: CommentType[] = commentsData.map((c: any) => {
+                const commentUser = c.profile 
+                    ? { name: c.profile.name, avatarUrl: c.profile.avatar_url } 
+                    : { name: 'Usuario Desconocido', avatarUrl: 'https://static.vecteezy.com/system/resources/thumbnails/009/292/244/small/default-avatar-icon-of-social-media-user-vector.jpg' };
+                
+                return {
+                    id: c.id,
+                    text: c.text,
+                    timestamp: new Date(c.created_at).toLocaleString(),
+                    user: commentUser
+                };
+            });
             setComments(formattedComments);
         }
         if (commentsCountData !== null) setCommentsCount(commentsCountData);

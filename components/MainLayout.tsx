@@ -101,6 +101,10 @@ const MainLayout: React.FC = () => {
         // Map Supabase response to app's Post type
         const fetchedPosts: Post[] = data.map((p: any) => {
             const group = p.group_id ? FAKE_GROUPS.find(g => g.id === p.group_id) : undefined;
+            const postUser = p.user 
+                ? { name: p.user.name, avatarUrl: p.user.avatar_url } 
+                : { name: 'Usuario Desconocido', avatarUrl: 'https://static.vecteezy.com/system/resources/thumbnails/009/292/244/small/default-avatar-icon-of-social-media-user-vector.jpg' };
+
             return {
                 id: p.id.toString(),
                 timestamp: new Date(p.created_at).toLocaleString(),
@@ -108,7 +112,7 @@ const MainLayout: React.FC = () => {
                 media: p.media,
                 type: p.type,
                 format: p.format,
-                user: { name: p.user.name, avatarUrl: p.user.avatar_url },
+                user: postUser,
                 likes: 0, // Should be fetched separately or with a join
                 commentsCount: 0, // Should be fetched separately
                 comments: [],
