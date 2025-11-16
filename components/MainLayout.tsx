@@ -7,7 +7,6 @@ import Feed from './Feed';
 import RightSidebar from './RightSidebar';
 import { Post, Fanpage, AppNotification, User, Group, AppEvent, Media } from '../types';
 import { FAKE_GROUPS, FAKE_EVENTS } from '../services/geminiService';
-import InstallPWA from './InstallPWA';
 import BottomNavBar from './BottomNavBar';
 import ProfilePage from '../pages/ProfilePage';
 import FriendsPage from '../pages/FriendsPage';
@@ -27,7 +26,6 @@ import EventDetailPage from '../pages/EventDetailPage';
 import CreateEventPage from '../pages/CreateEventPage';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../services/supabaseClient';
-import { subscribeUser } from '../utils/pushNotifications';
 
 const MOCK_FANPAGES: Fanpage[] = [
     { id: 'fp1', name: 'El Rincón del Café', category: 'Cafetería', bio: 'El mejor café de Reyes Iztacala.', ownerEmail: 'admin@example.com', avatarUrl: 'https://picsum.photos/id/55/200', coverUrl: 'https://picsum.photos/id/225/1600/400' },
@@ -62,26 +60,6 @@ const MainLayout: React.FC = () => {
   const resetNotificationCount = () => {
     setNotificationCount(0);
   };
-
-  useEffect(() => {
-    if (user && 'serviceWorker' in navigator && 'PushManager' in window) {
-      const initPushNotifications = async () => {
-        try {
-          const permission = await Notification.requestPermission();
-          if (permission === 'granted') {
-            console.log('Notification permission granted.');
-            await subscribeUser(user.id);
-          } else {
-            console.log('Unable to get permission for notifications.');
-          }
-        } catch (error) {
-          console.error('Error during push notification setup:', error);
-        }
-      };
-      
-      initPushNotifications();
-    }
-  }, [user]);
 
   useEffect(() => {
     const handleHashChange = () => {
@@ -194,7 +172,6 @@ const MainLayout: React.FC = () => {
         postData.group_id = group.id;
     }
 
-    // Step 1: Insert the post and get its raw data
     const { data: newPostData, error: insertError } = await supabase
       .from('posts')
       .insert(postData)
@@ -203,24 +180,11 @@ const MainLayout: React.FC = () => {
 
     if (insertError) {
         console.error('Error creating post:', insertError);
-        throw insertError;
+        throw insertError; // Throw error to be caught by the calling component
     }
 
     if (newPostData) {
-        // Step 2: Fetch the author's profile data separately to avoid join ambiguity
-        const { data: profileData, error: profileError } = await supabase
-            .from('profiles')
-            .select('id, name, avatar_url')
-            .eq('id', newPostData.user_id)
-            .single();
-
-        if (profileError) {
-            console.error('Error fetching profile for new post:', profileError);
-        }
-
-        const postUser = profileData 
-            ? { id: profileData.id, name: profileData.name, avatarUrl: profileData.avatar_url }
-            : { id: user.id, name: user.name, avatarUrl: user.avatarUrl }; // Fallback to current user from auth context
+        const postUser = { id: user.id, name: user.name, avatarUrl: user.avatarUrl };
 
         const newPost: Post = {
             id: newPostData.id.toString(),
@@ -284,7 +248,6 @@ const MainLayout: React.FC = () => {
               return <GroupsPage navigate={navigate} groups={groups} />;
           case 'group':
               const group = groups.find(g => g.id === param);
-              // Fix: Pass handleAddPost instead of the undefined onAddPost.
               return group ? <GroupDetailPage group={group} posts={posts.filter(p => p.group?.id === param)} onAddPost={handleAddPost} /> : <div>Grupo no encontrado</div>;
           case 'create-group':
                 return <CreateGroupPage onAddGroup={handleAddGroup} navigate={navigate} />;
@@ -312,7 +275,6 @@ const MainLayout: React.FC = () => {
         {renderPage()}
         {currentPath !== 'reels' && <RightSidebar />}
       </div>
-      <InstallPWA />
       {currentPath !== 'reels' && <BottomNavBar navigate={navigate} activePath={currentPath} />}
     </div>
   );

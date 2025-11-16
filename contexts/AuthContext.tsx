@@ -108,17 +108,36 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const signUp = async ({ name, email, password }) => {
-    const { data, error } = await supabase.auth.signUp({
+    const { data: authData, error: authError } = await supabase.auth.signUp({
       email,
-      password,
-      options: {
-        data: {
-          name: name,
-        }
-      }
+      password
     });
-    return { user: data.user, session: data.session, error };
+
+    if (authError) {
+      return { user: null, session: null, error: authError };
+    }
+
+    if (authData.user) {
+      // After successful sign up, create a profile for the new user
+      const { error: profileError } = await supabase.from('profiles').insert({
+        id: authData.user.id,
+        name,
+        // Using a placeholder avatar, user can change it later
+        avatar_url: `https://api.dicebear.com/7.x/initials/svg?seed=${name}`,
+      });
+
+      if (profileError) {
+        // If profile creation fails, this is a problem, but the user is already created in auth.
+        console.error("Error creating profile for new user:", profileError);
+        // We still return the auth data, but the app might be in a weird state.
+        // In a real app, you might want to handle this more gracefully (e.g., delete the auth user).
+        return { user: authData.user, session: authData.session, error: profileError };
+      }
+    }
+    
+    return { user: authData.user, session: authData.session, error: null };
   };
+
 
   const logout = async () => {
     await supabase.auth.signOut();
