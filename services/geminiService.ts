@@ -1,6 +1,5 @@
 
-import { GoogleGenAI, Type } from "@google/genai";
-import { Post, Group, Product, User, Event, Fanpage } from '../types';
+import { Group, Product, User, AppEvent, Fanpage } from '../types';
 
 export const FAKE_GROUPS: Group[] = [
     { id: 'g1', name: 'Vecinos de Reyes Iztacala', description: 'Un grupo para conectar con tus vecinos, compartir noticias y organizar eventos locales.', memberCount: 254, coverUrl: 'https://picsum.photos/id/1016/1600/400', avatarUrl: 'https://picsum.photos/id/101/200', isPrivate: false },
@@ -18,7 +17,7 @@ export const FAKE_PRODUCTS: Product[] = [
 const FAKE_USER_ORGANIZER: User = { id: 'organizer1', name: 'Comité Vecinal', avatarUrl: 'https://picsum.photos/id/88/200'};
 const FAKE_FANPAGE_ORGANIZER: Fanpage = { id: 'fp1', name: 'El Rincón del Café', category: 'Cafetería', bio: '', ownerEmail: '', avatarUrl: 'https://picsum.photos/id/55/200', coverUrl: ''};
 
-export const FAKE_EVENTS: Event[] = [
+export const FAKE_EVENTS: AppEvent[] = [
     { id: 'e1', name: 'Kermés Anual de la Colonia', description: '¡Ven a disfrutar con toda tu familia! Tendremos antojitos, juegos mecánicos y música en vivo.', date: 'SÁB, 25 NOV, 12:00 PM', location: 'Parque Central de Reyes Iztacala', coverUrl: 'https://picsum.photos/id/1019/1600/900', organizer: FAKE_USER_ORGANIZER, attendees: 125 },
     { id: 'e2', name: 'Noche de Acústico', description: 'Disfruta de una velada con música acústica en vivo y el mejor café de la zona.', date: 'VIE, 1 DIC, 8:00 PM', location: 'El Rincón del Café', coverUrl: 'https://picsum.photos/id/1082/1600/900', organizer: FAKE_FANPAGE_ORGANIZER, attendees: 40 },
 ];

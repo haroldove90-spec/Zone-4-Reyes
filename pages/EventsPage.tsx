@@ -1,14 +1,14 @@
 
 import React from 'react';
-import { Event } from '../types';
+import { AppEvent } from '../types';
 import { CalendarIcon, MapPinIcon } from '../components/icons';
 
 interface EventsPageProps {
   navigate: (path: string) => void;
-  events: Event[];
+  events: AppEvent[];
 }
 
-const EventCard: React.FC<{ event: Event; onClick: () => void }> = ({ event, onClick }) => (
+const EventCard: React.FC<{ event: AppEvent; onClick: () => void }> = ({ event, onClick }) => (
     <div onClick={onClick} className="bg-z-bg-secondary dark:bg-z-bg-secondary-dark rounded-lg shadow-md overflow-hidden group cursor-pointer flex flex-col sm:flex-row">
         <img src={event.coverUrl} alt={event.name} className="w-full sm:w-48 h-32 sm:h-auto object-cover" />
         <div className="p-4 flex flex-col justify-between">

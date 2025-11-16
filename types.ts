@@ -89,7 +89,7 @@ export interface Fanpage {
     ownerEmail: string;
 }
 
-export interface Event {
+export interface AppEvent {
   id: string;
   name: string;
   description: string;

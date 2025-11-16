@@ -1,10 +1,10 @@
 
 import React, { useState } from 'react';
-import { Event } from '../types';
+import { AppEvent } from '../types';
 import { useAuth } from '../contexts/AuthContext';
 
 interface CreateEventPageProps {
-    onAddEvent: (event: Event) => void;
+    onAddEvent: (event: AppEvent) => void;
     navigate: (path: string) => void;
 }
 
@@ -19,7 +19,7 @@ const CreateEventPage: React.FC<CreateEventPageProps> = ({ onAddEvent, navigate 
         e.preventDefault();
         if (!name || !date || !location || !description || !user) return;
 
-        const newEvent: Event = {
+        const newEvent: AppEvent = {
             id: `e${Date.now()}`,
             name,
             date,

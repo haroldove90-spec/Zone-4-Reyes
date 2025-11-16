@@ -1,10 +1,10 @@
 
 import React, { useState } from 'react';
-import { Event } from '../types';
+import { AppEvent } from '../types';
 import { CalendarIcon, MapPinIcon } from '../components/icons';
 
 interface EventDetailPageProps {
-  event: Event;
+  event: AppEvent;
 }
 
 const EventDetailPage: React.FC<EventDetailPageProps> = ({ event }) => {

@@ -4,7 +4,7 @@ import Header from './Header';
 import LeftSidebar from './LeftSidebar';
 import Feed from './Feed';
 import RightSidebar from './RightSidebar';
-import { Post, Fanpage, Notification, User, Group, Event, Media } from '../types';
+import { Post, Fanpage, Notification, User, Group, AppEvent, Media } from '../types';
 import { FAKE_GROUPS, FAKE_EVENTS } from '../services/geminiService';
 import InstallPWA from './InstallPWA';
 import BottomNavBar from './BottomNavBar';
@@ -38,7 +38,7 @@ const MainLayout: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [fanpages, setFanpages] = useState<Fanpage[]>(MOCK_FANPAGES);
   const [groups, setGroups] = useState<Group[]>(FAKE_GROUPS);
-  const [events, setEvents] = useState<Event[]>(FAKE_EVENTS);
+  const [events, setEvents] = useState<AppEvent[]>(FAKE_EVENTS);
   const [currentPath, setCurrentPath] = useState(window.location.hash.substring(1) || 'feed');
   const { user } = useAuth();
 
@@ -253,7 +253,7 @@ const MainLayout: React.FC = () => {
     setGroups(prev => [newGroup, ...prev]);
   };
   
-  const handleAddEvent = (newEvent: Event) => {
+  const handleAddEvent = (newEvent: AppEvent) => {
     setEvents(prev => [newEvent, ...prev]);
   };
   
