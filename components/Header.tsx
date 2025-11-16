@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { HomeIcon, UsersIcon, ClapperboardIcon, StoreIcon, BellIcon, MessageCircleIcon, SearchIcon } from './icons';
 import ThemeToggle from './ThemeToggle';
@@ -8,7 +7,7 @@ const Header: React.FC = () => {
     <header className="bg-z-bg-secondary dark:bg-z-bg-secondary-dark shadow-md fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-4 h-14 border-b border-transparent dark:border-z-border-dark">
       {/* Left Section */}
       <div className="flex items-center space-x-4">
-        <img src="https://appdesignmex.com/Zone4Reyes.png" alt="Logo" className="h-10" />
+        <img src="https://appdesignmex.com/Zone4Reyes.png" alt="Logo" className="h-[30px]" />
         <div className="relative hidden md:block">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
             <SearchIcon className="h-5 w-5 text-gray-400 dark:text-z-text-secondary-dark" />
