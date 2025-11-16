@@ -1,9 +1,7 @@
 
-const CACHE_NAME = 'zone4reyes-social-v2';
+const CACHE_NAME = 'zone4reyes-social-v3'; // Bumping version to trigger update
 const urlsToCache = [
-  '/',
-  '/index.html',
-  '/index.tsx',
+  // Only cache static assets. The main HTML page will be fetched from the network.
   'https://appdesignmex.com/Zone4Reyes.png',
   'https://appdesignmex.com/iconoreyes.png'
 ];
@@ -19,17 +17,21 @@ self.addEventListener('install', event => {
 });
 
 self.addEventListener('fetch', event => {
-  // Let the browser handle requests for scripts, other resources that might change frequently,
-  // and all requests to Supabase to prevent auth issues.
+  // Always fetch the main HTML page from the network.
+  // This prevents serving a stale app shell that points to old assets.
+  if (event.request.mode === 'navigate') {
+    return; // Let the browser handle the request.
+  }
+
+  // Let the browser handle requests for the main script and Supabase API calls.
   if (
-    event.request.url.includes('/@vite/') || 
     event.request.url.includes('index.tsx') ||
     event.request.url.includes('supabase.co')
   ) {
     return;
   }
 
-  // For other GET requests, use a cache-first strategy.
+  // For other GET requests (like images), use a cache-first strategy.
   if (event.request.method === 'GET') {
     event.respondWith(
       caches.match(event.request)
@@ -77,6 +79,47 @@ self.addEventListener('activate', event => {
           }
         })
       );
+    })
+  );
+});
+
+self.addEventListener('push', event => {
+  const data = event.data ? event.data.json() : { title: 'Zone4Reyes Social', body: 'Tienes una nueva notificación.'};
+  console.log('Push received:', data);
+
+  const title = data.title || 'Zone4Reyes Social';
+  const options = {
+    body: data.body || 'Tienes una nueva notificación.',
+    icon: 'https://appdesignmex.com/iconoreyes.png',
+    badge: 'https://appdesignmex.com/iconoreyes.png',
+    vibrate: [200, 100, 200],
+    data: {
+      url: data.url || '/',
+    },
+  };
+
+  event.waitUntil(
+    self.registration.showNotification(title, options)
+  );
+});
+
+self.addEventListener('notificationclick', event => {
+  event.notification.close();
+  const urlToOpen = new URL(event.notification.data.url || '/', self.location.origin).href;
+  
+  event.waitUntil(
+    clients.matchAll({
+      type: 'window',
+      includeUncontrolled: true
+    }).then(clientList => {
+      for (let client of clientList) {
+        if (client.url === urlToOpen && 'focus' in client) {
+          return client.focus();
+        }
+      }
+      if (clients.openWindow) {
+        return clients.openWindow(urlToOpen);
+      }
     })
   );
 });

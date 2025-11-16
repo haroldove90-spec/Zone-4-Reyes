@@ -26,6 +26,7 @@ import EventDetailPage from '../pages/EventDetailPage';
 import CreateEventPage from '../pages/CreateEventPage';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../services/supabaseClient';
+import { subscribeUser } from '../utils/pushNotifications';
 
 const MOCK_FANPAGES: Fanpage[] = [
     { id: 'fp1', name: 'El Rincón del Café', category: 'Cafetería', bio: 'El mejor café de Reyes Iztacala.', ownerEmail: 'admin@example.com', avatarUrl: 'https://picsum.photos/id/55/200', coverUrl: 'https://picsum.photos/id/225/1600/400' },
@@ -60,6 +61,26 @@ const MainLayout: React.FC = () => {
   const resetNotificationCount = () => {
     setNotificationCount(0);
   };
+
+  useEffect(() => {
+    if (user && 'serviceWorker' in navigator && 'PushManager' in window) {
+      const initPushNotifications = async () => {
+        try {
+          const permission = await Notification.requestPermission();
+          if (permission === 'granted') {
+            console.log('Notification permission granted.');
+            await subscribeUser(user.id);
+          } else {
+            console.log('Unable to get permission for notifications.');
+          }
+        } catch (error) {
+          console.error('Error during push notification setup:', error);
+        }
+      };
+      
+      initPushNotifications();
+    }
+  }, [user]);
 
   useEffect(() => {
     const handleHashChange = () => {
