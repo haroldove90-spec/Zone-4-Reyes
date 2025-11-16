@@ -1,9 +1,9 @@
 
 import React from 'react';
-import { Notification } from '../types';
+import { AppNotification } from '../types';
 
 interface NotificationsPanelProps {
-    notifications: Notification[];
+    notifications: AppNotification[];
 }
 
 const NotificationsPanel: React.FC<NotificationsPanelProps> = ({ notifications }) => {

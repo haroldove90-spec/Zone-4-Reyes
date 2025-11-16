@@ -56,7 +56,7 @@ export interface Post {
   fanpage?: { id: string; name: string; avatarUrl: string; };
 }
 
-export interface Notification {
+export interface AppNotification {
   id: string;
   user: User;
   text: string;

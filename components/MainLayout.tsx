@@ -1,10 +1,11 @@
 
+
 import React, { useState, useEffect, useCallback } from 'react';
 import Header from './Header';
 import LeftSidebar from './LeftSidebar';
 import Feed from './Feed';
 import RightSidebar from './RightSidebar';
-import { Post, Fanpage, Notification, User, Group, AppEvent, Media } from '../types';
+import { Post, Fanpage, AppNotification, User, Group, AppEvent, Media } from '../types';
 import { FAKE_GROUPS, FAKE_EVENTS } from '../services/geminiService';
 import InstallPWA from './InstallPWA';
 import BottomNavBar from './BottomNavBar';
@@ -42,11 +43,11 @@ const MainLayout: React.FC = () => {
   const [currentPath, setCurrentPath] = useState(window.location.hash.substring(1) || 'feed');
   const { user } = useAuth();
 
-  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [notificationCount, setNotificationCount] = useState(3); // Start with some fake notifications
 
   const addNotification = useCallback((text: string, user: User, postContent?: string) => {
-    const newNotification: Notification = {
+    const newNotification: AppNotification = {
         id: new Date().toISOString(),
         user: { id: user.id, name: user.name, avatarUrl: user.avatarUrl },
         text,
@@ -283,6 +284,7 @@ const MainLayout: React.FC = () => {
               return <GroupsPage navigate={navigate} groups={groups} />;
           case 'group':
               const group = groups.find(g => g.id === param);
+              // Fix: Pass handleAddPost instead of the undefined onAddPost.
               return group ? <GroupDetailPage group={group} posts={posts.filter(p => p.group?.id === param)} onAddPost={handleAddPost} /> : <div>Grupo no encontrado</div>;
           case 'create-group':
                 return <CreateGroupPage onAddGroup={handleAddGroup} navigate={navigate} />;

@@ -1,16 +1,18 @@
 
+
 import React, { useState, useRef, useEffect } from 'react';
 import { BellIcon, MessageCircleIcon, SearchIcon, LogOutIcon, CogIcon, FlagIcon } from './icons';
 import ThemeToggle from './ThemeToggle';
 import { useAuth } from '../contexts/AuthContext';
 import NotificationsPanel from './NotificationsPanel';
+import { AppNotification } from '../types';
+// Fix: Import the Messenger component.
 import Messenger from './Messenger';
-import { Notification } from '../types';
 
 interface HeaderProps {
   navigate: (page: string) => void;
   notificationCount: number;
-  notifications: Notification[];
+  notifications: AppNotification[];
   onNotificationsOpen: () => void;
 }
 
