@@ -172,29 +172,48 @@ const MainLayout: React.FC = () => {
         postData.group_id = group.id;
     }
 
-    const { data, error } = await supabase
+    // Step 1: Insert the post and get its raw data
+    const { data: newPostData, error: insertError } = await supabase
       .from('posts')
       .insert(postData)
-      .select('*, user:profiles!user_id(id, name, avatar_url)')
+      .select()
       .single();
 
-    if (error) {
-        console.error('Error creating post:', error);
-        throw error;
-    } else if (data) {
+    if (insertError) {
+        console.error('Error creating post:', insertError);
+        throw insertError;
+    }
+
+    if (newPostData) {
+        // Step 2: Fetch the author's profile data separately to avoid join ambiguity
+        const { data: profileData, error: profileError } = await supabase
+            .from('profiles')
+            .select('id, name, avatar_url')
+            .eq('id', newPostData.user_id)
+            .single();
+
+        if (profileError) {
+            console.error('Error fetching profile for new post:', profileError);
+        }
+
+        const postUser = profileData 
+            ? { id: profileData.id, name: profileData.name, avatarUrl: profileData.avatar_url }
+            : { id: user.id, name: user.name, avatarUrl: user.avatarUrl }; // Fallback to current user from auth context
+
         const newPost: Post = {
-            id: data.id.toString(),
-            timestamp: new Date(data.created_at).toLocaleString(),
-            content: data.content,
-            media: data.media,
-            type: data.type,
-            format: data.format,
-            user: { id: data.user.id, name: data.user.name, avatarUrl: data.user.avatar_url },
+            id: newPostData.id.toString(),
+            timestamp: new Date(newPostData.created_at).toLocaleString(),
+            content: newPostData.content,
+            media: newPostData.media,
+            type: newPostData.type,
+            format: newPostData.format,
+            user: postUser,
             likes: 0,
             commentsCount: 0,
             comments: [],
             group: group,
         };
+
         setPosts(prevPosts => [newPost, ...prevPosts]);
         if (currentPath.startsWith('profile')) {
             navigate('profile');
