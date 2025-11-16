@@ -154,41 +154,41 @@ const MainLayout: React.FC = () => {
     fetchPosts();
   }, [fetchPosts]);
 
-  const handleAddPost = async (content: string, mediaFiles: File[], postType: 'standard' | 'report' = 'standard', group?: { id: string; name: string }) => {
+  const handleAddPost = async (content: string, mediaFiles: File[], postType: 'standard' | 'report' = 'standard', group?: { id: string; name: string }, existingMedia?: Media[]) => {
     if (!user) {
         throw new Error("No estás autenticado. Por favor, inicia sesión de nuevo.");
     }
     
-    // Envolvemos toda la lógica en un bloque try...catch para garantizar que cualquier fallo sea capturado.
     try {
         let mediaToUpload: Media[] = [];
 
-        // Primero, recorremos y subimos todos los archivos multimedia.
-        for (const file of mediaFiles) {
-            const fileExt = file.name.split('.').pop();
-            const fileName = `${user.id}/${Date.now()}.${fileExt}`;
-            
-            const { error: uploadError } = await supabase.storage
-                .from('media')
-                .upload(fileName, file);
-            
-            if (uploadError) {
-                // Si alguna subida falla, nos detenemos y lanzamos el error.
-                console.error('Error al subir el archivo:', uploadError.message);
-                throw new Error(`Error al subir el archivo: ${uploadError.message}`);
-            }
+        if (existingMedia && existingMedia.length > 0) {
+            mediaToUpload = existingMedia;
+        } else if (mediaFiles.length > 0) {
+            for (const file of mediaFiles) {
+                const fileExt = file.name.split('.').pop();
+                const fileName = `${user.id}/${Date.now()}.${fileExt}`;
+                
+                const { error: uploadError } = await supabase.storage
+                    .from('media')
+                    .upload(fileName, file);
+                
+                if (uploadError) {
+                    console.error('Error al subir el archivo:', uploadError.message);
+                    throw new Error(`Error al subir el archivo: ${uploadError.message}`);
+                }
 
-            const { data: { publicUrl } } = supabase.storage
-                .from('media')
-                .getPublicUrl(fileName);
-            
-            mediaToUpload.push({
-                type: file.type.startsWith('image/') ? 'image' : 'video',
-                url: publicUrl,
-            });
+                const { data: { publicUrl } } = supabase.storage
+                    .from('media')
+                    .getPublicUrl(fileName);
+                
+                mediaToUpload.push({
+                    type: file.type.startsWith('image/') ? 'image' : 'video',
+                    url: publicUrl,
+                });
+            }
         }
 
-        // Preparamos los datos de la publicación para la inserción.
         const postData: { [key: string]: any } = { 
             user_id: user.id, 
             content,
@@ -196,12 +196,7 @@ const MainLayout: React.FC = () => {
             type: postType,
             format: 'post'
         };
-        // FIX: Removed group_id assignment as the column does not exist.
-        // if (group) {
-        //     postData.group_id = group.id;
-        // }
 
-        // Insertamos los datos de la publicación en la base de datos.
         const { error: insertError } = await supabase
             .from('posts')
             .insert(postData)
@@ -209,12 +204,10 @@ const MainLayout: React.FC = () => {
             .single();
 
         if (insertError) {
-            // Si la inserción en la base de datos falla, lanzamos un error.
             console.error('Error al crear la publicación en la base de datos:', insertError.message);
             throw new Error(`Error al guardar la publicación: ${insertError.message}`);
         }
 
-        // Si todo tiene éxito, volvemos a cargar las publicaciones para mostrar la nueva.
         await fetchPosts();
         
         if (currentPath.startsWith('profile')) {
@@ -224,9 +217,7 @@ const MainLayout: React.FC = () => {
         }
 
     } catch(error) {
-        // Registramos el error final y lo relanzamos para que CreatePost pueda manejarlo.
         console.error("Error en handleAddPost:", error);
-        // El relanzamiento es crucial para que la interfaz de usuario se desbloquee.
         throw error;
     }
   };
@@ -262,7 +253,7 @@ const MainLayout: React.FC = () => {
           case 'report':
               return <CitizenReportPage reportPosts={posts.filter(p => p.type === 'report')} onAddPost={handleAddPost} />;
           case 'reels':
-              return <ReelsPage reels={posts.filter(p => p.format === 'reel')} addNotification={addNotification} />;
+              return <ReelsPage reels={posts.filter(p => p.format === 'reel')} addNotification={addNotification} onAddPost={handleAddPost} />;
           case 'marketplace':
               return <MarketplacePage />;
           case 'groups':

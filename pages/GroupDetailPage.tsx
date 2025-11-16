@@ -1,13 +1,13 @@
 
 import React from 'react';
-import { Group, Post as PostType } from '../types';
+import { Group, Post as PostType, Media } from '../types';
 import CreatePost from '../components/CreatePost';
 import Post from '../components/Post';
 
 interface GroupDetailPageProps {
   group: Group;
   posts: PostType[];
-  onAddPost: (content: string, mediaFiles: File[], postType?: 'standard' | 'report', group?: { id: string; name: string }) => Promise<void>;
+  onAddPost: (content: string, mediaFiles: File[], postType?: 'standard' | 'report', group?: { id: string; name: string }, existingMedia?: Media[]) => Promise<void>;
 }
 
 const GroupDetailPage: React.FC<GroupDetailPageProps> = ({ group, posts, onAddPost }) => {
@@ -30,7 +30,7 @@ const GroupDetailPage: React.FC<GroupDetailPageProps> = ({ group, posts, onAddPo
                 />
                 <div className="mt-6">
                     {posts.length > 0 ? (
-                        posts.map((post, index) => <Post key={post.id} post={post} index={index} addNotification={() => {}} />)
+                        posts.map((post, index) => <Post key={post.id} post={post} index={index} addNotification={() => {}} onAddPost={onAddPost} />)
                     ) : (
                         <div className="text-center py-10 text-z-text-secondary dark:text-z-text-secondary-dark bg-z-bg-secondary dark:bg-z-bg-secondary-dark rounded-xl">
                             <p>Aún no hay publicaciones en este grupo. ¡Sé el primero!</p>

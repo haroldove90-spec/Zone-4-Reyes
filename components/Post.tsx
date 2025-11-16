@@ -1,10 +1,12 @@
+
 import React, { useState, useEffect } from 'react';
-import { Post as PostType, Comment as CommentType, User } from '../types';
+import { Post as PostType, Comment as CommentType, User, Media } from '../types';
 import { 
     ThumbsUpIcon, MessageSquareIcon, Share2Icon, MoreHorizontalIcon, SendIcon 
 } from './icons';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../services/supabaseClient';
+import ShareModal from './modals/ShareModal';
 
 export const PostSkeleton: React.FC = () => (
   <div className="bg-z-bg-secondary dark:bg-z-bg-secondary-dark rounded-xl shadow-md my-6 p-4 animate-pulse">
@@ -41,6 +43,7 @@ interface PostProps {
   post: PostType;
   index: number;
   addNotification: (text: string, user: User, postContent?: string) => void;
+  onAddPost: (content: string, mediaFiles: File[], postType?: 'standard' | 'report', group?: { id: string; name: string; }, existingMedia?: Media[]) => Promise<void>;
 }
 
 const Comment: React.FC<{ comment: CommentType }> = ({ comment }) => (
@@ -53,13 +56,14 @@ const Comment: React.FC<{ comment: CommentType }> = ({ comment }) => (
     </div>
 );
 
-const Post: React.FC<PostProps> = ({ post, index, addNotification }) => {
+const Post: React.FC<PostProps> = ({ post, index, addNotification, onAddPost }) => {
   const { user } = useAuth();
   const [isLiked, setIsLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
   const [comments, setComments] = useState<CommentType[]>([]);
   const [commentsCount, setCommentsCount] = useState(0);
   const [allCommentsLoaded, setAllCommentsLoaded] = useState(false);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
 
   const [newComment, setNewComment] = useState('');
   const commentInputRef = React.useRef<HTMLInputElement>(null);
@@ -210,21 +214,44 @@ const Post: React.FC<PostProps> = ({ post, index, addNotification }) => {
     }
   };
 
-  const handleShare = () => {
+  const handleInternalShare = async (comment: string) => {
+    if (!user) return;
+    const authorName = post.fanpage?.name || post.user.name;
+    const quotedContent = post.content.split('\n').map(line => `> ${line}`).join('\n');
+    const sharedPostContent = `${comment}\n\n--- Reposteando de **${authorName}** ---\n${quotedContent}`;
+
+    try {
+        await onAddPost(sharedPostContent, [], 'standard', undefined, post.media);
+        addNotification(`reposteaste la publicación de ${authorName}`, user, post.content);
+        setIsShareModalOpen(false);
+    } catch(err) {
+        console.error("Error al repostear:", err);
+        // Aquí podrías mostrar un error al usuario.
+    }
+  };
+
+  const handleExternalShare = () => {
+    const authorName = post.fanpage?.name || post.user.name;
+    const shareText = `Mira esta publicación de ${authorName} en Zone4Reyes Social: ${post.content}`;
+    const shareUrl = window.location.href.split('#')[0];
+
     if (navigator.share) {
       navigator.share({
-        title: `Publicación de ${author.name}`,
-        text: post.content,
-        url: window.location.href,
+        title: `Publicación de ${authorName}`,
+        text: shareText,
+        url: shareUrl,
       })
       .then(() => console.log('Successful share'))
       .catch((error) => console.log('Error sharing', error));
     } else {
-      alert('¡Publicación compartida! (Simulación)');
+      navigator.clipboard.writeText(`${shareText}\n\nVer en: ${shareUrl}`);
+      alert('¡Enlace de la publicación copiado al portapapeles!');
     }
+    setIsShareModalOpen(false);
   };
 
   return (
+    <>
     <div 
       className="bg-z-bg-secondary dark:bg-z-bg-secondary-dark rounded-xl shadow-md my-6 border border-transparent dark:border-z-border-dark animate-slideInUp"
       style={{ animationDelay: `${index * 100}ms`, animationFillMode: 'backwards' }}
@@ -303,7 +330,7 @@ const Post: React.FC<PostProps> = ({ post, index, addNotification }) => {
             <MessageSquareIcon className="h-6 w-6" />
             <span className="font-medium group-hover:text-z-text-primary dark:group-hover:text-z-text-primary-dark transition-colors">Comentar</span>
          </div>
-         <div onClick={handleShare} className="flex-1 flex items-center justify-center space-x-2 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-z-hover-dark cursor-pointer transition-colors group">
+         <div onClick={() => setIsShareModalOpen(true)} className="flex-1 flex items-center justify-center space-x-2 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-z-hover-dark cursor-pointer transition-colors group">
             <Share2Icon className="h-6 w-6" />
             <span className="font-medium group-hover:text-z-text-primary dark:group-hover:text-z-text-primary-dark transition-colors">Compartir</span>
          </div>
@@ -338,6 +365,8 @@ const Post: React.FC<PostProps> = ({ post, index, addNotification }) => {
         </div>
       </div>
     </div>
+    {isShareModalOpen && <ShareModal post={post} onClose={() => setIsShareModalOpen(false)} onInternalShare={handleInternalShare} onExternalShare={handleExternalShare} />}
+    </>
   );
 };
 

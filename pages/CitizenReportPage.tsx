@@ -1,12 +1,13 @@
+
 import React from 'react';
-import { Post as PostType, User } from '../types';
+import { Post as PostType, User, Media } from '../types';
 import CreatePost from '../components/CreatePost';
 import Post from '../components/Post';
 import { AlertTriangleIcon } from '../components/icons';
 
 interface CitizenReportPageProps {
     reportPosts: PostType[];
-    onAddPost: (content: string, mediaFiles: File[], postType?: 'standard' | 'report', group?: { id: string; name: string }) => Promise<void>;
+    onAddPost: (content: string, mediaFiles: File[], postType?: 'standard' | 'report', group?: { id: string; name: string }, existingMedia?: Media[]) => Promise<void>;
 }
 
 const CitizenReportPage: React.FC<CitizenReportPageProps> = ({ reportPosts, onAddPost }) => {
@@ -29,7 +30,7 @@ const CitizenReportPage: React.FC<CitizenReportPageProps> = ({ reportPosts, onAd
         </div>
         {reportPosts.length > 0 ? (
           reportPosts.map((post, index) => (
-            <Post key={post.id} post={post} index={index} addNotification={() => {}} />
+            <Post key={post.id} post={post} index={index} addNotification={() => {}} onAddPost={onAddPost} />
           ))
         ) : (
           <div className="text-center py-10 text-z-text-secondary dark:text-z-text-secondary-dark bg-z-bg-secondary dark:bg-z-bg-secondary-dark rounded-xl">

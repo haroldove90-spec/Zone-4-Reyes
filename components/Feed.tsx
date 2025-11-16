@@ -1,5 +1,6 @@
+
 import React, { useState } from 'react';
-import { Post as PostType, User } from '../types';
+import { Post as PostType, User, Media } from '../types';
 import CreatePost from './CreatePost';
 import Post, { PostSkeleton } from './Post';
 import StoryReel from './StoryReel';
@@ -8,7 +9,7 @@ import AdPost from './AdPost';
 
 interface FeedProps {
     posts: PostType[];
-    onAddPost: (content: string, mediaFiles: File[], postType?: 'standard' | 'report', group?: { id: string; name: string }) => Promise<void>;
+    onAddPost: (content: string, mediaFiles: File[], postType?: 'standard' | 'report', group?: { id: string; name: string }, existingMedia?: Media[]) => Promise<void>;
     loading: boolean;
     addNotification: (text: string, user: User, postContent?: string) => void;
     isNewUser?: boolean;
@@ -55,7 +56,7 @@ const Feed: React.FC<FeedProps> = ({ posts, onAddPost, loading, addNotification,
         ) : filteredPosts.length > 0 ? (
           filteredPosts.map((post, index) => (
             <React.Fragment key={post.id}>
-              <Post post={post} index={index} addNotification={addNotification} />
+              <Post post={post} index={index} addNotification={addNotification} onAddPost={onAddPost} />
               {index === 1 && <AdPost />}
             </React.Fragment>
           ))

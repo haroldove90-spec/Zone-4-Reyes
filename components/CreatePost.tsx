@@ -2,6 +2,7 @@
 import React, { useState, useRef } from 'react';
 import { VideoIcon, PhotoIcon, SmileIcon } from './icons';
 import { useAuth } from '../contexts/AuthContext';
+import { Media } from '../types';
 
 interface Preview {
   url: string;
@@ -10,7 +11,7 @@ interface Preview {
 }
 
 interface CreatePostProps {
-  onAddPost: (content: string, mediaFiles: File[], postType?: 'standard' | 'report', group?: { id: string; name: string }) => Promise<void>;
+  onAddPost: (content: string, mediaFiles: File[], postType?: 'standard' | 'report', group?: { id: string; name: string }, existingMedia?: Media[]) => Promise<void>;
   postType?: 'standard' | 'report';
   placeholder?: string;
   group?: { id: string; name: string };

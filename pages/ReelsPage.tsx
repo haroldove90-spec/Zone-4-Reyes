@@ -1,18 +1,18 @@
 
+
 import React, { useState } from 'react';
-import { Post, User } from '../types';
+import { Post, User, Media } from '../types';
 import ReelItem from '../components/ReelItem';
 
 interface ReelsPageProps {
   reels: Post[];
   addNotification: (text: string, user: User, postContent?: string) => void;
+  onAddPost: (content: string, mediaFiles: File[], postType?: 'standard' | 'report', group?: { id: string; name: string }, existingMedia?: Media[]) => Promise<void>;
 }
 
-const ReelsPage: React.FC<ReelsPageProps> = ({ reels, addNotification }) => {
+const ReelsPage: React.FC<ReelsPageProps> = ({ reels, addNotification, onAddPost }) => {
   const [currentReelIndex, setCurrentReelIndex] = useState(0);
 
-  // In a real app, you'd have more sophisticated logic for scrolling and loading.
-  // This is a simplified version for demonstration.
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
     const { scrollTop, clientHeight } = e.currentTarget;
     const newIndex = Math.round(scrollTop / clientHeight);
@@ -29,6 +29,7 @@ const ReelsPage: React.FC<ReelsPageProps> = ({ reels, addNotification }) => {
             post={reel} 
             addNotification={addNotification} 
             isVisible={index === currentReelIndex}
+            onAddPost={onAddPost}
           />
         </div>
       ))}

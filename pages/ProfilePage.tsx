@@ -1,6 +1,7 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { Post as PostType, Fanpage } from '../types';
+import { Post as PostType, Fanpage, Media } from '../types';
 import Post, { PostSkeleton } from '../components/Post';
 import CreatePost from '../components/CreatePost';
 import { MoreHorizontalIcon, ImagePlusIcon, MapPinIcon, LinkIcon, CakeIcon, UsersIcon, PhotoIcon, FlagIcon } from '../components/icons';
@@ -73,7 +74,7 @@ const ProfilePageSkeleton: React.FC = () => {
 
 interface ProfilePageProps {
     userPosts: PostType[];
-    onAddPost: (content: string, mediaFiles: File[], postType?: 'standard' | 'report', group?: { id: string; name: string }) => Promise<void>;
+    onAddPost: (content: string, mediaFiles: File[], postType?: 'standard' | 'report', group?: { id: string; name: string }, existingMedia?: Media[]) => Promise<void>;
     navigate: (page: string) => void;
 }
 
@@ -224,7 +225,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ userPosts, onAddPost, navigat
                              <CreatePost onAddPost={onAddPost} />
                         </div>
                         {userPosts.map((post, index) => (
-                            <Post key={post.id} post={post} index={index} addNotification={() => {}} />
+                            <Post key={post.id} post={post} index={index} addNotification={() => {}} onAddPost={onAddPost} />
                         ))}
                     </div>
                 </div>
