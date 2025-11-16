@@ -1,4 +1,5 @@
 
+
 import React from 'react';
 import { Post as PostType, User, Media } from '../types';
 import CreatePost from '../components/CreatePost';
@@ -8,9 +9,10 @@ import { AlertTriangleIcon } from '../components/icons';
 interface CitizenReportPageProps {
     reportPosts: PostType[];
     onAddPost: (content: string, mediaFiles: File[], postType?: 'standard' | 'report', group?: { id: string; name: string }, existingMedia?: Media[]) => Promise<void>;
+    navigate: (path: string) => void;
 }
 
-const CitizenReportPage: React.FC<CitizenReportPageProps> = ({ reportPosts, onAddPost }) => {
+const CitizenReportPage: React.FC<CitizenReportPageProps> = ({ reportPosts, onAddPost, navigate }) => {
   return (
     <main className="flex-grow pt-14 lg:ml-20 xl:ml-80 lg:mr-72 overflow-x-hidden p-4 md:p-6">
       <div className="max-w-xl lg:max-w-2xl xl:max-w-3xl mx-auto">
@@ -30,7 +32,7 @@ const CitizenReportPage: React.FC<CitizenReportPageProps> = ({ reportPosts, onAd
         </div>
         {reportPosts.length > 0 ? (
           reportPosts.map((post, index) => (
-            <Post key={post.id} post={post} index={index} addNotification={() => {}} onAddPost={onAddPost} />
+            <Post key={post.id} post={post} index={index} addNotification={() => {}} onAddPost={onAddPost} navigate={navigate} />
           ))
         ) : (
           <div className="text-center py-10 text-z-text-secondary dark:text-z-text-secondary-dark bg-z-bg-secondary dark:bg-z-bg-secondary-dark rounded-xl">

@@ -1,5 +1,6 @@
 
 
+
 import React, { useState, useEffect, useCallback } from 'react';
 import Header from './Header';
 import LeftSidebar from './LeftSidebar';
@@ -42,8 +43,30 @@ const MainLayout: React.FC = () => {
   const { user } = useAuth();
 
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
-  const [notificationCount, setNotificationCount] = useState(3); // Start with some fake notifications
+  const [notificationCount, setNotificationCount] = useState(3);
+  const [friendRequests, setFriendRequests] = useState<User[]>([]);
 
+  const fetchFriendRequests = useCallback(async () => {
+      if (!user) return;
+      try {
+          const { data, error } = await supabase
+              .from('friendships')
+              .select('requester_id, profiles!friendships_requester_id_fkey(id, name, avatar_url)')
+              .eq('addressee_id', user.id)
+              .eq('status', 'pending');
+
+          if (error) throw error;
+          const requests = data.map((req: any) => ({
+              id: req.profiles.id,
+              name: req.profiles.name,
+              avatarUrl: req.profiles.avatar_url,
+          }));
+          setFriendRequests(requests);
+      } catch (error) {
+          console.error("Error fetching friend requests:", error);
+      }
+  }, [user]);
+  
   const addNotification = useCallback((text: string, user: User, postContent?: string) => {
     const newNotification: AppNotification = {
         id: new Date().toISOString(),
@@ -82,42 +105,34 @@ const MainLayout: React.FC = () => {
   const fetchPosts = useCallback(async () => {
     setLoading(true);
     try {
-        // Step 1: Fetch posts and their user_id
-        // FIX: Removed `group_id` from the select statement as it doesn't exist in the table.
         const { data: postsData, error: postsError } = await supabase
             .from('posts')
-            .select('id, created_at, content, media, type, format, user_id')
+            .select('id, created_at, content, media, type, format, user_id, groups(id, name)')
             .order('created_at', { ascending: false });
 
         if (postsError) throw postsError;
-
         if (!postsData) {
             setPosts([]);
             setLoading(false);
             return;
         }
 
-        // Step 2: Collect all unique user IDs from the posts
         const userIds = [...new Set(postsData.map(p => p.user_id).filter(Boolean))];
 
         if (userIds.length === 0) {
-            setPosts([]); // Set empty posts if no users
+            setPosts([]);
             setLoading(false);
             return;
         }
 
-        // Step 3: Fetch the profiles for these user IDs
         const { data: profilesData, error: profilesError } = await supabase
             .from('profiles')
             .select('id, name, avatar_url')
             .in('id', userIds);
 
         if (profilesError) throw profilesError;
-
-        // Step 4: Create a map of profiles for easy lookup
         const profilesMap = new Map<string, { id: string; name: string; avatar_url: string; }>((profilesData || []).map((profile: any) => [profile.id, profile]));
 
-        // Step 5: Combine posts with their author's profile information
         const fetchedPosts: Post[] = postsData.map((p: any) => {
             const profile = profilesMap.get(p.user_id);
             const postUser = profile
@@ -135,11 +150,9 @@ const MainLayout: React.FC = () => {
                 likes: 0,
                 commentsCount: 0,
                 comments: [],
-                // FIX: Removed group logic as group_id is not available.
-                group: undefined,
+                group: p.groups ? { id: p.groups.id, name: p.groups.name } : undefined,
             };
         });
-
         setPosts(fetchedPosts);
 
     } catch (error: any) {
@@ -152,7 +165,8 @@ const MainLayout: React.FC = () => {
 
   useEffect(() => {
     fetchPosts();
-  }, [fetchPosts]);
+    fetchFriendRequests();
+  }, [fetchPosts, fetchFriendRequests]);
 
   const handleAddPost = async (content: string, mediaFiles: File[], postType: 'standard' | 'report' = 'standard', group?: { id: string; name: string }, existingMedia?: Media[]) => {
     if (!user) {
@@ -173,19 +187,10 @@ const MainLayout: React.FC = () => {
                     .from('media')
                     .upload(fileName, file);
                 
-                if (uploadError) {
-                    console.error('Error al subir el archivo:', uploadError.message);
-                    throw new Error(`Error al subir el archivo: ${uploadError.message}`);
-                }
+                if (uploadError) throw new Error(`Error al subir el archivo: ${uploadError.message}`);
 
-                const { data: { publicUrl } } = supabase.storage
-                    .from('media')
-                    .getPublicUrl(fileName);
-                
-                mediaToUpload.push({
-                    type: file.type.startsWith('image/') ? 'image' : 'video',
-                    url: publicUrl,
-                });
+                const { data: { publicUrl } } = supabase.storage.from('media').getPublicUrl(fileName);
+                mediaToUpload.push({ type: file.type.startsWith('image/') ? 'image' : 'video', url: publicUrl });
             }
         }
 
@@ -194,27 +199,17 @@ const MainLayout: React.FC = () => {
             content,
             media: mediaToUpload.length > 0 ? mediaToUpload : null,
             type: postType,
-            format: 'post'
+            format: 'post',
+            group_id: group?.id
         };
 
-        const { error: insertError } = await supabase
-            .from('posts')
-            .insert(postData)
-            .select()
-            .single();
-
-        if (insertError) {
-            console.error('Error al crear la publicación en la base de datos:', insertError.message);
-            throw new Error(`Error al guardar la publicación: ${insertError.message}`);
-        }
+        const { error: insertError } = await supabase.from('posts').insert(postData).select().single();
+        if (insertError) throw new Error(`Error al guardar la publicación: ${insertError.message}`);
 
         await fetchPosts();
         
-        if (currentPath.startsWith('profile')) {
-            navigate('profile');
-        } else if (!currentPath.startsWith('group/')) {
-            window.scrollTo(0, 0);
-        }
+        if (currentPath.startsWith('profile')) navigate(`profile/${user.id}`);
+        else if (!currentPath.startsWith('group/')) window.scrollTo(0, 0);
 
     } catch(error) {
         console.error("Error en handleAddPost:", error);
@@ -222,26 +217,20 @@ const MainLayout: React.FC = () => {
     }
   };
 
-  const handleAddPage = (newPage: Fanpage) => {
-    setFanpages(prev => [newPage, ...prev]);
-  };
-
-  const handleAddGroup = (newGroup: Group) => {
-    setGroups(prev => [newGroup, ...prev]);
-  };
-  
-  const handleAddEvent = (newEvent: AppEvent) => {
-    setEvents(prev => [newEvent, ...prev]);
-  };
+  const handleAddPage = (newPage: Fanpage) => setFanpages(prev => [newPage, ...prev]);
+  const handleAddGroup = (newGroup: Group) => setGroups(prev => [newGroup, ...prev]);
+  const handleAddEvent = (newEvent: AppEvent) => setEvents(prev => [newEvent, ...prev]);
   
   const renderPage = () => {
       const [path, param] = currentPath.split('/');
       
       switch(path) {
           case 'profile':
-              return <ProfilePage userPosts={posts.filter(p => p.user && user && p.user.id === user.id)} onAddPost={handleAddPost} navigate={navigate} />;
+              const profileId = param || user?.id;
+              if (!profileId) return <Feed posts={[]} onAddPost={handleAddPost} loading={true} addNotification={addNotification} navigate={navigate} />;
+              return <ProfilePage key={profileId} userId={profileId} onAddPost={handleAddPost} navigate={navigate} addNotification={addNotification} />;
           case 'friends':
-              return <FriendsPage />;
+              return <FriendsPage navigate={navigate} addNotification={addNotification} />;
           case 'ads':
               return <AdCenterPage />;
           case 'settings':
@@ -251,7 +240,7 @@ const MainLayout: React.FC = () => {
           case 'create-fanpage':
               return <CreateFanpage onAddPage={handleAddPage} navigate={navigate} />;
           case 'report':
-              return <CitizenReportPage reportPosts={posts.filter(p => p.type === 'report')} onAddPost={handleAddPost} />;
+              return <CitizenReportPage reportPosts={posts.filter(p => p.type === 'report')} onAddPost={handleAddPost} navigate={navigate} />;
           case 'reels':
               return <ReelsPage reels={posts.filter(p => p.format === 'reel')} addNotification={addNotification} onAddPost={handleAddPost} />;
           case 'marketplace':
@@ -260,7 +249,7 @@ const MainLayout: React.FC = () => {
               return <GroupsPage navigate={navigate} groups={groups} />;
           case 'group':
               const group = groups.find(g => g.id === param);
-              return group ? <GroupDetailPage group={group} posts={posts.filter(p => p.group?.id === param)} onAddPost={handleAddPost} /> : <div>Grupo no encontrado</div>;
+              return group ? <GroupDetailPage group={group} posts={posts.filter(p => p.group?.id === param)} onAddPost={handleAddPost} navigate={navigate} /> : <div>Grupo no encontrado</div>;
           case 'create-group':
                 return <CreateGroupPage onAddGroup={handleAddGroup} navigate={navigate} />;
           case 'events':
@@ -271,17 +260,17 @@ const MainLayout: React.FC = () => {
           case 'create-event':
               return <CreateEventPage onAddEvent={handleAddEvent} navigate={navigate} />;
           case 'admin':
-              return user?.isAdmin ? <AdminDashboardPage fanpages={fanpages}/> : <Feed posts={posts.filter(p => p.type !== 'report' && p.format !== 'reel')} onAddPost={handleAddPost} loading={loading} addNotification={addNotification} />;
+              return user?.isAdmin ? <AdminDashboardPage fanpages={fanpages}/> : <Feed posts={posts.filter(p => p.type !== 'report' && p.format !== 'reel')} onAddPost={handleAddPost} loading={loading} addNotification={addNotification} navigate={navigate} />;
           case 'feed':
           default:
               const isNewUser = user ? posts.filter(p => p.user && p.user.id === user.id).length === 0 && !loading : false;
-              return <Feed posts={posts.filter(p => p.type !== 'report' && p.format !== 'reel')} onAddPost={handleAddPost} loading={loading} addNotification={addNotification} isNewUser={isNewUser} />;
+              return <Feed posts={posts.filter(p => p.type !== 'report' && p.format !== 'reel')} onAddPost={handleAddPost} loading={loading} addNotification={addNotification} isNewUser={isNewUser} navigate={navigate} />;
       }
   }
 
   return (
     <div className="min-h-screen bg-z-bg-primary dark:bg-z-bg-primary-dark animate-fadeIn">
-      {currentPath !== 'reels' && <Header navigate={navigate} notificationCount={notificationCount} notifications={notifications} onNotificationsOpen={resetNotificationCount} />}
+      {currentPath !== 'reels' && <Header navigate={navigate} notificationCount={notificationCount} notifications={notifications} onNotificationsOpen={resetNotificationCount} friendRequests={friendRequests} onFriendRequestAction={fetchFriendRequests} />}
       <div className="flex">
         {currentPath !== 'reels' && <LeftSidebar navigate={navigate} />}
         {renderPage()}

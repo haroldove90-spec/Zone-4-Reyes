@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect } from 'react';
 import { Post as PostType, Comment as CommentType, User, Media } from '../types';
 import { 
@@ -44,19 +45,20 @@ interface PostProps {
   index: number;
   addNotification: (text: string, user: User, postContent?: string) => void;
   onAddPost: (content: string, mediaFiles: File[], postType?: 'standard' | 'report', group?: { id: string; name: string; }, existingMedia?: Media[]) => Promise<void>;
+  navigate: (path: string) => void;
 }
 
-const Comment: React.FC<{ comment: CommentType }> = ({ comment }) => (
+const Comment: React.FC<{ comment: CommentType; navigate: (path: string) => void; }> = ({ comment, navigate }) => (
     <div className="flex items-start space-x-2 mt-2">
-        <img src={comment.user.avatarUrl} alt={comment.user.name} className="h-8 w-8 rounded-full" loading="lazy" />
+        <img src={comment.user.avatarUrl} alt={comment.user.name} className="h-8 w-8 rounded-full cursor-pointer" loading="lazy" onClick={() => navigate(`profile/${comment.user.id}`)} />
         <div className="bg-gray-100 dark:bg-z-hover-dark rounded-xl p-2 px-3 text-sm">
-            <p className="font-bold text-z-text-primary dark:text-z-text-primary-dark">{comment.user.name}</p>
+            <p className="font-bold text-z-text-primary dark:text-z-text-primary-dark cursor-pointer hover:underline" onClick={() => navigate(`profile/${comment.user.id}`)}>{comment.user.name}</p>
             <p className="text-z-text-primary dark:text-z-text-primary-dark">{comment.text}</p>
         </div>
     </div>
 );
 
-const Post: React.FC<PostProps> = ({ post, index, addNotification, onAddPost }) => {
+const Post: React.FC<PostProps> = ({ post, index, addNotification, onAddPost, navigate }) => {
   const { user } = useAuth();
   const [isLiked, setIsLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
@@ -182,7 +184,9 @@ const Post: React.FC<PostProps> = ({ post, index, addNotification, onAddPost }) 
             if (error) throw error;
             setIsLiked(true);
             setLikeCount(prev => prev + 1);
-            addNotification(`le ha gustado la publicación de ${author.name}`, user, post.content);
+            if(user.id !== author.id) {
+                addNotification(`le ha gustado tu publicación`, user, post.content);
+            }
         }
     } catch (error) {
         console.error("Error handling like:", error);
@@ -207,7 +211,9 @@ const Post: React.FC<PostProps> = ({ post, index, addNotification, onAddPost }) 
             setComments(prev => [...prev, commentToAdd]);
             setCommentsCount(prev => prev + 1);
             setNewComment('');
-            addNotification(`ha comentado la publicación de ${author.name}: "${newComment}"`, user, post.content);
+            if(user.id !== author.id) {
+                addNotification(`ha comentado tu publicación: "${newComment}"`, user, post.content);
+            }
         }
     } catch (error) {
         console.error("Error adding comment:", error);
@@ -222,11 +228,12 @@ const Post: React.FC<PostProps> = ({ post, index, addNotification, onAddPost }) 
 
     try {
         await onAddPost(sharedPostContent, [], 'standard', undefined, post.media);
-        addNotification(`reposteaste la publicación de ${authorName}`, user, post.content);
+        if(user.id !== author.id) {
+            addNotification(`reposteó tu publicación`, user, post.content);
+        }
         setIsShareModalOpen(false);
     } catch(err) {
         console.error("Error al repostear:", err);
-        // Aquí podrías mostrar un error al usuario.
     }
   };
 
@@ -250,6 +257,14 @@ const Post: React.FC<PostProps> = ({ post, index, addNotification, onAddPost }) 
     setIsShareModalOpen(false);
   };
 
+  const handleProfileClick = () => {
+      if (!('ownerEmail' in author)) { // It's a User, not a Fanpage
+          navigate(`profile/${author.id}`);
+      }
+      // Optional: handle click for Fanpage profile later
+  };
+
+
   return (
     <>
     <div 
@@ -258,10 +273,10 @@ const Post: React.FC<PostProps> = ({ post, index, addNotification, onAddPost }) 
     >
       <div className="p-4">
         <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <img src={author.avatarUrl} alt={author.name} className="h-10 w-10 rounded-full" loading="lazy" />
+          <div className="flex items-center space-x-3" >
+            <img src={author.avatarUrl} alt={author.name} className="h-10 w-10 rounded-full cursor-pointer" loading="lazy" onClick={handleProfileClick} />
             <div>
-              <p className="font-bold text-z-text-primary dark:text-z-text-primary-dark">{author.name}</p>
+              <p className="font-bold text-z-text-primary dark:text-z-text-primary-dark hover:underline cursor-pointer" onClick={handleProfileClick}>{author.name}</p>
               <p className="text-sm text-z-text-secondary dark:text-z-text-secondary-dark">{post.timestamp}</p>
             </div>
           </div>
@@ -339,7 +354,7 @@ const Post: React.FC<PostProps> = ({ post, index, addNotification, onAddPost }) 
       {comments.length > 0 && <div className="border-t border-gray-200/80 dark:border-z-border-dark mx-4 mt-1"></div>}
       
       <div className="p-4 pt-2">
-        {comments.map(comment => <Comment key={comment.id} comment={comment}/>)}
+        {comments.map(comment => <Comment key={comment.id} comment={comment} navigate={navigate} />)}
         {!allCommentsLoaded && commentsCount > comments.length && (
             <button onClick={handleLoadAllComments} className="text-sm font-semibold text-z-text-secondary dark:text-z-text-secondary-dark mt-2 hover:underline">
                 {`Ver ${commentsCount - comments.length} comentarios más`}

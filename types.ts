@@ -1,4 +1,7 @@
 
+
+export type FriendshipStatus = 'loading' | 'friends' | 'pending_sent' | 'pending_received' | 'not_friends';
+
 export interface User {
   id: string;
   name: string;

@@ -1,4 +1,5 @@
 
+
 import React, { useState } from 'react';
 import { Post as PostType, User, Media } from '../types';
 import CreatePost from './CreatePost';
@@ -13,9 +14,10 @@ interface FeedProps {
     loading: boolean;
     addNotification: (text: string, user: User, postContent?: string) => void;
     isNewUser?: boolean;
+    navigate: (path: string) => void;
 }
 
-const Feed: React.FC<FeedProps> = ({ posts, onAddPost, loading, addNotification, isNewUser }) => {
+const Feed: React.FC<FeedProps> = ({ posts, onAddPost, loading, addNotification, isNewUser, navigate }) => {
   const [activeFilter, setActiveFilter] = useState<'all' | 'pages'>('all');
 
   const filteredPosts = activeFilter === 'pages'
@@ -56,7 +58,7 @@ const Feed: React.FC<FeedProps> = ({ posts, onAddPost, loading, addNotification,
         ) : filteredPosts.length > 0 ? (
           filteredPosts.map((post, index) => (
             <React.Fragment key={post.id}>
-              <Post post={post} index={index} addNotification={addNotification} onAddPost={onAddPost} />
+              <Post post={post} index={index} addNotification={addNotification} onAddPost={onAddPost} navigate={navigate} />
               {index === 1 && <AdPost />}
             </React.Fragment>
           ))

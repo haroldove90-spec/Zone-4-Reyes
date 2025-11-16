@@ -1,32 +1,37 @@
 
 
+
 import React, { useState, useRef, useEffect } from 'react';
-import { BellIcon, MessageCircleIcon, SearchIcon, LogOutIcon, CogIcon, FlagIcon } from './icons';
+import { BellIcon, MessageCircleIcon, SearchIcon, LogOutIcon, CogIcon, FlagIcon, UsersIcon } from './icons';
 import ThemeToggle from './ThemeToggle';
 import { useAuth } from '../contexts/AuthContext';
 import NotificationsPanel from './NotificationsPanel';
-import { AppNotification } from '../types';
-// Fix: Import the Messenger component.
+import { AppNotification, User } from '../types';
 import Messenger from './Messenger';
+import FriendRequestsPanel from './FriendRequestsPanel';
 
 interface HeaderProps {
   navigate: (page: string) => void;
   notificationCount: number;
   notifications: AppNotification[];
   onNotificationsOpen: () => void;
+  friendRequests: User[];
+  onFriendRequestAction: () => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ navigate, notificationCount, notifications, onNotificationsOpen }) => {
+const Header: React.FC<HeaderProps> = ({ navigate, notificationCount, notifications, onNotificationsOpen, friendRequests, onFriendRequestAction }) => {
   const { user, logout } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [isMessengerOpen, setIsMessengerOpen] = useState(false);
+  const [isFriendsOpen, setIsFriendsOpen] = useState(false);
 
   const [messageCount, setMessageCount] = useState(5);
 
   const menuRef = useRef<HTMLDivElement>(null);
   const notificationsRef = useRef<HTMLDivElement>(null);
   const messengerRef = useRef<HTMLDivElement>(null);
+  const friendsRef = useRef<HTMLDivElement>(null);
 
 
   useEffect(() => {
@@ -37,8 +42,8 @@ const Header: React.FC<HeaderProps> = ({ navigate, notificationCount, notificati
       if (notificationsRef.current && !notificationsRef.current.contains(event.target as Node)) {
         setIsNotificationsOpen(false);
       }
-      if (messengerRef.current && !messengerRef.current.contains(event.target as Node)) {
-        // Messenger is a floating window, so we don't close it this way
+      if (friendsRef.current && !friendsRef.current.contains(event.target as Node)) {
+        setIsFriendsOpen(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -57,10 +62,14 @@ const Header: React.FC<HeaderProps> = ({ navigate, notificationCount, notificati
   const handleMessengerClick = () => {
     setIsMessengerOpen(!isMessengerOpen);
   }
+  
+  const handleFriendsClick = () => {
+    setIsFriendsOpen(!isFriendsOpen);
+  }
 
   const handleProfileClick = () => {
     setIsMenuOpen(false);
-    navigate('profile');
+    navigate(`profile/${user?.id}`);
   };
 
   const handleSettingsClick = () => {
@@ -92,6 +101,17 @@ const Header: React.FC<HeaderProps> = ({ navigate, notificationCount, notificati
             <span className="hidden xl:inline">Crear Página</span>
         </button>
         <ThemeToggle />
+
+        <div className="relative" ref={friendsRef}>
+          <div className="p-2.5 bg-z-bg-primary dark:bg-z-bg-secondary-dark rounded-full cursor-pointer hover:bg-gray-200 dark:hover:bg-z-hover-dark transition-transform hover:scale-110 relative" title="Solicitudes de amistad" onClick={handleFriendsClick}>
+            <UsersIcon className="h-6 w-6 text-z-text-primary dark:text-z-text-primary-dark" />
+            {friendRequests.length > 0 && (
+              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">{friendRequests.length}</span>
+            )}
+          </div>
+          {isFriendsOpen && <FriendRequestsPanel requests={friendRequests} onAction={onFriendRequestAction} navigate={navigate} />}
+        </div>
+
         <div className="relative" ref={messengerRef}>
           <div className="p-2.5 bg-z-bg-primary dark:bg-z-bg-secondary-dark rounded-full cursor-pointer hover:bg-gray-200 dark:hover:bg-z-hover-dark transition-transform hover:scale-110 relative" title="Messenger" onClick={handleMessengerClick}>
             <MessageCircleIcon className="h-6 w-6 text-z-text-primary dark:text-z-text-primary-dark" />

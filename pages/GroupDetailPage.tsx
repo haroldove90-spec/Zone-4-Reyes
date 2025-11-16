@@ -1,4 +1,5 @@
 
+
 import React from 'react';
 import { Group, Post as PostType, Media } from '../types';
 import CreatePost from '../components/CreatePost';
@@ -8,9 +9,10 @@ interface GroupDetailPageProps {
   group: Group;
   posts: PostType[];
   onAddPost: (content: string, mediaFiles: File[], postType?: 'standard' | 'report', group?: { id: string; name: string }, existingMedia?: Media[]) => Promise<void>;
+  navigate: (path: string) => void;
 }
 
-const GroupDetailPage: React.FC<GroupDetailPageProps> = ({ group, posts, onAddPost }) => {
+const GroupDetailPage: React.FC<GroupDetailPageProps> = ({ group, posts, onAddPost, navigate }) => {
   return (
     <main className="flex-grow pt-14 lg:ml-20 xl:ml-80 lg:mr-72 overflow-x-hidden">
         <div className="max-w-4xl mx-auto">
@@ -30,7 +32,7 @@ const GroupDetailPage: React.FC<GroupDetailPageProps> = ({ group, posts, onAddPo
                 />
                 <div className="mt-6">
                     {posts.length > 0 ? (
-                        posts.map((post, index) => <Post key={post.id} post={post} index={index} addNotification={() => {}} onAddPost={onAddPost} />)
+                        posts.map((post, index) => <Post key={post.id} post={post} index={index} addNotification={() => {}} onAddPost={onAddPost} navigate={navigate} />)
                     ) : (
                         <div className="text-center py-10 text-z-text-secondary dark:text-z-text-secondary-dark bg-z-bg-secondary dark:bg-z-bg-secondary-dark rounded-xl">
                             <p>Aún no hay publicaciones en este grupo. ¡Sé el primero!</p>
