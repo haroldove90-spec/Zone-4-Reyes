@@ -4,8 +4,8 @@ import Header from './Header';
 import LeftSidebar from './LeftSidebar';
 import Feed from './Feed';
 import RightSidebar from './RightSidebar';
-import { Post, Fanpage, Notification, User, Group, Event } from '../types';
-import { generateSocialFeed, FAKE_GROUPS, FAKE_EVENTS } from '../services/geminiService';
+import { Post, Fanpage, Notification, User, Group, Event, Media } from '../types';
+import { FAKE_GROUPS, FAKE_EVENTS } from '../services/geminiService';
 import InstallPWA from './InstallPWA';
 import BottomNavBar from './BottomNavBar';
 import ProfilePage from '../pages/ProfilePage';
@@ -25,6 +25,7 @@ import EventsPage from '../pages/EventsPage';
 import EventDetailPage from '../pages/EventDetailPage';
 import CreateEventPage from '../pages/CreateEventPage';
 import { useAuth } from '../contexts/AuthContext';
+import { supabase } from '../services/supabaseClient';
 
 const MOCK_FANPAGES: Fanpage[] = [
     { id: 'fp1', name: 'El Rincón del Café', category: 'Cafetería', bio: 'El mejor café de Reyes Iztacala.', ownerEmail: 'admin@example.com', avatarUrl: 'https://picsum.photos/id/55/200', coverUrl: 'https://picsum.photos/id/225/1600/400' },
@@ -80,23 +81,115 @@ const MainLayout: React.FC = () => {
 
   const fetchPosts = useCallback(async () => {
     setLoading(true);
-    const generatedPosts = await generateSocialFeed();
-    setPosts(generatedPosts);
-    setTimeout(() => setLoading(false), 500);
+    try {
+        const { data, error } = await supabase
+            .from('posts')
+            .select(`
+                id,
+                created_at,
+                content,
+                media,
+                type,
+                format,
+                user:profiles (id, name, avatar_url)
+            `)
+            .order('created_at', { ascending: false });
+
+        if (error) throw error;
+        
+        // Map Supabase response to app's Post type
+        const fetchedPosts: Post[] = data.map((p: any) => ({
+            id: p.id.toString(),
+            timestamp: new Date(p.created_at).toLocaleString(),
+            content: p.content,
+            media: p.media,
+            type: p.type,
+            format: p.format,
+            user: { name: p.user.name, avatarUrl: p.user.avatar_url },
+            likes: 0, // Should be fetched separately or with a join
+            commentsCount: 0, // Should be fetched separately
+            comments: []
+        }));
+
+        setPosts(fetchedPosts);
+
+    } catch (error) {
+        console.error("Error fetching posts:", error);
+    } finally {
+        setLoading(false);
+    }
   }, []);
 
   useEffect(() => {
     fetchPosts();
   }, [fetchPosts]);
 
-  const handleAddPost = (newPost: Post) => {
-    setPosts(prevPosts => [newPost, ...prevPosts]);
-    if (currentPath.startsWith('profile')) {
-      navigate('profile'); // stay on profile
-    } else {
-      window.scrollTo(0, 0);
+  const handleAddPost = async (content: string, mediaFiles: File[], postType: 'standard' | 'report' = 'standard') => {
+    if (!user) return;
+
+    let mediaToUpload: Media[] = [];
+
+    // Upload media files to Supabase Storage
+    for (const file of mediaFiles) {
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${user.id}/${Date.now()}.${fileExt}`;
+        
+        const { error: uploadError } = await supabase.storage
+            .from('media')
+            .upload(fileName, file);
+        
+        if (uploadError) {
+            console.error('Error uploading file:', uploadError);
+            continue;
+        }
+
+        const { data: { publicUrl } } = supabase.storage
+            .from('media')
+            .getPublicUrl(fileName);
+        
+        mediaToUpload.push({
+            type: file.type.startsWith('image/') ? 'image' : 'video',
+            url: publicUrl,
+        });
+    }
+
+    // Insert post into Supabase database
+    const { data, error } = await supabase
+      .from('posts')
+      .insert({ 
+        user_id: user.id, 
+        content,
+        media: mediaToUpload.length > 0 ? mediaToUpload : null,
+        type: postType,
+        format: 'post' // Assuming 'post' for now, reels would be different
+      })
+      .select('*, user:profiles (id, name, avatar_url)')
+      .single();
+
+    if (error) {
+        console.error('Error creating post:', error);
+    } else if (data) {
+        const newPost: Post = {
+            id: data.id.toString(),
+            timestamp: new Date(data.created_at).toLocaleString(),
+            content: data.content,
+            media: data.media,
+            type: data.type,
+            format: data.format,
+            user: { name: data.user.name, avatarUrl: data.user.avatar_url },
+            likes: 0,
+            commentsCount: 0,
+            comments: []
+        };
+        setPosts(prevPosts => [newPost, ...prevPosts]);
+        if (currentPath.startsWith('profile')) {
+            navigate('profile');
+        } else {
+            window.scrollTo(0, 0);
+        }
     }
   };
+
 
   const handleAddPage = (newPage: Fanpage) => {
     setFanpages(prev => [newPage, ...prev]);
@@ -136,7 +229,7 @@ const MainLayout: React.FC = () => {
               return <GroupsPage navigate={navigate} groups={groups} />;
           case 'group':
               const group = groups.find(g => g.id === param);
-              return group ? <GroupDetailPage group={group} posts={posts.filter(p => p.group?.id === param)} onAddPost={handleAddPost} /> : <div>Grupo no encontrado</div>;
+              return group ? <GroupDetailPage group={group} posts={posts.filter(p => p.group?.id === param)} onAddPost={() => {}} /> : <div>Grupo no encontrado</div>;
           case 'create-group':
                 return <CreateGroupPage onAddGroup={handleAddGroup} navigate={navigate} />;
           case 'events':

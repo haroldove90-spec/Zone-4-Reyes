@@ -6,6 +6,7 @@ import Post from '../components/Post';
 import CreatePost from '../components/CreatePost';
 import { MoreHorizontalIcon, ImagePlusIcon, MapPinIcon, LinkIcon, CakeIcon, UsersIcon, PhotoIcon, FlagIcon } from '../components/icons';
 import EditProfileModal from '../components/modals/EditProfileModal';
+import { supabase } from '../services/supabaseClient';
 
 const Spinner: React.FC = () => (
     <div className="flex justify-center items-center p-10">
@@ -16,7 +17,7 @@ const Spinner: React.FC = () => (
 
 interface ProfilePageProps {
     userPosts: PostType[];
-    onAddPost: (post: PostType) => void;
+    onAddPost: (content: string, mediaFiles: File[], postType?: 'standard' | 'report') => Promise<void>;
     navigate: (page: string) => void;
 }
 
@@ -29,36 +30,44 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ userPosts, onAddPost, navigat
 
     useEffect(() => {
         setLoading(true);
-        // Simulate loading user data and posts
         const timer = setTimeout(() => {
             setLoading(false);
         }, 1200);
         return () => clearTimeout(timer);
     }, [user]);
 
+    const handlePhotoUpload = async (file: File, type: 'cover' | 'profile') => {
+        if (!user) return;
+
+        const bucket = type === 'profile' ? 'avatars' : 'covers';
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${user.id}/${Date.now()}.${fileExt}`;
+
+        const { error: uploadError } = await supabase.storage.from(bucket).upload(fileName, file);
+        if (uploadError) {
+            console.error(`Error uploading ${type} photo:`, uploadError);
+            return;
+        }
+
+        const { data: { publicUrl } } = supabase.storage.from(bucket).getPublicUrl(fileName);
+        
+        if (type === 'cover') {
+            updateUser({ coverUrl: publicUrl });
+        } else {
+            updateUser({ avatarUrl: publicUrl });
+        }
+    };
+
     const handleCoverPhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
-        if (file) {
-          const reader = new FileReader();
-          reader.onloadend = () => {
-            updateUser({ coverUrl: reader.result as string });
-          };
-          reader.readAsDataURL(file);
-        }
+        if (file) handlePhotoUpload(file, 'cover');
     };
     
     const handleProfilePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
-        if (file) {
-          const reader = new FileReader();
-          reader.onloadend = () => {
-            updateUser({ avatarUrl: reader.result as string });
-          };
-          reader.readAsDataURL(file);
-        }
+        if (file) handlePhotoUpload(file, 'profile');
     };
 
-    // Mock data for friends and photos
     const friends = Array.from({ length: 9 }, (_, i) => ({ name: `Amigo ${i+1}`, avatarUrl: `https://picsum.photos/id/${10 + i}/200` }));
     const photos = Array.from({ length: 9 }, (_, i) => `https://picsum.photos/id/${20 + i}/200`);
     const myPages: Partial<Fanpage>[] = [{ name: 'El Rincón del Café', avatarUrl: 'https://picsum.photos/id/55/200' }];
@@ -73,7 +82,6 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ userPosts, onAddPost, navigat
         <main className="flex-grow pt-14 lg:ml-20 xl:ml-80 lg:mr-72 overflow-x-hidden">
             <div className="max-w-4xl mx-auto">
                 <div className="bg-z-bg-secondary dark:bg-z-bg-secondary-dark shadow-md">
-                    {/* Cover Photo */}
                     <div className="relative h-48 md:h-64 lg:h-80 group">
                         <img src={user.coverUrl} alt="Foto de portada" className="w-full h-full object-cover" loading="lazy"/>
                         <input type="file" ref={coverPhotoInputRef} onChange={handleCoverPhotoChange} className="hidden" accept="image/*" />
@@ -82,7 +90,6 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ userPosts, onAddPost, navigat
                         </button>
                     </div>
 
-                    {/* Profile Info */}
                     <div className="p-4 flex flex-col sm:flex-row items-center sm:items-end -mt-16 sm:-mt-8 space-y-4 sm:space-y-0 sm:space-x-6 border-b dark:border-z-border-dark pb-4">
                         <div className="relative group cursor-pointer" onClick={() => profilePhotoInputRef.current?.click()}>
                             <img src={user.avatarUrl} alt="Avatar del usuario" className="w-40 h-40 rounded-full border-4 border-z-bg-secondary dark:border-z-bg-secondary-dark" loading="lazy"/>

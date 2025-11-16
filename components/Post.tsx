@@ -1,18 +1,16 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Post as PostType, Comment as CommentType, User } from '../types';
 import { 
     ThumbsUpIcon, MessageSquareIcon, Share2Icon, MoreHorizontalIcon,
     ThumbsDownIcon, LaughIcon, WowIcon, AngryIcon, SendIcon 
 } from './icons';
 import { useAuth } from '../contexts/AuthContext';
+import { supabase } from '../services/supabaseClient';
+
 
 const reactions = [
     { name: 'Me gusta', icon: ThumbsUpIcon, color: 'text-z-primary', textColor: 'text-z-primary' },
-    { name: 'No me gusta', icon: ThumbsDownIcon, color: 'text-red-500', textColor: 'text-red-500' },
-    { name: 'Me divierte', icon: LaughIcon, color: 'text-yellow-500', textColor: 'text-yellow-500' },
-    { name: 'Me asombra', icon: WowIcon, color: 'text-yellow-500', textColor: 'text-yellow-500' },
-    { name: 'Me enoja', icon: AngryIcon, color: 'text-red-500', textColor: 'text-red-500' }
 ];
 
 interface PostProps {
@@ -33,50 +31,112 @@ const Comment: React.FC<{ comment: CommentType }> = ({ comment }) => (
 
 const Post: React.FC<PostProps> = ({ post, index, addNotification }) => {
   const { user } = useAuth();
-  const [selectedReaction, setSelectedReaction] = useState<string | null>(null);
-  const [likeCount, setLikeCount] = useState(post.likes);
-  const [comments, setComments] = useState<CommentType[]>(post.comments);
+  const [isLiked, setIsLiked] = useState(false);
+  const [likeCount, setLikeCount] = useState(0);
+  const [comments, setComments] = useState<CommentType[]>([]);
+  const [commentsCount, setCommentsCount] = useState(0);
+
   const [newComment, setNewComment] = useState('');
   const [showAllComments, setShowAllComments] = useState(false);
-  const [showReactions, setShowReactions] = useState(false);
   const commentInputRef = React.useRef<HTMLInputElement>(null);
-  // FIX: Replaced `NodeJS.Timeout` with `number` and used `useRef` to persist the timeout ID across re-renders.
-  const reactionTimeout = React.useRef<number>();
   
   const mediaCount = post.media?.length || 0;
   const author = post.fanpage || post.user;
+  
+  useEffect(() => {
+    const fetchPostDetails = async () => {
+        // Fetch likes
+        const { count: likesData, error: likesError } = await supabase
+            .from('likes')
+            .select('*', { count: 'exact' })
+            .eq('post_id', post.id);
 
-  const handleReactionSelect = (reactionName: string) => {
-    if (selectedReaction === reactionName) {
-      // User is deselecting the reaction
-      setSelectedReaction(null);
-      setLikeCount(prev => prev - 1);
+        if (likesData !== null) setLikeCount(likesData);
+
+        if(user) {
+             const { data: userLike, error: userLikeError } = await supabase
+                .from('likes')
+                .select('*')
+                .eq('post_id', post.id)
+                .eq('user_id', user.id)
+                .maybeSingle();
+            if(userLike) setIsLiked(true);
+        }
+
+        // Fetch comments
+        const { data: commentsData, count: commentsCountData, error: commentsError } = await supabase
+            .from('comments')
+            .select('*, profile:profiles(name, avatar_url)', { count: 'exact' })
+            .eq('post_id', post.id)
+            .order('created_at', { ascending: true });
+
+        if (commentsData) {
+            const formattedComments: CommentType[] = commentsData.map((c: any) => ({
+                id: c.id,
+                text: c.text,
+                timestamp: new Date(c.created_at).toLocaleString(),
+                user: { name: c.profile.name, avatarUrl: c.profile.avatar_url }
+            }));
+            setComments(formattedComments);
+        }
+        if (commentsCountData !== null) setCommentsCount(commentsCountData);
+    };
+
+    fetchPostDetails();
+  }, [post.id, user]);
+
+
+  const handleLikeToggle = async () => {
+    if (!user) return;
+    
+    if (isLiked) {
+        // Unlike
+        const { error } = await supabase
+            .from('likes')
+            .delete()
+            .eq('post_id', post.id)
+            .eq('user_id', user.id);
+        
+        if (!error) {
+            setIsLiked(false);
+            setLikeCount(prev => prev - 1);
+        }
     } else {
-      // New reaction or changing reaction
-      if (!selectedReaction) {
-        setLikeCount(prev => prev + 1);
-      }
-      setSelectedReaction(reactionName);
-      if(user) {
-        addNotification(`ha reaccionado a la publicación de ${author.name}`, user, post.content);
-      }
+        // Like
+        const { error } = await supabase
+            .from('likes')
+            .insert({ post_id: post.id, user_id: user.id });
+
+        if (!error) {
+            setIsLiked(true);
+            setLikeCount(prev => prev + 1);
+            addNotification(`ha reaccionado a la publicación de ${author.name}`, user, post.content);
+        }
     }
-    setShowReactions(false);
   };
   
-  const handleAddComment = (e: React.FormEvent) => {
+  const handleAddComment = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newComment.trim() || !user) return;
 
-    const commentToAdd: CommentType = {
-        id: new Date().toISOString(),
-        user: { name: user.name, avatarUrl: user.avatarUrl },
-        text: newComment,
-        timestamp: 'Justo ahora'
-    };
-    setComments(prev => [...prev, commentToAdd]);
-    setNewComment('');
-    addNotification(`ha comentado la publicación de ${author.name}: "${newComment}"`, user, post.content);
+    const { data, error } = await supabase
+        .from('comments')
+        .insert({ post_id: post.id, user_id: user.id, text: newComment })
+        .select('*, profile:profiles(name, avatar_url)')
+        .single();
+    
+    if (!error && data) {
+         const commentToAdd: CommentType = {
+            id: data.id,
+            user: { name: data.profile.name, avatarUrl: data.profile.avatar_url },
+            text: data.text,
+            timestamp: new Date(data.created_at).toLocaleString()
+        };
+        setComments(prev => [...prev, commentToAdd]);
+        setCommentsCount(prev => prev + 1);
+        setNewComment('');
+        addNotification(`ha comentado la publicación de ${author.name}: "${newComment}"`, user, post.content);
+    }
   };
 
   const handleShare = () => {
@@ -94,7 +154,7 @@ const Post: React.FC<PostProps> = ({ post, index, addNotification }) => {
   };
 
   const displayedComments = showAllComments ? comments : comments.slice(0, 2);
-  const currentReaction = reactions.find(r => r.name === selectedReaction);
+  const currentReaction = isLiked ? reactions[0] : null;
   const ReactionIcon = currentReaction?.icon || ThumbsUpIcon;
 
   return (
@@ -151,12 +211,14 @@ const Post: React.FC<PostProps> = ({ post, index, addNotification }) => {
 
       <div className="p-2 px-4 flex justify-between items-center text-z-text-secondary dark:text-z-text-secondary-dark">
          <div className="flex items-center space-x-1">
-            <div className="p-1 bg-z-light-blue rounded-full">
-                <ThumbsUpIcon className="h-3 w-3 text-white" />
-            </div>
-            <span className="text-sm">{likeCount}</span>
+            {likeCount > 0 && <>
+                <div className="p-1 bg-z-light-blue rounded-full">
+                    <ThumbsUpIcon className="h-3 w-3 text-white" />
+                </div>
+                <span className="text-sm">{likeCount}</span>
+            </>}
          </div>
-         {comments.length > 0 && <span className="text-sm hover:underline cursor-pointer" onClick={() => setShowAllComments(!showAllComments)}>{comments.length} comentarios</span>}
+         {commentsCount > 0 && <span className="text-sm hover:underline cursor-pointer" onClick={() => setShowAllComments(!showAllComments)}>{commentsCount} comentarios</span>}
       </div>
 
       <div className="border-t border-gray-200/80 dark:border-z-border-dark mx-4 my-1"></div>
@@ -164,24 +226,10 @@ const Post: React.FC<PostProps> = ({ post, index, addNotification }) => {
       <div className="p-1 flex justify-around text-z-text-secondary dark:text-z-text-secondary-dark">
          <div 
             className="relative flex-1"
-            onMouseEnter={() => { clearTimeout(reactionTimeout.current); setShowReactions(true); }}
-            onMouseLeave={() => { reactionTimeout.current = window.setTimeout(() => setShowReactions(false), 300); }}
          >
-            {showReactions && (
-                <div 
-                  className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 bg-z-bg-secondary dark:bg-z-bg-secondary-dark rounded-full shadow-lg p-1.5 flex space-x-2 border dark:border-z-border-dark animate-fadeIn"
-                  style={{animationDuration: '0.15s'}}
-                >
-                    {reactions.map(r => (
-                        <div key={r.name} onClick={() => handleReactionSelect(r.name)} className="p-1.5 rounded-full hover:bg-gray-200 dark:hover:bg-z-hover-dark cursor-pointer transform hover:scale-125 transition-transform">
-                            <r.icon className={`h-7 w-7 ${r.color}`} />
-                        </div>
-                    ))}
-                </div>
-            )}
-            <div onClick={() => handleReactionSelect('Me gusta')} className={`flex items-center justify-center space-x-2 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-z-hover-dark cursor-pointer transition-colors group ${currentReaction ? currentReaction.textColor : ''}`}>
+            <div onClick={handleLikeToggle} className={`flex items-center justify-center space-x-2 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-z-hover-dark cursor-pointer transition-colors group ${currentReaction ? currentReaction.textColor : ''}`}>
                 <ReactionIcon className="h-6 w-6" />
-                <span className={`font-medium group-hover:text-z-text-primary dark:group-hover:text-z-text-primary-dark transition-colors ${currentReaction ? currentReaction.textColor : ''}`}>{selectedReaction || 'Me gusta'}</span>
+                <span className={`font-medium group-hover:text-z-text-primary dark:group-hover:text-z-text-primary-dark transition-colors ${currentReaction ? currentReaction.textColor : ''}`}>{isLiked ? 'Te gusta' : 'Me gusta'}</span>
             </div>
          </div>
          <div onClick={() => commentInputRef.current?.focus()} className="flex-1 flex items-center justify-center space-x-2 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-z-hover-dark cursor-pointer transition-colors group">
