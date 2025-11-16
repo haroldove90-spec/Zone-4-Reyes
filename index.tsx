@@ -3,8 +3,16 @@ import ReactDOM from 'react-dom/client';
 import App from './App';
 import { AuthProvider } from './contexts/AuthContext';
 
-// The service worker registration was removed to prevent a 404 error that was blocking the app load.
-// This is a temporary fix until the build process can be configured to correctly include the sw.js file.
+// Re-enable Service Worker for PWA functionality
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').then(registration => {
+      console.log('ServiceWorker registration successful with scope: ', registration.scope);
+    }, err => {
+      console.log('ServiceWorker registration failed: ', err);
+    });
+  });
+}
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {
