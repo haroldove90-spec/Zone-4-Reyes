@@ -105,8 +105,17 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Failsafe timer to prevent getting stuck on the loading screen
+    const loadingTimeout = setTimeout(() => {
+        if (loading) {
+            console.warn("Auth state check timed out. Forcing UI load.");
+            setLoading(false);
+        }
+    }, 15000); // 15 seconds timeout
+
     const { data: authListener } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
+        clearTimeout(loadingTimeout); // Clear the failsafe timer on a successful response
         try {
           setSession(session);
           if (session?.user) {
@@ -125,6 +134,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     );
 
     return () => {
+      clearTimeout(loadingTimeout);
       authListener.subscription.unsubscribe();
     };
   }, []);
