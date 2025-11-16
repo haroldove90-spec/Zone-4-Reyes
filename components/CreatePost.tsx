@@ -89,10 +89,6 @@ const CreatePost: React.FC<CreatePostProps> = ({ onAddPost }) => {
         </form>
       </div>
       <div className="border-t border-gray-200/80 dark:border-z-border-dark mt-4 pt-3 flex justify-around">
-        <div className="flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-z-hover-dark cursor-pointer w-1/3 justify-center transition-colors group">
-          <VideoIcon className="h-7 w-7 text-red-500" />
-          <span className="font-medium text-z-text-secondary dark:text-z-text-secondary-dark group-hover:text-z-text-primary dark:group-hover:text-z-text-primary-dark hidden sm:inline transition-colors">Video en vivo</span>
-        </div>
         <input
           type="file"
           ref={fileInputRef}
@@ -100,11 +96,11 @@ const CreatePost: React.FC<CreatePostProps> = ({ onAddPost }) => {
           accept="image/*"
           onChange={handleImageSelect}
         />
-        <div onClick={() => fileInputRef.current?.click()} className="flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-z-hover-dark cursor-pointer w-1/3 justify-center transition-colors group">
+        <div onClick={() => fileInputRef.current?.click()} className="flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-z-hover-dark cursor-pointer w-1/2 justify-center transition-colors group">
           <PhotoIcon className="h-7 w-7 text-green-500" />
           <span className="font-medium text-z-text-secondary dark:text-z-text-secondary-dark group-hover:text-z-text-primary dark:group-hover:text-z-text-primary-dark hidden sm:inline transition-colors">Foto/video</span>
         </div>
-        <div className="flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-z-hover-dark cursor-pointer w-1/3 justify-center transition-colors group">
+        <div className="flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-z-hover-dark cursor-pointer w-1/2 justify-center transition-colors group">
           <SmileIcon className="h-7 w-7 text-yellow-500" />
           <span className="font-medium text-z-text-secondary dark:text-z-text-secondary-dark group-hover:text-z-text-primary dark:group-hover:text-z-text-primary-dark hidden sm:inline transition-colors">Sentimiento/actividad</span>
         </div>

@@ -1,12 +1,23 @@
-
 import React, { useState } from 'react';
-import { Post as PostType, Comment as CommentType } from '../types';
-import { ThumbsUpIcon, MessageSquareIcon, Share2Icon, MoreHorizontalIcon } from './icons';
+import { Post as PostType, Comment as CommentType, User } from '../types';
+import { 
+    ThumbsUpIcon, MessageSquareIcon, Share2Icon, MoreHorizontalIcon,
+    ThumbsDownIcon, LaughIcon, WowIcon, AngryIcon 
+} from './icons';
 import { useAuth } from '../contexts/AuthContext';
+
+const reactions = [
+    { name: 'Me gusta', icon: ThumbsUpIcon, color: 'text-z-primary', textColor: 'text-z-primary' },
+    { name: 'No me gusta', icon: ThumbsDownIcon, color: 'text-red-500', textColor: 'text-red-500' },
+    { name: 'Me divierte', icon: LaughIcon, color: 'text-yellow-500', textColor: 'text-yellow-500' },
+    { name: 'Me asombra', icon: WowIcon, color: 'text-yellow-500', textColor: 'text-yellow-500' },
+    { name: 'Me enoja', icon: AngryIcon, color: 'text-red-500', textColor: 'text-red-500' }
+];
 
 interface PostProps {
   post: PostType;
   index: number;
+  addNotification: (text: string, user: User, postContent?: string) => void;
 }
 
 const Comment: React.FC<{ comment: CommentType }> = ({ comment }) => (
@@ -19,20 +30,36 @@ const Comment: React.FC<{ comment: CommentType }> = ({ comment }) => (
     </div>
 );
 
-const Post: React.FC<PostProps> = ({ post, index }) => {
+const Post: React.FC<PostProps> = ({ post, index, addNotification }) => {
   const { user } = useAuth();
-  const [isLiked, setIsLiked] = useState(false);
+  const [selectedReaction, setSelectedReaction] = useState<string | null>(null);
   const [likeCount, setLikeCount] = useState(post.likes);
   const [comments, setComments] = useState<CommentType[]>(post.comments);
   const [newComment, setNewComment] = useState('');
   const [showAllComments, setShowAllComments] = useState(false);
+  const [showReactions, setShowReactions] = useState(false);
   const commentInputRef = React.useRef<HTMLInputElement>(null);
+  // FIX: Replaced `NodeJS.Timeout` with `number` and used `useRef` to persist the timeout ID across re-renders.
+  const reactionTimeout = React.useRef<number>();
 
-  const handleLike = () => {
-    setIsLiked(!isLiked);
-    setLikeCount(prev => isLiked ? prev - 1 : prev + 1);
+  const handleReactionSelect = (reactionName: string) => {
+    if (selectedReaction === reactionName) {
+      // User is deselecting the reaction
+      setSelectedReaction(null);
+      setLikeCount(prev => prev - 1);
+    } else {
+      // New reaction or changing reaction
+      if (!selectedReaction) {
+        setLikeCount(prev => prev + 1);
+      }
+      setSelectedReaction(reactionName);
+      if(user) {
+        addNotification(`ha reaccionado a la publicación de ${post.user.name}`, user, post.content);
+      }
+    }
+    setShowReactions(false);
   };
-
+  
   const handleAddComment = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newComment.trim() || !user) return;
@@ -45,6 +72,7 @@ const Post: React.FC<PostProps> = ({ post, index }) => {
     };
     setComments(prev => [...prev, commentToAdd]);
     setNewComment('');
+    addNotification(`ha comentado la publicación de ${post.user.name}: "${newComment}"`, user, post.content);
   };
 
   const handleShare = () => {
@@ -62,6 +90,8 @@ const Post: React.FC<PostProps> = ({ post, index }) => {
   };
 
   const displayedComments = showAllComments ? comments : comments.slice(0, 2);
+  const currentReaction = reactions.find(r => r.name === selectedReaction);
+  const ReactionIcon = currentReaction?.icon || ThumbsUpIcon;
 
   return (
     <div 
@@ -103,9 +133,27 @@ const Post: React.FC<PostProps> = ({ post, index }) => {
       <div className="border-t border-gray-200/80 dark:border-z-border-dark mx-4 my-1"></div>
 
       <div className="p-1 flex justify-around text-z-text-secondary dark:text-z-text-secondary-dark">
-         <div onClick={handleLike} className={`flex-1 flex items-center justify-center space-x-2 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-z-hover-dark cursor-pointer transition-colors group ${isLiked ? 'text-z-primary' : ''}`}>
-            <ThumbsUpIcon className="h-6 w-6" />
-            <span className={`font-medium group-hover:text-z-text-primary dark:group-hover:text-z-text-primary-dark transition-colors ${isLiked ? 'text-z-primary' : ''}`}>Me gusta</span>
+         <div 
+            className="relative flex-1"
+            onMouseEnter={() => { clearTimeout(reactionTimeout.current); setShowReactions(true); }}
+            onMouseLeave={() => { reactionTimeout.current = window.setTimeout(() => setShowReactions(false), 300); }}
+         >
+            {showReactions && (
+                <div 
+                  className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 bg-z-bg-secondary dark:bg-z-bg-secondary-dark rounded-full shadow-lg p-1.5 flex space-x-2 border dark:border-z-border-dark animate-fadeIn"
+                  style={{animationDuration: '0.15s'}}
+                >
+                    {reactions.map(r => (
+                        <div key={r.name} onClick={() => handleReactionSelect(r.name)} className="p-1.5 rounded-full hover:bg-gray-200 dark:hover:bg-z-hover-dark cursor-pointer transform hover:scale-125 transition-transform">
+                            <r.icon className={`h-7 w-7 ${r.color}`} />
+                        </div>
+                    ))}
+                </div>
+            )}
+            <div onClick={() => handleReactionSelect('Me gusta')} className={`flex items-center justify-center space-x-2 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-z-hover-dark cursor-pointer transition-colors group ${currentReaction ? currentReaction.textColor : ''}`}>
+                <ReactionIcon className="h-6 w-6" />
+                <span className={`font-medium group-hover:text-z-text-primary dark:group-hover:text-z-text-primary-dark transition-colors ${currentReaction ? currentReaction.textColor : ''}`}>{selectedReaction || 'Me gusta'}</span>
+            </div>
          </div>
          <div onClick={() => commentInputRef.current?.focus()} className="flex-1 flex items-center justify-center space-x-2 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-z-hover-dark cursor-pointer transition-colors group">
             <MessageSquareIcon className="h-6 w-6" />

@@ -17,13 +17,15 @@ const Spinner: React.FC = () => (
 interface ProfilePageProps {
     userPosts: PostType[];
     onAddPost: (post: PostType) => void;
+    navigate: (page: string) => void;
 }
 
-const ProfilePage: React.FC<ProfilePageProps> = ({ userPosts, onAddPost }) => {
+const ProfilePage: React.FC<ProfilePageProps> = ({ userPosts, onAddPost, navigate }) => {
     const { user, updateUser } = useAuth();
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [loading, setLoading] = useState(true);
     const coverPhotoInputRef = useRef<HTMLInputElement>(null);
+    const profilePhotoInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
         setLoading(true);
@@ -40,6 +42,17 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ userPosts, onAddPost }) => {
           const reader = new FileReader();
           reader.onloadend = () => {
             updateUser({ coverUrl: reader.result as string });
+          };
+          reader.readAsDataURL(file);
+        }
+    };
+    
+    const handleProfilePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            updateUser({ avatarUrl: reader.result as string });
           };
           reader.readAsDataURL(file);
         }
@@ -70,11 +83,12 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ userPosts, onAddPost }) => {
 
                     {/* Profile Info */}
                     <div className="p-4 flex flex-col sm:flex-row items-center sm:items-end -mt-16 sm:-mt-8 space-y-4 sm:space-y-0 sm:space-x-6 border-b dark:border-z-border-dark pb-4">
-                        <div className="relative group">
+                        <div className="relative group cursor-pointer" onClick={() => profilePhotoInputRef.current?.click()}>
                             <img src={user.avatarUrl} alt="Avatar del usuario" className="w-40 h-40 rounded-full border-4 border-z-bg-secondary dark:border-z-bg-secondary-dark" loading="lazy"/>
-                             <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity">
+                             <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                                 <ImagePlusIcon className="h-8 w-8 text-white"/>
                             </div>
+                            <input type="file" ref={profilePhotoInputRef} onChange={handleProfilePhotoChange} className="hidden" accept="image/*" />
                         </div>
                         <div className="flex-grow text-center sm:text-left">
                             <h1 className="text-3xl font-bold text-z-text-primary dark:text-z-text-primary-dark">{user.name}</h1>
@@ -102,7 +116,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ userPosts, onAddPost }) => {
                         <div className="bg-z-bg-secondary dark:bg-z-bg-secondary-dark rounded-xl shadow-md p-4">
                             <div className="flex justify-between items-center mb-3">
                                 <h2 className="text-xl font-bold text-z-text-primary dark:text-z-text-primary-dark">Amigos</h2>
-                                <a href="#" className="text-sm text-z-primary hover:underline">Ver todos</a>
+                                <button onClick={() => navigate('friends')} className="text-sm text-z-primary hover:underline">Ver todos</button>
                             </div>
                              <p className="text-z-text-secondary dark:text-z-text-secondary-dark mb-3">{user.friendsCount} amigos</p>
                             <div className="grid grid-cols-3 gap-2">
@@ -133,7 +147,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ userPosts, onAddPost }) => {
                              <CreatePost onAddPost={onAddPost} />
                         </div>
                         {userPosts.map((post, index) => (
-                            <Post key={post.id} post={post} index={index} />
+                            <Post key={post.id} post={post} index={index} addNotification={() => {}} />
                         ))}
                     </div>
                 </div>

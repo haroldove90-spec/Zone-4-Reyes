@@ -4,7 +4,7 @@ import Header from './Header';
 import LeftSidebar from './LeftSidebar';
 import Feed from './Feed';
 import RightSidebar from './RightSidebar';
-import { Post, Fanpage } from '../types';
+import { Post, Fanpage, Notification, User } from '../types';
 import { generateSocialFeed } from '../services/geminiService';
 import InstallPWA from './InstallPWA';
 import BottomNavBar from './BottomNavBar';
@@ -150,6 +150,26 @@ const MainLayout: React.FC = () => {
   const [currentPath, setCurrentPath] = useState(window.location.hash.substring(1) || '/feed');
   const { user } = useAuth();
 
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [notificationCount, setNotificationCount] = useState(3); // Start with some fake notifications
+
+  const addNotification = useCallback((text: string, user: User, postContent?: string) => {
+    const newNotification: Notification = {
+        id: new Date().toISOString(),
+        user: { name: user.name, avatarUrl: user.avatarUrl },
+        text,
+        timestamp: 'Justo ahora',
+        read: false,
+        postContent: postContent ? postContent.substring(0, 50) + '...' : undefined
+    };
+    setNotifications(prev => [newNotification, ...prev]);
+    setNotificationCount(prev => prev + 1);
+  }, []);
+
+  const resetNotificationCount = () => {
+    setNotificationCount(0);
+  };
+
   useEffect(() => {
     const handleHashChange = () => {
         setCurrentPath(window.location.hash.substring(1) || '/feed');
@@ -193,7 +213,7 @@ const MainLayout: React.FC = () => {
       
       switch(path) {
           case 'profile':
-              return <ProfilePage userPosts={posts.slice(0,2)} onAddPost={handleAddPost} />;
+              return <ProfilePage userPosts={posts.slice(0,2)} onAddPost={handleAddPost} navigate={navigate} />;
           case 'friends':
               return <FriendsPage />;
           case 'ads':
@@ -205,16 +225,16 @@ const MainLayout: React.FC = () => {
           case 'create-fanpage':
               return <CreateFanpage onAddPage={handleAddPage} navigate={navigate} />;
           case 'admin':
-              return user?.isAdmin ? <AdminDashboardPage /> : <Feed posts={posts} onAddPost={handleAddPost} loading={loading} />;
+              return user?.isAdmin ? <AdminDashboardPage /> : <Feed posts={posts} onAddPost={handleAddPost} loading={loading} addNotification={addNotification} />;
           case 'feed':
           default:
-              return <Feed posts={posts} onAddPost={handleAddPost} loading={loading} />;
+              return <Feed posts={posts} onAddPost={handleAddPost} loading={loading} addNotification={addNotification} />;
       }
   }
 
   return (
     <div className="min-h-screen bg-z-bg-primary dark:bg-z-bg-primary-dark animate-fadeIn">
-      <Header navigate={navigate} />
+      <Header navigate={navigate} notificationCount={notificationCount} notifications={notifications} onNotificationsOpen={resetNotificationCount} />
       <div className="flex">
         <LeftSidebar navigate={navigate} />
         {renderPage()}

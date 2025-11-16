@@ -5,18 +5,21 @@ import ThemeToggle from './ThemeToggle';
 import { useAuth } from '../contexts/AuthContext';
 import NotificationsPanel from './NotificationsPanel';
 import Messenger from './Messenger';
+import { Notification } from '../types';
 
 interface HeaderProps {
   navigate: (page: string) => void;
+  notificationCount: number;
+  notifications: Notification[];
+  onNotificationsOpen: () => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ navigate }) => {
+const Header: React.FC<HeaderProps> = ({ navigate, notificationCount, notifications, onNotificationsOpen }) => {
   const { user, logout } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [isMessengerOpen, setIsMessengerOpen] = useState(false);
 
-  const [notificationCount, setNotificationCount] = useState(3);
   const [messageCount, setMessageCount] = useState(5);
 
   const menuRef = useRef<HTMLDivElement>(null);
@@ -44,7 +47,9 @@ const Header: React.FC<HeaderProps> = ({ navigate }) => {
 
   const handleNotificationsClick = () => {
     setIsNotificationsOpen(!isNotificationsOpen);
-    setNotificationCount(0); // Mark as read when opened
+    if (!isNotificationsOpen) {
+      onNotificationsOpen();
+    }
   };
   
   const handleMessengerClick = () => {
@@ -97,7 +102,7 @@ const Header: React.FC<HeaderProps> = ({ navigate }) => {
               <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">{notificationCount}</span>
             )}
           </div>
-          {isNotificationsOpen && <NotificationsPanel />}
+          {isNotificationsOpen && <NotificationsPanel notifications={notifications} />}
         </div>
         <div className="relative" ref={menuRef}>
           <img

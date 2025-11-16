@@ -35,6 +35,7 @@ export interface Notification {
   text: string;
   timestamp: string;
   read: boolean;
+  postContent?: string;
 }
 
 export interface ChatMessage {

@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Post as PostType } from '../types';
+import { Post as PostType, User } from '../types';
 import CreatePost from './CreatePost';
 import Post from './Post';
 import StoryReel from './StoryReel';
@@ -26,9 +26,10 @@ interface FeedProps {
     posts: PostType[];
     onAddPost: (post: PostType) => void;
     loading: boolean;
+    addNotification: (text: string, user: User, postContent?: string) => void;
 }
 
-const Feed: React.FC<FeedProps> = ({ posts, onAddPost, loading }) => {
+const Feed: React.FC<FeedProps> = ({ posts, onAddPost, loading, addNotification }) => {
   return (
     <main className="flex-grow pt-14 lg:ml-20 xl:ml-80 lg:mr-72 overflow-x-hidden pb-20 md:pb-0">
       <div className="max-w-xl lg:max-w-2xl xl:max-w-3xl mx-auto px-4">
@@ -45,7 +46,7 @@ const Feed: React.FC<FeedProps> = ({ posts, onAddPost, loading }) => {
         ) : posts.length > 0 ? (
           posts.map((post, index) => (
             <React.Fragment key={post.id}>
-              <Post post={post} index={index} />
+              <Post post={post} index={index} addNotification={addNotification} />
               {/* Inyecta un anuncio simulado después de la segunda publicación */}
               {index === 1 && <AdPost />}
             </React.Fragment>
