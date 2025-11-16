@@ -62,16 +62,18 @@ const Messenger: React.FC<MessengerProps> = ({ onClose, unreadCount, setUnreadCo
         if(activeConversation) {
             const conversationToMarkAsRead = conversations.find(c => c.id === activeConversation.id);
             if (conversationToMarkAsRead && conversationToMarkAsRead.unreadCount > 0) {
-                 const newUnread = unreadCount - conversationToMarkAsRead.unreadCount;
-                setUnreadCount(newUnread < 0 ? 0 : newUnread);
+                 const unreadInThisConv = conversationToMarkAsRead.unreadCount;
+                 setUnreadCount(prevUnread => {
+                    const newUnread = prevUnread - unreadInThisConv;
+                    return newUnread < 0 ? 0 : newUnread;
+                 });
                 
                 setConversations(prev => prev.map(c => 
                     c.id === activeConversation.id ? { ...c, unreadCount: 0 } : c
                 ));
             }
         }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [activeConversation]);
+    }, [activeConversation, conversations, setUnreadCount]);
 
     const handleSendMessage = (e: React.FormEvent) => {
         e.preventDefault();

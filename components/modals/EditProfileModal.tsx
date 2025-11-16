@@ -13,11 +13,12 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({ onClose }) => {
     const [bio, setBio] = useState(user?.bio || '');
     const [location, setLocation] = useState(user?.location || '');
     const [website, setWebsite] = useState(user?.website || '');
-    const [age, setAge] = useState(user?.age || '');
+    const [age, setAge] = useState(user?.age?.toString() || '');
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        updateUser({ name, nickname, bio, location, website, age: Number(age) });
+        const ageValue = age === '' ? undefined : Number(age);
+        updateUser({ name, nickname, bio, location, website, age: ageValue });
         onClose();
     };
 
@@ -56,7 +57,7 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({ onClose }) => {
                                 type="number"
                                 id="age"
                                 value={age}
-                                onChange={(e) => setAge(Number(e.target.value))}
+                                onChange={(e) => setAge(e.target.value)}
                                 className="w-full bg-z-bg-primary dark:bg-z-hover-dark rounded-md px-4 py-2.5 text-z-text-primary dark:text-z-text-primary-dark focus:outline-none focus:ring-2 focus:ring-z-primary/50"
                             />
                         </div>

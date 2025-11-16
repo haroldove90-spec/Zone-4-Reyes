@@ -146,7 +146,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const updateUser = async (newUserData: Partial<AuthUser>) => {
       if(!user) return;
       
-      const snakeCaseData = {
+      const newUserDataSnake: {[key: string]: any} = {
           name: newUserData.name,
           nickname: newUserData.nickname,
           bio: newUserData.bio,
@@ -157,9 +157,16 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           cover_url: newUserData.coverUrl,
       };
 
+      // Filter out undefined values to avoid overwriting existing data with null
+      const updateData = Object.fromEntries(
+        Object.entries(newUserDataSnake).filter(([_, v]) => v !== undefined)
+      );
+
+      if (Object.keys(updateData).length === 0) return;
+
       const { data, error } = await supabase
         .from('profiles')
-        .update(snakeCaseData)
+        .update(updateData)
         .eq('id', user.id)
         .select()
         .single();
