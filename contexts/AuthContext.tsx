@@ -45,21 +45,34 @@ const formatProfile = (profileData: any, supabaseUser: SupabaseUser): AuthUser =
 });
 
 const getUserProfile = async (supabaseUser: SupabaseUser): Promise<AuthUser | null> => {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 5000); // 5-second timeout
+
     try {
         const { data: profile, error } = await supabase
             .from('profiles')
             .select('*')
             .eq('id', supabaseUser.id)
+            .signal(controller.signal)
             .single();
 
+        clearTimeout(timeout);
+
         if (error) {
-            console.error('Error fetching profile:', error.message);
+            if (error.name === 'AbortError') {
+                console.warn('Profile fetch timed out.');
+            } else {
+                console.error('Error fetching profile:', error.message);
+            }
             return null;
         }
 
         return profile ? formatProfile(profile, supabaseUser) : null;
-    } catch (e) {
-        console.error('Exception fetching profile', e);
+    } catch (e: any) {
+        clearTimeout(timeout);
+         if (e.name !== 'AbortError') {
+            console.error('Exception fetching profile', e);
+        }
         return null;
     }
 }
