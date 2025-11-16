@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Post as PostType, Comment as CommentType, User } from '../types';
 import { 
@@ -7,6 +6,36 @@ import {
 } from './icons';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../services/supabaseClient';
+
+export const PostSkeleton: React.FC = () => (
+  <div className="bg-z-bg-secondary dark:bg-z-bg-secondary-dark rounded-xl shadow-md my-6 p-4 animate-pulse">
+    {/* Header */}
+    <div className="flex items-center space-x-3">
+      <div className="h-10 w-10 rounded-full bg-gray-200 dark:bg-z-hover-dark"></div>
+      <div>
+        <div className="h-4 w-32 bg-gray-200 dark:bg-z-hover-dark rounded"></div>
+        <div className="h-3 w-24 bg-gray-200 dark:bg-z-hover-dark rounded mt-1.5"></div>
+      </div>
+    </div>
+
+    {/* Content */}
+    <div className="my-4 space-y-2">
+        <div className="h-4 bg-gray-200 dark:bg-z-hover-dark rounded w-full"></div>
+        <div className="h-4 bg-gray-200 dark:bg-z-hover-dark rounded w-5/6"></div>
+    </div>
+
+    {/* Media */}
+    <div className="aspect-video bg-gray-200 dark:bg-z-hover-dark rounded-lg"></div>
+
+     {/* Actions */}
+    <div className="border-t border-gray-200/80 dark:border-z-border-dark mx-4 my-1 mt-4"></div>
+    <div className="p-1 flex justify-around mt-1">
+        <div className="h-8 w-24 bg-gray-200 dark:bg-z-hover-dark rounded-lg"></div>
+        <div className="h-8 w-24 bg-gray-200 dark:bg-z-hover-dark rounded-lg"></div>
+        <div className="h-8 w-24 bg-gray-200 dark:bg-z-hover-dark rounded-lg"></div>
+    </div>
+  </div>
+);
 
 
 const reactions = [

@@ -1,19 +1,75 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { Post as PostType, Fanpage } from '../types';
-import Post from '../components/Post';
+import Post, { PostSkeleton } from '../components/Post';
 import CreatePost from '../components/CreatePost';
 import { MoreHorizontalIcon, ImagePlusIcon, MapPinIcon, LinkIcon, CakeIcon, UsersIcon, PhotoIcon, FlagIcon } from '../components/icons';
 import EditProfileModal from '../components/modals/EditProfileModal';
 import { supabase } from '../services/supabaseClient';
 
-const Spinner: React.FC = () => (
-    <div className="flex justify-center items-center p-10">
-        <div className="w-12 h-12 border-4 border-z-primary/30 border-t-z-primary rounded-full animate-spin"></div>
-        <style>{`@keyframes spin { to { transform: rotate(360deg); } } .animate-spin { animation: spin 1s linear infinite; }`}</style>
-    </div>
-);
+const ProfilePageSkeleton: React.FC = () => {
+    return (
+        <main className="flex-grow pt-14 lg:ml-20 xl:ml-80 lg:mr-72 overflow-x-hidden animate-pulse">
+            <div className="max-w-4xl mx-auto">
+                <div className="bg-z-bg-secondary dark:bg-z-bg-secondary-dark shadow-md">
+                    {/* Cover Photo */}
+                    <div className="h-48 md:h-64 lg:h-80 bg-gray-200 dark:bg-z-hover-dark"></div>
+
+                    <div className="p-4 flex flex-col sm:flex-row items-center sm:items-end -mt-16 sm:-mt-8 space-y-4 sm:space-y-0 sm:space-x-6 border-b dark:border-z-border-dark pb-4">
+                        {/* Profile Photo */}
+                        <div className="w-40 h-40 rounded-full bg-gray-200 dark:bg-z-hover-dark border-4 border-z-bg-secondary dark:border-z-bg-secondary-dark"></div>
+                        <div className="flex-grow text-center sm:text-left">
+                            {/* Name */}
+                            <div className="h-8 w-48 bg-gray-200 dark:bg-z-hover-dark rounded-md mb-2"></div>
+                            {/* Friends Count */}
+                            <div className="h-4 w-24 bg-gray-200 dark:bg-z-hover-dark rounded-md"></div>
+                        </div>
+                        {/* Action Buttons */}
+                        <div className="flex space-x-2">
+                             <div className="h-10 w-32 bg-gray-200 dark:bg-z-hover-dark rounded-md"></div>
+                             <div className="h-10 w-12 bg-gray-200 dark:bg-z-hover-dark rounded-md"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="p-0 md:p-4 grid grid-cols-1 md:grid-cols-5 gap-6">
+                    {/* Left Column */}
+                    <div className="md:col-span-2 space-y-6 p-4 md:p-0">
+                        {/* Intro Card Skeleton */}
+                        <div className="bg-z-bg-secondary dark:bg-z-bg-secondary-dark rounded-xl shadow-md p-4 space-y-3">
+                            <div className="h-6 w-20 bg-gray-200 dark:bg-z-hover-dark rounded-md"></div>
+                            <div className="h-4 w-full bg-gray-200 dark:bg-z-hover-dark rounded-md"></div>
+                            <div className="h-4 w-5/6 bg-gray-200 dark:bg-z-hover-dark rounded-md"></div>
+                            <div className="h-4 w-full bg-gray-200 dark:bg-z-hover-dark rounded-md mt-2"></div>
+                        </div>
+                        
+                        {/* Friends Card Skeleton */}
+                         <div className="bg-z-bg-secondary dark:bg-z-bg-secondary-dark rounded-xl shadow-md p-4">
+                            <div className="h-6 w-24 bg-gray-200 dark:bg-z-hover-dark rounded-md mb-3"></div>
+                            <div className="grid grid-cols-3 gap-2">
+                                <div className="aspect-square bg-gray-200 dark:bg-z-hover-dark rounded-lg"></div>
+                                <div className="aspect-square bg-gray-200 dark:bg-z-hover-dark rounded-lg"></div>
+                                <div className="aspect-square bg-gray-200 dark:bg-z-hover-dark rounded-lg"></div>
+                            </div>
+                        </div>
+                    </div>
+                    {/* Right Column */}
+                    <div className="md:col-span-3">
+                        {/* Create Post Skeleton */}
+                        <div className="bg-z-bg-secondary dark:bg-z-bg-secondary-dark rounded-xl shadow-md p-4 mb-6">
+                            <div className="flex space-x-3 items-start">
+                                <div className="h-10 w-10 rounded-full bg-gray-200 dark:bg-z-hover-dark"></div>
+                                <div className="h-10 w-full bg-gray-200 dark:bg-z-hover-dark rounded-2xl"></div>
+                            </div>
+                        </div>
+                        <PostSkeleton />
+                        <PostSkeleton />
+                    </div>
+                </div>
+            </div>
+        </main>
+    );
+};
 
 interface ProfilePageProps {
     userPosts: PostType[];
@@ -73,7 +129,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ userPosts, onAddPost, navigat
     const myPages: Partial<Fanpage>[] = [{ name: 'El Rincón del Café', avatarUrl: 'https://picsum.photos/id/55/200' }];
 
     if (loading) {
-        return <main className="flex-grow pt-14 lg:ml-20 xl:ml-80 lg:mr-72"><Spinner /></main>;
+        return <ProfilePageSkeleton />;
     }
     
     if (!user) return null;

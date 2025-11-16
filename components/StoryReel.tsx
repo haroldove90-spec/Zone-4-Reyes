@@ -3,6 +3,14 @@ import { Story } from '../types';
 import { PlusIcon } from './icons';
 import { useAuth } from '../contexts/AuthContext';
 
+const StorySkeleton: React.FC = () => {
+  return (
+    <div className="relative h-56 w-36 rounded-xl shadow-md bg-z-bg-secondary dark:bg-z-bg-secondary-dark flex-shrink-0 animate-pulse">
+       <div className="h-full w-full bg-gray-200 dark:bg-z-hover-dark rounded-xl"></div>
+    </div>
+  );
+};
+
 const initialStories: Story[] = [
   { id: '1', user: { name: 'Jane Smith', avatarUrl: 'https://picsum.photos/id/1025/200' }, imageUrl: 'https://picsum.photos/id/103/200/300' },
   { id: '2', user: { name: 'John Doe', avatarUrl: 'https://picsum.photos/id/1011/200' }, imageUrl: 'https://picsum.photos/id/104/200/300' },
@@ -41,7 +49,11 @@ const StoryCard: React.FC<{ story?: Story; isCreate?: boolean; onClick?: () => v
   );
 };
 
-const StoryReel: React.FC = () => {
+interface StoryReelProps {
+  loading?: boolean;
+}
+
+const StoryReel: React.FC<StoryReelProps> = ({ loading = false }) => {
   const { user } = useAuth();
   const [stories, setStories] = useState<Story[]>(initialStories);
   const storyInputRef = useRef<HTMLInputElement>(null);
@@ -80,10 +92,22 @@ const StoryReel: React.FC = () => {
         onChange={handleStoryFileChange}
       />
       <div className="flex space-x-3 overflow-x-auto pb-4 -mx-4 px-4">
-        <StoryCard isCreate={true} onClick={handleCreateStoryClick} />
-        {stories.map((story) => (
-          <StoryCard key={story.id} story={story} />
-        ))}
+        {loading ? (
+          <>
+            <StorySkeleton />
+            <StorySkeleton />
+            <StorySkeleton />
+            <StorySkeleton />
+            <StorySkeleton />
+          </>
+        ) : (
+          <>
+            <StoryCard isCreate={true} onClick={handleCreateStoryClick} />
+            {stories.map((story) => (
+              <StoryCard key={story.id} story={story} />
+            ))}
+          </>
+        )}
       </div>
     </div>
   );

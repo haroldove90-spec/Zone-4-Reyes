@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Post as PostType, User } from '../types';
 import CreatePost from '../components/CreatePost';
@@ -7,7 +6,7 @@ import { AlertTriangleIcon } from '../components/icons';
 
 interface CitizenReportPageProps {
     reportPosts: PostType[];
-    onAddPost: (content: string, mediaFiles: File[], postType?: 'standard' | 'report') => Promise<void>;
+    onAddPost: (content: string, mediaFiles: File[], postType?: 'standard' | 'report', group?: { id: string; name: string }) => Promise<void>;
 }
 
 const CitizenReportPage: React.FC<CitizenReportPageProps> = ({ reportPosts, onAddPost }) => {
