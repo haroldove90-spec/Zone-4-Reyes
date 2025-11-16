@@ -21,7 +21,9 @@ const ReelItem: React.FC<ReelItemProps> = ({ post, addNotification, isVisible })
       videoRef.current?.play();
     } else {
       videoRef.current?.pause();
-      videoRef.current?.currentTime(0);
+      if(videoRef.current) {
+        videoRef.current.currentTime = 0;
+      }
     }
   }, [isVisible]);
   
@@ -42,13 +44,14 @@ const ReelItem: React.FC<ReelItemProps> = ({ post, addNotification, isVisible })
   };
 
   return (
-    <div className="relative h-full w-full max-w-md mx-auto">
+    <div className="relative h-full w-full">
       <video
         ref={videoRef}
         src={post.media?.[0]?.url}
         loop
         className="h-full w-full object-contain"
         onClick={handleVideoPress}
+        playsInline
       />
       <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/60 to-transparent text-white">
         <div className="flex items-center space-x-3 mb-2">

@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { UsersIcon, ClapperboardIcon, StoreIcon, MegaphoneIcon, ShieldIcon, FlagIcon, AlertTriangleIcon, UsersRoundIcon } from './icons';
+import { UsersIcon, ClapperboardIcon, StoreIcon, MegaphoneIcon, ShieldIcon, FlagIcon, AlertTriangleIcon, UsersRoundIcon, CalendarIcon } from './icons';
 import { useAuth } from '../contexts/AuthContext';
 
 interface SidebarItemProps {
@@ -37,6 +37,7 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({ navigate }) => {
         <SidebarItem Icon={ClapperboardIcon} title="Reels" onClick={() => navigate('reels')} />
         <SidebarItem Icon={UsersRoundIcon} title="Grupos" onClick={() => navigate('groups')} />
         <SidebarItem Icon={StoreIcon} title="Marketplace" onClick={() => navigate('marketplace')} />
+        <SidebarItem Icon={CalendarIcon} title="Eventos" onClick={() => navigate('events')} />
         <SidebarItem Icon={MegaphoneIcon} title="Centro de Anuncios" onClick={() => navigate('ads')} />
         <SidebarItem Icon={FlagIcon} title="Mis Páginas" onClick={() => navigate('my-pages')} />
         {user?.isAdmin && <SidebarItem Icon={ShieldIcon} title="Admin Dashboard" onClick={() => navigate('admin')} />}

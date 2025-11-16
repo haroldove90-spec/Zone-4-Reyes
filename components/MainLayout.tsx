@@ -4,8 +4,8 @@ import Header from './Header';
 import LeftSidebar from './LeftSidebar';
 import Feed from './Feed';
 import RightSidebar from './RightSidebar';
-import { Post, Fanpage, Notification, User, Group } from '../types';
-import { generateSocialFeed, FAKE_GROUPS } from '../services/geminiService';
+import { Post, Fanpage, Notification, User, Group, Event } from '../types';
+import { generateSocialFeed, FAKE_GROUPS, FAKE_EVENTS } from '../services/geminiService';
 import InstallPWA from './InstallPWA';
 import BottomNavBar from './BottomNavBar';
 import ProfilePage from '../pages/ProfilePage';
@@ -21,6 +21,9 @@ import MarketplacePage from '../pages/MarketplacePage';
 import GroupsPage from '../pages/GroupsPage';
 import GroupDetailPage from '../pages/GroupDetailPage';
 import CreateGroupPage from '../pages/CreateGroupPage';
+import EventsPage from '../pages/EventsPage';
+import EventDetailPage from '../pages/EventDetailPage';
+import CreateEventPage from '../pages/CreateEventPage';
 import { useAuth } from '../contexts/AuthContext';
 
 const MOCK_FANPAGES: Fanpage[] = [
@@ -33,6 +36,7 @@ const MainLayout: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [fanpages, setFanpages] = useState<Fanpage[]>(MOCK_FANPAGES);
   const [groups, setGroups] = useState<Group[]>(FAKE_GROUPS);
+  const [events, setEvents] = useState<Event[]>(FAKE_EVENTS);
   const [currentPath, setCurrentPath] = useState(window.location.hash.substring(1) || 'feed');
   const { user } = useAuth();
 
@@ -100,7 +104,11 @@ const MainLayout: React.FC = () => {
 
   const handleAddGroup = (newGroup: Group) => {
     setGroups(prev => [newGroup, ...prev]);
-  }
+  };
+  
+  const handleAddEvent = (newEvent: Event) => {
+    setEvents(prev => [newEvent, ...prev]);
+  };
   
   const renderPage = () => {
       const [path, param] = currentPath.split('/');
@@ -131,6 +139,13 @@ const MainLayout: React.FC = () => {
               return group ? <GroupDetailPage group={group} posts={posts.filter(p => p.group?.id === param)} onAddPost={handleAddPost} /> : <div>Grupo no encontrado</div>;
           case 'create-group':
                 return <CreateGroupPage onAddGroup={handleAddGroup} navigate={navigate} />;
+          case 'events':
+              return <EventsPage navigate={navigate} events={events} />;
+          case 'event':
+              const event = events.find(e => e.id === param);
+              return event ? <EventDetailPage event={event} /> : <div>Evento no encontrado</div>;
+          case 'create-event':
+              return <CreateEventPage onAddEvent={handleAddEvent} navigate={navigate} />;
           case 'admin':
               return user?.isAdmin ? <AdminDashboardPage fanpages={fanpages}/> : <Feed posts={posts.filter(p => p.type !== 'report' && p.format !== 'reel')} onAddPost={handleAddPost} loading={loading} addNotification={addNotification} />;
           case 'feed':

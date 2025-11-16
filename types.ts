@@ -87,3 +87,14 @@ export interface Fanpage {
     bio: string;
     ownerEmail: string;
 }
+
+export interface Event {
+  id: string;
+  name: string;
+  description: string;
+  date: string;
+  location: string;
+  coverUrl: string;
+  organizer: User | Fanpage;
+  attendees: number;
+}
