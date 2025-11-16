@@ -83,9 +83,10 @@ const MainLayout: React.FC = () => {
     setLoading(true);
     try {
         // Step 1: Fetch posts and their user_id
+        // FIX: Removed `group_id` from the select statement as it doesn't exist in the table.
         const { data: postsData, error: postsError } = await supabase
             .from('posts')
-            .select('id, created_at, content, media, type, format, group_id, user_id')
+            .select('id, created_at, content, media, type, format, user_id')
             .order('created_at', { ascending: false });
 
         if (postsError) throw postsError;
@@ -114,12 +115,10 @@ const MainLayout: React.FC = () => {
         if (profilesError) throw profilesError;
 
         // Step 4: Create a map of profiles for easy lookup
-        // Fix: Explicitly type the map to ensure type safety for profile data from Supabase.
         const profilesMap = new Map<string, { id: string; name: string; avatar_url: string; }>((profilesData || []).map((profile: any) => [profile.id, profile]));
 
         // Step 5: Combine posts with their author's profile information
         const fetchedPosts: Post[] = postsData.map((p: any) => {
-            const group = p.group_id ? FAKE_GROUPS.find(g => g.id === p.group_id) : undefined;
             const profile = profilesMap.get(p.user_id);
             const postUser = profile
                 ? { id: profile.id, name: profile.name, avatarUrl: profile.avatar_url }
@@ -136,7 +135,8 @@ const MainLayout: React.FC = () => {
                 likes: 0,
                 commentsCount: 0,
                 comments: [],
-                group: group ? { id: group.id, name: group.name } : undefined,
+                // FIX: Removed group logic as group_id is not available.
+                group: undefined,
             };
         });
 
@@ -155,10 +155,15 @@ const MainLayout: React.FC = () => {
   }, [fetchPosts]);
 
   const handleAddPost = async (content: string, mediaFiles: File[], postType: 'standard' | 'report' = 'standard', group?: { id: string; name: string }) => {
-    if (!user) return;
+    if (!user) {
+        throw new Error("No estás autenticado. Por favor, inicia sesión de nuevo.");
+    }
+    
+    // Envolvemos toda la lógica en un bloque try...catch para garantizar que cualquier fallo sea capturado.
     try {
         let mediaToUpload: Media[] = [];
 
+        // Primero, recorremos y subimos todos los archivos multimedia.
         for (const file of mediaFiles) {
             const fileExt = file.name.split('.').pop();
             const fileName = `${user.id}/${Date.now()}.${fileExt}`;
@@ -168,8 +173,9 @@ const MainLayout: React.FC = () => {
                 .upload(fileName, file);
             
             if (uploadError) {
-                console.error('Error uploading file:', uploadError);
-                throw uploadError;
+                // Si alguna subida falla, nos detenemos y lanzamos el error.
+                console.error('Error al subir el archivo:', uploadError.message);
+                throw new Error(`Error al subir el archivo: ${uploadError.message}`);
             }
 
             const { data: { publicUrl } } = supabase.storage
@@ -182,58 +188,48 @@ const MainLayout: React.FC = () => {
             });
         }
 
+        // Preparamos los datos de la publicación para la inserción.
         const postData: { [key: string]: any } = { 
-        user_id: user.id, 
-        content,
-        media: mediaToUpload.length > 0 ? mediaToUpload : null,
-        type: postType,
-        format: 'post'
+            user_id: user.id, 
+            content,
+            media: mediaToUpload.length > 0 ? mediaToUpload : null,
+            type: postType,
+            format: 'post'
         };
-        if (group) {
-            postData.group_id = group.id;
-        }
+        // FIX: Removed group_id assignment as the column does not exist.
+        // if (group) {
+        //     postData.group_id = group.id;
+        // }
 
-        const { data: newPostData, error: insertError } = await supabase
-        .from('posts')
-        .insert(postData)
-        .select()
-        .single();
+        // Insertamos los datos de la publicación en la base de datos.
+        const { error: insertError } = await supabase
+            .from('posts')
+            .insert(postData)
+            .select()
+            .single();
 
         if (insertError) {
-            console.error('Error creating post:', insertError);
-            throw insertError; // Throw error to be caught by the calling component
+            // Si la inserción en la base de datos falla, lanzamos un error.
+            console.error('Error al crear la publicación en la base de datos:', insertError.message);
+            throw new Error(`Error al guardar la publicación: ${insertError.message}`);
         }
 
-        if (newPostData) {
-            const postUser = { id: user.id, name: user.name, avatarUrl: user.avatarUrl };
-
-            const newPost: Post = {
-                id: newPostData.id.toString(),
-                timestamp: new Date(newPostData.created_at).toLocaleString(),
-                content: newPostData.content,
-                media: newPostData.media,
-                type: newPostData.type,
-                format: newPostData.format,
-                user: postUser,
-                likes: 0,
-                commentsCount: 0,
-                comments: [],
-                group: group,
-            };
-
-            setPosts(prevPosts => [newPost, ...prevPosts]);
-            if (currentPath.startsWith('profile')) {
-                navigate('profile');
-            } else if (!currentPath.startsWith('group/')) {
-                window.scrollTo(0, 0);
-            }
+        // Si todo tiene éxito, volvemos a cargar las publicaciones para mostrar la nueva.
+        await fetchPosts();
+        
+        if (currentPath.startsWith('profile')) {
+            navigate('profile');
+        } else if (!currentPath.startsWith('group/')) {
+            window.scrollTo(0, 0);
         }
+
     } catch(error) {
-        console.error("Full error object in handleAddPost:", error);
+        // Registramos el error final y lo relanzamos para que CreatePost pueda manejarlo.
+        console.error("Error en handleAddPost:", error);
+        // El relanzamiento es crucial para que la interfaz de usuario se desbloquee.
         throw error;
     }
   };
-
 
   const handleAddPage = (newPage: Fanpage) => {
     setFanpages(prev => [newPage, ...prev]);

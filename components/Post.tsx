@@ -68,14 +68,27 @@ const Post: React.FC<PostProps> = ({ post, index, addNotification }) => {
   const [likeCount, setLikeCount] = useState(0);
   const [comments, setComments] = useState<CommentType[]>([]);
   const [commentsCount, setCommentsCount] = useState(0);
+  const [allCommentsLoaded, setAllCommentsLoaded] = useState(false);
 
   const [newComment, setNewComment] = useState('');
-  const [showAllComments, setShowAllComments] = useState(false);
   const commentInputRef = React.useRef<HTMLInputElement>(null);
   const [showReactionPicker, setShowReactionPicker] = useState(false);
   
   const mediaCount = post.media?.length || 0;
   const author = post.fanpage || post.user;
+
+  const formatComment = (c: any): CommentType => {
+      const commentUser = c.profile 
+          ? { id: c.profile.id, name: c.profile.name, avatarUrl: c.profile.avatar_url } 
+          : { id: 'unknown', name: 'Usuario Desconocido', avatarUrl: 'https://static.vecteezy.com/system/resources/thumbnails/009/292/244/small/default-avatar-icon-of-social-media-user-vector.jpg' };
+      
+      return {
+          id: c.id,
+          text: c.text,
+          timestamp: new Date(c.created_at).toLocaleString(),
+          user: commentUser
+      };
+  };
   
   useEffect(() => {
     const fetchPostDetails = async () => {
@@ -103,30 +116,25 @@ const Post: React.FC<PostProps> = ({ post, index, addNotification }) => {
                 }
             }
     
-            // Fetch comments
+            // Fetch initial comments (latest 2)
             const { data: commentsData, count: commentsCountData, error: commentsError } = await supabase
                 .from('comments')
                 .select('*, profile:profiles(id, name, avatar_url)', { count: 'exact' })
                 .eq('post_id', post.id)
-                .order('created_at', { ascending: true });
+                .order('created_at', { ascending: false })
+                .limit(2);
     
             if (commentsError) throw commentsError;
             if (commentsData) {
-                const formattedComments: CommentType[] = commentsData.map((c: any) => {
-                    const commentUser = c.profile 
-                        ? { id: c.profile.id, name: c.profile.name, avatarUrl: c.profile.avatar_url } 
-                        : { id: 'unknown', name: 'Usuario Desconocido', avatarUrl: 'https://static.vecteezy.com/system/resources/thumbnails/009/292/244/small/default-avatar-icon-of-social-media-user-vector.jpg' };
-                    
-                    return {
-                        id: c.id,
-                        text: c.text,
-                        timestamp: new Date(c.created_at).toLocaleString(),
-                        user: commentUser
-                    };
-                });
+                const formattedComments: CommentType[] = commentsData.map(formatComment).reverse();
                 setComments(formattedComments);
             }
-            if (commentsCountData !== null) setCommentsCount(commentsCountData);
+            if (commentsCountData !== null) {
+                setCommentsCount(commentsCountData);
+                 if (commentsData && commentsCountData <= commentsData.length) {
+                    setAllCommentsLoaded(true);
+                }
+            }
         } catch (error) {
             console.error(`Error fetching details for post ${post.id}:`, error);
         }
@@ -134,6 +142,26 @@ const Post: React.FC<PostProps> = ({ post, index, addNotification }) => {
 
     fetchPostDetails();
   }, [post.id, user]);
+
+
+  const handleLoadAllComments = async () => {
+    if (allCommentsLoaded) return;
+    try {
+        const { data: commentsData, error: commentsError } = await supabase
+            .from('comments')
+            .select('*, profile:profiles(id, name, avatar_url)')
+            .eq('post_id', post.id)
+            .order('created_at', { ascending: true });
+        
+        if (commentsError) throw commentsError;
+        if (commentsData) {
+            setComments(commentsData.map(formatComment));
+            setAllCommentsLoaded(true);
+        }
+    } catch (error) {
+        console.error("Error fetching all comments:", error);
+    }
+  };
 
 
   const handleReaction = async (reactionName: string) => {
@@ -195,12 +223,7 @@ const Post: React.FC<PostProps> = ({ post, index, addNotification }) => {
         if (error) throw error;
         
         if (data) {
-             const commentToAdd: CommentType = {
-                id: data.id,
-                user: { id: data.profile.id, name: data.profile.name, avatarUrl: data.profile.avatar_url },
-                text: data.text,
-                timestamp: new Date(data.created_at).toLocaleString()
-            };
+             const commentToAdd = formatComment(data);
             setComments(prev => [...prev, commentToAdd]);
             setCommentsCount(prev => prev + 1);
             setNewComment('');
@@ -225,7 +248,6 @@ const Post: React.FC<PostProps> = ({ post, index, addNotification }) => {
     }
   };
 
-  const displayedComments = showAllComments ? comments : comments.slice(0, 2);
   const selectedReaction = reactions.find(r => r.name === currentReaction);
   const ReactionIcon = selectedReaction?.icon || ThumbsUpIcon;
 
@@ -290,7 +312,7 @@ const Post: React.FC<PostProps> = ({ post, index, addNotification }) => {
                 <span className="text-sm">{likeCount}</span>
             </>}
          </div>
-         {commentsCount > 0 && <span className="text-sm hover:underline cursor-pointer" onClick={() => setShowAllComments(!showAllComments)}>{commentsCount} comentarios</span>}
+         {commentsCount > 0 && <span className="text-sm hover:underline cursor-pointer" onClick={handleLoadAllComments}>{commentsCount} comentarios</span>}
       </div>
 
       <div className="border-t border-gray-200/80 dark:border-z-border-dark mx-4 my-1"></div>
@@ -328,10 +350,10 @@ const Post: React.FC<PostProps> = ({ post, index, addNotification }) => {
       {comments.length > 0 && <div className="border-t border-gray-200/80 dark:border-z-border-dark mx-4 mt-1"></div>}
       
       <div className="p-4 pt-2">
-        {displayedComments.map(comment => <Comment key={comment.id} comment={comment}/>)}
-        {comments.length > 2 && (
-            <button onClick={() => setShowAllComments(!showAllComments)} className="text-sm font-semibold text-z-text-secondary dark:text-z-text-secondary-dark mt-2 hover:underline">
-                {showAllComments ? 'Mostrar menos comentarios' : `Ver ${comments.length - 2} comentarios más`}
+        {comments.map(comment => <Comment key={comment.id} comment={comment}/>)}
+        {!allCommentsLoaded && commentsCount > comments.length && (
+            <button onClick={handleLoadAllComments} className="text-sm font-semibold text-z-text-secondary dark:text-z-text-secondary-dark mt-2 hover:underline">
+                {`Ver ${commentsCount - comments.length} comentarios más`}
             </button>
         )}
         <div className="flex items-center space-x-2 mt-4">
