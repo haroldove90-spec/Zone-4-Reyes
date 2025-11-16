@@ -1,5 +1,5 @@
 
-const CACHE_NAME = 'zone4reyes-social-v3'; // Bumping version to trigger update
+const CACHE_NAME = 'zone4reyes-social-v4'; // Bumping version to trigger update
 const urlsToCache = [
   // Only cache static assets. The main HTML page will be fetched from the network.
   'https://appdesignmex.com/Zone4Reyes.png',
@@ -7,6 +7,8 @@ const urlsToCache = [
 ];
 
 self.addEventListener('install', event => {
+  console.log('ServiceWorker: Installing...');
+  self.skipWaiting(); // Activate new SW immediately
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(cache => {
@@ -69,16 +71,26 @@ self.addEventListener('fetch', event => {
 
 
 self.addEventListener('activate', event => {
+  console.log('ServiceWorker: Activating...');
   const cacheWhitelist = [CACHE_NAME];
   event.waitUntil(
     caches.keys().then(cacheNames => {
       return Promise.all(
         cacheNames.map(cacheName => {
           if (cacheWhitelist.indexOf(cacheName) === -1) {
+            console.log('ServiceWorker: Deleting old cache', cacheName);
             return caches.delete(cacheName);
           }
         })
       );
+    }).then(() => {
+      // Take control of all open clients
+      return self.clients.claim().then(() => {
+        // Notify clients that a new version is available
+        self.clients.matchAll().then(clients => {
+          clients.forEach(client => client.postMessage({ type: 'NEW_VERSION_AVAILABLE' }));
+        });
+      });
     })
   );
 });
