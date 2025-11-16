@@ -82,28 +82,48 @@ const MainLayout: React.FC = () => {
   const fetchPosts = useCallback(async () => {
     setLoading(true);
     try {
-        const { data, error } = await supabase
+        // Step 1: Fetch posts and their user_id
+        const { data: postsData, error: postsError } = await supabase
             .from('posts')
-            .select(`
-                id,
-                created_at,
-                content,
-                media,
-                type,
-                format,
-                group_id,
-                profiles(id, name, avatar_url)
-            `)
+            .select('id, created_at, content, media, type, format, group_id, user_id')
             .order('created_at', { ascending: false });
 
-        if (error) throw error;
-        
-        // Map Supabase response to app's Post type
-        const fetchedPosts: Post[] = data.map((p: any) => {
+        if (postsError) throw postsError;
+
+        if (!postsData) {
+            setPosts([]);
+            setLoading(false);
+            return;
+        }
+
+        // Step 2: Collect all unique user IDs from the posts
+        const userIds = [...new Set(postsData.map(p => p.user_id).filter(Boolean))];
+
+        if (userIds.length === 0) {
+            setPosts([]); // Set empty posts if no users
+            setLoading(false);
+            return;
+        }
+
+        // Step 3: Fetch the profiles for these user IDs
+        const { data: profilesData, error: profilesError } = await supabase
+            .from('profiles')
+            .select('id, name, avatar_url')
+            .in('id', userIds);
+
+        if (profilesError) throw profilesError;
+
+        // Step 4: Create a map of profiles for easy lookup
+        // Fix: Explicitly type the map to ensure type safety for profile data from Supabase.
+        const profilesMap = new Map<string, { id: string; name: string; avatar_url: string; }>((profilesData || []).map((profile: any) => [profile.id, profile]));
+
+        // Step 5: Combine posts with their author's profile information
+        const fetchedPosts: Post[] = postsData.map((p: any) => {
             const group = p.group_id ? FAKE_GROUPS.find(g => g.id === p.group_id) : undefined;
-            const postUser = p.profiles 
-                ? { id: p.profiles.id, name: p.profiles.name, avatarUrl: p.profiles.avatar_url } 
-                : { id: 'unknown', name: 'Usuario Desconocido', avatarUrl: 'https://static.vecteezy.com/system/resources/thumbnails/009/292/244/small/default-avatar-icon-of-social-media-user-vector.jpg' };
+            const profile = profilesMap.get(p.user_id);
+            const postUser = profile
+                ? { id: profile.id, name: profile.name, avatarUrl: profile.avatar_url }
+                : { id: p.user_id || 'unknown', name: 'Usuario Desconocido', avatarUrl: 'https://static.vecteezy.com/system/resources/thumbnails/009/292/244/small/default-avatar-icon-of-social-media-user-vector.jpg' };
 
             return {
                 id: p.id.toString(),
@@ -113,8 +133,8 @@ const MainLayout: React.FC = () => {
                 type: p.type,
                 format: p.format,
                 user: postUser,
-                likes: 0, // Should be fetched separately or with a join
-                commentsCount: 0, // Should be fetched separately
+                likes: 0,
+                commentsCount: 0,
                 comments: [],
                 group: group ? { id: group.id, name: group.name } : undefined,
             };
@@ -122,12 +142,13 @@ const MainLayout: React.FC = () => {
 
         setPosts(fetchedPosts);
 
-    } catch (error) {
-        console.error("Error fetching posts:", error);
+    } catch (error: any) {
+        console.error("Error fetching posts:", error.message || error);
     } finally {
         setLoading(false);
     }
   }, []);
+
 
   useEffect(() => {
     fetchPosts();
@@ -135,77 +156,81 @@ const MainLayout: React.FC = () => {
 
   const handleAddPost = async (content: string, mediaFiles: File[], postType: 'standard' | 'report' = 'standard', group?: { id: string; name: string }) => {
     if (!user) return;
+    try {
+        let mediaToUpload: Media[] = [];
 
-    let mediaToUpload: Media[] = [];
+        for (const file of mediaFiles) {
+            const fileExt = file.name.split('.').pop();
+            const fileName = `${user.id}/${Date.now()}.${fileExt}`;
+            
+            const { error: uploadError } = await supabase.storage
+                .from('media')
+                .upload(fileName, file);
+            
+            if (uploadError) {
+                console.error('Error uploading file:', uploadError);
+                throw uploadError;
+            }
 
-    for (const file of mediaFiles) {
-        const fileExt = file.name.split('.').pop();
-        const fileName = `${user.id}/${Date.now()}.${fileExt}`;
-        
-        const { error: uploadError } = await supabase.storage
-            .from('media')
-            .upload(fileName, file);
-        
-        if (uploadError) {
-            console.error('Error uploading file:', uploadError);
-            throw uploadError;
+            const { data: { publicUrl } } = supabase.storage
+                .from('media')
+                .getPublicUrl(fileName);
+            
+            mediaToUpload.push({
+                type: file.type.startsWith('image/') ? 'image' : 'video',
+                url: publicUrl,
+            });
         }
 
-        const { data: { publicUrl } } = supabase.storage
-            .from('media')
-            .getPublicUrl(fileName);
-        
-        mediaToUpload.push({
-            type: file.type.startsWith('image/') ? 'image' : 'video',
-            url: publicUrl,
-        });
-    }
-
-    const postData: { [key: string]: any } = { 
-      user_id: user.id, 
-      content,
-      media: mediaToUpload.length > 0 ? mediaToUpload : null,
-      type: postType,
-      format: 'post'
-    };
-    if (group) {
-        postData.group_id = group.id;
-    }
-
-    const { data: newPostData, error: insertError } = await supabase
-      .from('posts')
-      .insert(postData)
-      .select()
-      .single();
-
-    if (insertError) {
-        console.error('Error creating post:', insertError);
-        throw insertError; // Throw error to be caught by the calling component
-    }
-
-    if (newPostData) {
-        const postUser = { id: user.id, name: user.name, avatarUrl: user.avatarUrl };
-
-        const newPost: Post = {
-            id: newPostData.id.toString(),
-            timestamp: new Date(newPostData.created_at).toLocaleString(),
-            content: newPostData.content,
-            media: newPostData.media,
-            type: newPostData.type,
-            format: newPostData.format,
-            user: postUser,
-            likes: 0,
-            commentsCount: 0,
-            comments: [],
-            group: group,
+        const postData: { [key: string]: any } = { 
+        user_id: user.id, 
+        content,
+        media: mediaToUpload.length > 0 ? mediaToUpload : null,
+        type: postType,
+        format: 'post'
         };
-
-        setPosts(prevPosts => [newPost, ...prevPosts]);
-        if (currentPath.startsWith('profile')) {
-            navigate('profile');
-        } else if (!currentPath.startsWith('group/')) {
-            window.scrollTo(0, 0);
+        if (group) {
+            postData.group_id = group.id;
         }
+
+        const { data: newPostData, error: insertError } = await supabase
+        .from('posts')
+        .insert(postData)
+        .select()
+        .single();
+
+        if (insertError) {
+            console.error('Error creating post:', insertError);
+            throw insertError; // Throw error to be caught by the calling component
+        }
+
+        if (newPostData) {
+            const postUser = { id: user.id, name: user.name, avatarUrl: user.avatarUrl };
+
+            const newPost: Post = {
+                id: newPostData.id.toString(),
+                timestamp: new Date(newPostData.created_at).toLocaleString(),
+                content: newPostData.content,
+                media: newPostData.media,
+                type: newPostData.type,
+                format: newPostData.format,
+                user: postUser,
+                likes: 0,
+                commentsCount: 0,
+                comments: [],
+                group: group,
+            };
+
+            setPosts(prevPosts => [newPost, ...prevPosts]);
+            if (currentPath.startsWith('profile')) {
+                navigate('profile');
+            } else if (!currentPath.startsWith('group/')) {
+                window.scrollTo(0, 0);
+            }
+        }
+    } catch(error) {
+        console.error("Full error object in handleAddPost:", error);
+        throw error;
     }
   };
 
