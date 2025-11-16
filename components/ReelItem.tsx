@@ -118,6 +118,7 @@ const ReelItem: React.FC<ReelItemProps> = ({ post, addNotification, isVisible, o
               <div className="p-3 bg-black/40 rounded-full">
                   <Share2Icon className="h-7 w-7" />
               </div>
+              <span className="text-sm font-semibold">Compartir</span>
           </div>
         </div>
       </div>
