@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Post as PostType, Comment as CommentType, User } from '../types';
 import { 
@@ -41,6 +42,8 @@ const Post: React.FC<PostProps> = ({ post, index, addNotification }) => {
   const commentInputRef = React.useRef<HTMLInputElement>(null);
   // FIX: Replaced `NodeJS.Timeout` with `number` and used `useRef` to persist the timeout ID across re-renders.
   const reactionTimeout = React.useRef<number>();
+  
+  const mediaCount = post.media?.length || 0;
 
   const handleReactionSelect = (reactionName: string) => {
     if (selectedReaction === reactionName) {
@@ -111,12 +114,37 @@ const Post: React.FC<PostProps> = ({ post, index, addNotification }) => {
              <MoreHorizontalIcon className="h-6 w-6 text-z-text-secondary dark:text-z-text-secondary-dark" />
           </div>
         </div>
-        <p className="my-3 text-z-text-primary dark:text-z-text-primary-dark text-[15px] leading-relaxed whitespace-pre-wrap">{post.content}</p>
+        {post.content && <p className="my-3 text-z-text-primary dark:text-z-text-primary-dark text-[15px] leading-relaxed whitespace-pre-wrap">{post.content}</p>}
       </div>
 
-      {(post.imageUrl || post.imagePreviewUrl) && (
-        <div className="bg-black">
-          <img src={post.imagePreviewUrl || post.imageUrl} alt="Contenido de la publicación" className="w-full h-auto max-h-[70vh] object-contain" loading="lazy" />
+      {(post.media && mediaCount > 0) && (
+        <div className="my-3 -mx-4 sm:mx-0">
+            {mediaCount === 1 ? (
+                <div className="bg-black">
+                    {post.media[0].type === 'image' ? (
+                        <img src={post.media[0].url} alt="Contenido de la publicación" className="w-full h-auto max-h-[70vh] object-contain" loading="lazy" />
+                    ) : (
+                        <video src={post.media[0].url} controls className="w-full h-auto max-h-[70vh] object-contain" />
+                    )}
+                </div>
+            ) : (
+                <div className={`grid gap-0.5 ${mediaCount > 1 ? 'grid-cols-2' : 'grid-cols-1'}`}>
+                    {post.media.slice(0, 4).map((media, index) => (
+                        <div key={index} className="relative bg-black aspect-square">
+                            {media.type === 'image' ? (
+                                <img src={media.url} alt={`Contenido ${index + 1}`} className="w-full h-full object-cover" loading="lazy" />
+                            ) : (
+                                <video src={media.url} controls className="w-full h-full object-cover" />
+                            )}
+                            {mediaCount > 4 && index === 3 && (
+                                <div className="absolute inset-0 bg-black/60 flex items-center justify-center text-white text-2xl font-bold">
+                                    +{mediaCount - 4}
+                                </div>
+                            )}
+                        </div>
+                    ))}
+                </div>
+            )}
         </div>
       )}
 

@@ -17,13 +17,17 @@ export interface Comment {
   timestamp: string;
 }
 
+export interface Media {
+  type: 'image' | 'video';
+  url: string;
+}
+
 export interface Post {
   id: string;
   user: User;
   timestamp: string;
   content: string;
-  imageUrl?: string;
-  imagePreviewUrl?: string; // For client-side image uploads
+  media?: Media[];
   likes: number;
   commentsCount: number;
   comments: Comment[];

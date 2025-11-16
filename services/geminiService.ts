@@ -8,7 +8,7 @@ const FAKE_POSTS: Post[] = [
       user: { name: "Juan Pérez", avatarUrl: "https://picsum.photos/id/1011/200" },
       timestamp: "hace 2h",
       content: "¡Pasando un tiempo increíble explorando las montañas! La vista es impresionante. 🏔️ #naturaleza #viajes",
-      imageUrl: "https://picsum.photos/id/1015/800/600",
+      media: [{ type: 'image', url: "https://picsum.photos/id/1015/800/600" }],
       likes: 128,
       commentsCount: 12,
       comments: [],
@@ -18,7 +18,7 @@ const FAKE_POSTS: Post[] = [
       user: { name: "Ana García", avatarUrl: "https://picsum.photos/id/1025/200" },
       timestamp: "hace 5h",
       content: "Acabo de terminar una nueva pintura. ¿Qué les parece? 🎨",
-      imageUrl: "https://picsum.photos/id/10/800/600",
+      media: [{ type: 'image', url: "https://picsum.photos/id/10/800/600" }],
       likes: 256,
       commentsCount: 34,
       comments: [],
@@ -93,8 +93,16 @@ export const generateSocialFeed = async (): Promise<Post[]> => {
     });
 
     const text = response.text.trim();
-    const posts = JSON.parse(text);
-    return posts;
+    const postsFromApi = JSON.parse(text);
+
+    // Adapt API response to new Post structure
+    const adaptedPosts: Post[] = postsFromApi.map((p: any) => ({
+        ...p,
+        media: p.imageUrl ? [{ type: 'image', url: p.imageUrl }] : [],
+        imageUrl: undefined, // remove old property
+    }));
+    
+    return adaptedPosts;
   } catch (error) {
     console.error("Error al generar el feed social desde Gemini:", error);
     return FAKE_POSTS;
