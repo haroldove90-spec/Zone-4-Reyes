@@ -27,7 +27,7 @@ const Post: React.FC<PostProps> = ({ post }) => {
       </div>
 
       {post.imageUrl && (
-        <img src={post.imageUrl} alt="Post content" className="w-full h-auto" />
+        <img src={post.imageUrl} alt="Contenido de la publicación" className="w-full h-auto" />
       )}
 
       <div className="p-2 px-4 flex justify-between items-center text-z-text-secondary dark:text-z-text-secondary-dark">
@@ -37,7 +37,7 @@ const Post: React.FC<PostProps> = ({ post }) => {
             </div>
             <span className="text-sm">{post.likes}</span>
          </div>
-         <span className="text-sm hover:underline cursor-pointer">{post.commentsCount} comments</span>
+         <span className="text-sm hover:underline cursor-pointer">{post.commentsCount} comentarios</span>
       </div>
 
       <div className="border-t border-gray-200/80 dark:border-z-border-dark mx-4 my-1"></div>
@@ -45,15 +45,15 @@ const Post: React.FC<PostProps> = ({ post }) => {
       <div className="p-1 flex justify-around text-z-text-secondary dark:text-z-text-secondary-dark">
          <div className="flex-1 flex items-center justify-center space-x-2 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-z-hover-dark cursor-pointer">
             <ThumbsUpIcon className="h-6 w-6" />
-            <span className="font-medium">Like</span>
+            <span className="font-medium">Me gusta</span>
          </div>
          <div className="flex-1 flex items-center justify-center space-x-2 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-z-hover-dark cursor-pointer">
             <MessageSquareIcon className="h-6 w-6" />
-            <span className="font-medium">Comment</span>
+            <span className="font-medium">Comentar</span>
          </div>
          <div className="flex-1 flex items-center justify-center space-x-2 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-z-hover-dark cursor-pointer">
             <Share2Icon className="h-6 w-6" />
-            <span className="font-medium">Share</span>
+            <span className="font-medium">Compartir</span>
          </div>
       </div>
     </div>

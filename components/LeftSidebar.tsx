@@ -26,13 +26,13 @@ const LeftSidebar: React.FC = () => {
     <aside className="hidden lg:block w-20 xl:w-80 pt-14 px-4 fixed h-full">
       <nav className="flex flex-col space-y-2">
         {user && <SidebarItem avatarUrl={user.avatarUrl} title={user.name} Icon={UsersIcon} />}
-        <SidebarItem Icon={UsersIcon} title="Friends" />
-        <SidebarItem Icon={ClapperboardIcon} title="Watch" />
+        <SidebarItem Icon={UsersIcon} title="Amigos" />
+        <SidebarItem Icon={ClapperboardIcon} title="Videos" />
         <SidebarItem Icon={StoreIcon} title="Marketplace" />
          <div className="border-t border-gray-300 dark:border-z-border-dark my-2"></div>
-        <h2 className="text-z-text-secondary dark:text-z-text-secondary-dark font-semibold text-lg pt-2 hidden xl:block">Your Shortcuts</h2>
-        <SidebarItem avatarUrl="https://picsum.photos/id/33/200" title="Design Group" Icon={UsersIcon} />
-        <SidebarItem avatarUrl="https://picsum.photos/id/44/200" title="Gaming Community" Icon={UsersIcon} />
+        <h2 className="text-z-text-secondary dark:text-z-text-secondary-dark font-semibold text-lg pt-2 hidden xl:block">Tus Atajos</h2>
+        <SidebarItem avatarUrl="https://picsum.photos/id/33/200" title="Grupo de Diseño" Icon={UsersIcon} />
+        <SidebarItem avatarUrl="https://picsum.photos/id/44/200" title="Comunidad de Gaming" Icon={UsersIcon} />
       </nav>
     </aside>
   );

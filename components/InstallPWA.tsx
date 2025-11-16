@@ -39,9 +39,9 @@ const InstallPWA: React.FC = () => {
             deferredPrompt.prompt();
             deferredPrompt.userChoice.then((choiceResult: { outcome: string }) => {
                 if (choiceResult.outcome === 'accepted') {
-                    console.log('User accepted the A2HS prompt');
+                    console.log('El usuario aceptó la solicitud A2HS');
                 } else {
-                    console.log('User dismissed the A2HS prompt');
+                    console.log('El usuario rechazó la solicitud A2HS');
                 }
                 setDeferredPrompt(null);
             });
@@ -61,20 +61,20 @@ const InstallPWA: React.FC = () => {
             <div className="flex items-center">
                 <img src="https://appdesignmex.com/iconoreyes.png" alt="App Icon" className="h-12 w-12 mr-4" />
                 <div>
-                    <h3 className="font-bold text-z-text-primary dark:text-z-text-primary-dark">Install Zone4Reyes App</h3>
-                    <p className="text-sm text-z-text-secondary dark:text-z-text-secondary-dark">Add to your home screen for a better experience.</p>
+                    <h3 className="font-bold text-z-text-primary dark:text-z-text-primary-dark">Instala la app de Zone4Reyes</h3>
+                    <p className="text-sm text-z-text-secondary dark:text-z-text-secondary-dark">Añádela a tu pantalla de inicio para una mejor experiencia.</p>
                 </div>
             </div>
             <div className="flex items-center space-x-2">
                 {isIos() ? (
-                     <p className="text-sm text-z-text-primary dark:text-z-text-primary-dark font-medium">Tap 'Share' then 'Add to Home Screen'</p>
+                     <p className="text-sm text-z-text-primary dark:text-z-text-primary-dark font-medium">Toca 'Compartir' y luego 'Añadir a pantalla de inicio'</p>
                 ) : (
                     <button onClick={handleInstallClick} className="bg-z-primary text-white font-bold py-2 px-4 rounded-lg hover:bg-z-dark-blue transition-colors">
-                        Install
+                        Instalar
                     </button>
                 )}
                  <button onClick={handleClose} className="text-z-text-secondary dark:text-z-text-secondary-dark font-medium py-2 px-4 rounded-lg hover:bg-gray-100 dark:hover:bg-z-hover-dark">
-                    Not now
+                    Ahora no
                 </button>
             </div>
              <style>{`

@@ -20,7 +20,7 @@ const Feed: React.FC<FeedProps> = ({ posts, onAddPost }) => {
         {posts.length > 0 ? (
           posts.map((post) => <Post key={post.id} post={post} />)
         ) : (
-          <div className="text-center py-10 text-z-text-secondary">Loading posts...</div>
+          <div className="text-center py-10 text-z-text-secondary">Cargando publicaciones...</div>
         )}
       </div>
     </main>

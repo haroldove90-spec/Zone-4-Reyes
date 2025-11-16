@@ -25,7 +25,7 @@ const RightSidebar: React.FC = () => {
   return (
     <aside className="hidden lg:block w-72 pt-16 px-4 fixed right-0 h-full">
       <div className="flex flex-col space-y-2">
-        <h2 className="text-z-text-secondary dark:text-z-text-secondary-dark font-semibold text-lg mb-2">Contacts</h2>
+        <h2 className="text-z-text-secondary dark:text-z-text-secondary-dark font-semibold text-lg mb-2">Contactos</h2>
         {contacts.map((contact) => (
           <ContactItem key={contact.name} name={contact.name} avatarUrl={contact.avatarUrl} />
         ))}

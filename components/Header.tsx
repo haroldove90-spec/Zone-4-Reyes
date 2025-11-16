@@ -32,7 +32,7 @@ const Header: React.FC = () => {
           </div>
           <input
             type="text"
-            placeholder="Search Zone4Reyes"
+            placeholder="Buscar en Zone4Reyes"
             className="bg-z-bg-primary dark:bg-z-hover-dark text-z-text-primary dark:text-z-text-primary-dark rounded-full py-2 pl-10 pr-4 w-60 focus:outline-none focus:ring-2 focus:ring-z-primary/50"
           />
         </div>
@@ -44,13 +44,13 @@ const Header: React.FC = () => {
       {/* Center Section */}
       <div className="flex-grow flex justify-center items-stretch h-full hidden md:flex">
         <div className="flex space-x-2">
-          <div className="flex items-center border-b-4 border-z-primary text-z-primary px-6 cursor-pointer" title="Home">
+          <div className="flex items-center border-b-4 border-z-primary text-z-primary px-6 cursor-pointer" title="Inicio">
             <HomeIcon className="h-7 w-7" />
           </div>
-          <div className="flex items-center text-z-text-secondary dark:text-z-text-secondary-dark hover:bg-gray-100 dark:hover:bg-z-hover-dark px-6 rounded-lg cursor-pointer" title="Friends">
+          <div className="flex items-center text-z-text-secondary dark:text-z-text-secondary-dark hover:bg-gray-100 dark:hover:bg-z-hover-dark px-6 rounded-lg cursor-pointer" title="Amigos">
             <UsersIcon className="h-7 w-7" />
           </div>
-          <div className="flex items-center text-z-text-secondary dark:text-z-text-secondary-dark hover:bg-gray-100 dark:hover:bg-z-hover-dark px-6 rounded-lg cursor-pointer" title="Watch">
+          <div className="flex items-center text-z-text-secondary dark:text-z-text-secondary-dark hover:bg-gray-100 dark:hover:bg-z-hover-dark px-6 rounded-lg cursor-pointer" title="Videos">
             <ClapperboardIcon className="h-7 w-7" />
           </div>
           <div className="flex items-center text-z-text-secondary dark:text-z-text-secondary-dark hover:bg-gray-100 dark:hover:bg-z-hover-dark px-6 rounded-lg cursor-pointer" title="Marketplace">
@@ -65,7 +65,7 @@ const Header: React.FC = () => {
         <div className="p-2 bg-z-bg-primary dark:bg-z-bg-secondary-dark rounded-full cursor-pointer hover:bg-gray-200 dark:hover:bg-z-hover-dark" title="Messenger">
           <MessageCircleIcon className="h-6 w-6 text-z-text-primary dark:text-z-text-primary-dark" />
         </div>
-        <div className="p-2 bg-z-bg-primary dark:bg-z-bg-secondary-dark rounded-full cursor-pointer hover:bg-gray-200 dark:hover:bg-z-hover-dark" title="Notifications">
+        <div className="p-2 bg-z-bg-primary dark:bg-z-bg-secondary-dark rounded-full cursor-pointer hover:bg-gray-200 dark:hover:bg-z-hover-dark" title="Notificaciones">
           <BellIcon className="h-6 w-6 text-z-text-primary dark:text-z-text-primary-dark" />
         </div>
         <div className="relative" ref={menuRef}>
@@ -78,7 +78,7 @@ const Header: React.FC = () => {
           {isMenuOpen && (
              <div className="absolute right-0 mt-2 w-48 bg-z-bg-secondary dark:bg-z-bg-secondary-dark rounded-md shadow-lg py-1 z-50 border dark:border-z-border-dark">
                 <div className="px-4 py-2 text-sm text-z-text-primary dark:text-z-text-primary-dark border-b dark:border-z-border-dark">
-                  Signed in as <br/>
+                  Has iniciado sesión como <br/>
                   <span className="font-semibold">{user?.name}</span>
                 </div>
                 <button
@@ -86,7 +86,7 @@ const Header: React.FC = () => {
                   className="w-full text-left flex items-center space-x-2 px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-z-hover-dark"
                 >
                   <LogOutIcon className="h-5 w-5" />
-                  <span>Logout</span>
+                  <span>Cerrar Sesión</span>
                 </button>
             </div>
           )}
