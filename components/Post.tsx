@@ -25,6 +25,8 @@ const Post: React.FC<PostProps> = ({ post, index }) => {
   const [likeCount, setLikeCount] = useState(post.likes);
   const [comments, setComments] = useState<CommentType[]>(post.comments);
   const [newComment, setNewComment] = useState('');
+  const [showAllComments, setShowAllComments] = useState(false);
+  const commentInputRef = React.useRef<HTMLInputElement>(null);
 
   const handleLike = () => {
     setIsLiked(!isLiked);
@@ -45,6 +47,22 @@ const Post: React.FC<PostProps> = ({ post, index }) => {
     setNewComment('');
   };
 
+  const handleShare = () => {
+    if (navigator.share) {
+      navigator.share({
+        title: `Publicación de ${post.user.name}`,
+        text: post.content,
+        url: window.location.href,
+      })
+      .then(() => console.log('Successful share'))
+      .catch((error) => console.log('Error sharing', error));
+    } else {
+      alert('¡Publicación compartida! (Simulación)');
+    }
+  };
+
+  const displayedComments = showAllComments ? comments : comments.slice(0, 2);
+
   return (
     <div 
       className="bg-z-bg-secondary dark:bg-z-bg-secondary-dark rounded-xl shadow-md my-6 border border-transparent dark:border-z-border-dark animate-slideInUp"
@@ -63,7 +81,7 @@ const Post: React.FC<PostProps> = ({ post, index }) => {
              <MoreHorizontalIcon className="h-6 w-6 text-z-text-secondary dark:text-z-text-secondary-dark" />
           </div>
         </div>
-        <p className="my-3 text-z-text-primary dark:text-z-text-primary-dark text-[15px] leading-relaxed">{post.content}</p>
+        <p className="my-3 text-z-text-primary dark:text-z-text-primary-dark text-[15px] leading-relaxed whitespace-pre-wrap">{post.content}</p>
       </div>
 
       {(post.imageUrl || post.imagePreviewUrl) && (
@@ -79,7 +97,7 @@ const Post: React.FC<PostProps> = ({ post, index }) => {
             </div>
             <span className="text-sm">{likeCount}</span>
          </div>
-         <span className="text-sm hover:underline cursor-pointer">{comments.length > 0 ? `${comments.length} comentarios` : ''}</span>
+         {comments.length > 0 && <span className="text-sm hover:underline cursor-pointer" onClick={() => setShowAllComments(!showAllComments)}>{comments.length} comentarios</span>}
       </div>
 
       <div className="border-t border-gray-200/80 dark:border-z-border-dark mx-4 my-1"></div>
@@ -89,24 +107,30 @@ const Post: React.FC<PostProps> = ({ post, index }) => {
             <ThumbsUpIcon className="h-6 w-6" />
             <span className={`font-medium group-hover:text-z-text-primary dark:group-hover:text-z-text-primary-dark transition-colors ${isLiked ? 'text-z-primary' : ''}`}>Me gusta</span>
          </div>
-         <div className="flex-1 flex items-center justify-center space-x-2 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-z-hover-dark cursor-pointer transition-colors group">
+         <div onClick={() => commentInputRef.current?.focus()} className="flex-1 flex items-center justify-center space-x-2 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-z-hover-dark cursor-pointer transition-colors group">
             <MessageSquareIcon className="h-6 w-6" />
             <span className="font-medium group-hover:text-z-text-primary dark:group-hover:text-z-text-primary-dark transition-colors">Comentar</span>
          </div>
-         <div className="flex-1 flex items-center justify-center space-x-2 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-z-hover-dark cursor-pointer transition-colors group">
+         <div onClick={handleShare} className="flex-1 flex items-center justify-center space-x-2 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-z-hover-dark cursor-pointer transition-colors group">
             <Share2Icon className="h-6 w-6" />
             <span className="font-medium group-hover:text-z-text-primary dark:group-hover:text-z-text-primary-dark transition-colors">Compartir</span>
          </div>
       </div>
       
-      <div className="border-t border-gray-200/80 dark:border-z-border-dark mx-4 mt-1"></div>
+      {comments.length > 0 && <div className="border-t border-gray-200/80 dark:border-z-border-dark mx-4 mt-1"></div>}
       
       <div className="p-4 pt-2">
-        {comments.map(comment => <Comment key={comment.id} comment={comment}/>)}
+        {displayedComments.map(comment => <Comment key={comment.id} comment={comment}/>)}
+        {comments.length > 2 && (
+            <button onClick={() => setShowAllComments(!showAllComments)} className="text-sm font-semibold text-z-text-secondary dark:text-z-text-secondary-dark mt-2 hover:underline">
+                {showAllComments ? 'Mostrar menos comentarios' : `Ver ${comments.length - 2} comentarios más`}
+            </button>
+        )}
         <div className="flex items-center space-x-2 mt-4">
             <img src={user?.avatarUrl} alt="Tu avatar" className="h-8 w-8 rounded-full" />
             <form onSubmit={handleAddComment} className="flex-1">
                  <input
+                    ref={commentInputRef}
                     type="text"
                     value={newComment}
                     onChange={(e) => setNewComment(e.target.value)}

@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Conversation, ChatMessage } from '../types';
-import { MoreHorizontalIcon, SearchIcon } from './icons';
+import { MoreHorizontalIcon, SearchIcon, SendIcon } from './icons';
 
 const initialConversations: Conversation[] = [
     {
@@ -35,22 +35,25 @@ interface MessengerProps {
 
 const Messenger: React.FC<MessengerProps> = ({ onClose, unreadCount, setUnreadCount }) => {
     const [conversations, setConversations] = useState(initialConversations);
-    const [activeConversation, setActiveConversation] = useState<Conversation | null>(conversations[0]);
+    const [activeConversation, setActiveConversation] = useState<Conversation | null>(null);
     const [newMessage, setNewMessage] = useState('');
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+        messagesEndRef.current?.scrollIntoView({ behavior: 'auto' });
     }, [activeConversation?.messages]);
     
     useEffect(() => {
         if(activeConversation) {
-            const newUnread = unreadCount - activeConversation.unreadCount;
-            setUnreadCount(newUnread < 0 ? 0 : newUnread);
-            
-            setConversations(prev => prev.map(c => 
-                c.id === activeConversation.id ? { ...c, unreadCount: 0 } : c
-            ));
+            const conversationToMarkAsRead = conversations.find(c => c.id === activeConversation.id);
+            if (conversationToMarkAsRead && conversationToMarkAsRead.unreadCount > 0) {
+                 const newUnread = unreadCount - conversationToMarkAsRead.unreadCount;
+                setUnreadCount(newUnread < 0 ? 0 : newUnread);
+                
+                setConversations(prev => prev.map(c => 
+                    c.id === activeConversation.id ? { ...c, unreadCount: 0 } : c
+                ));
+            }
         }
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [activeConversation]);
@@ -100,11 +103,11 @@ const Messenger: React.FC<MessengerProps> = ({ onClose, unreadCount, setUnreadCo
                                     <img src={conv.user.avatarUrl} alt={conv.user.name} className="h-12 w-12 rounded-full" />
                                     <div className="absolute bottom-0 right-0 bg-green-500 w-3 h-3 rounded-full border-2 border-z-bg-secondary dark:border-z-bg-secondary-dark"></div>
                                 </div>
-                                <div className="flex-1">
-                                    <p className="font-bold text-z-text-primary dark:text-z-text-primary-dark">{conv.user.name}</p>
+                                <div className="flex-1 overflow-hidden">
+                                    <p className="font-bold text-z-text-primary dark:text-z-text-primary-dark truncate">{conv.user.name}</p>
                                     <p className={`text-sm truncate ${conv.unreadCount > 0 ? 'text-z-text-primary dark:text-z-text-primary-dark font-bold' : 'text-z-text-secondary dark:text-z-text-secondary-dark'}`}>{conv.messages[conv.messages.length - 1].text}</p>
                                 </div>
-                                {conv.unreadCount > 0 && <div className="w-3 h-3 bg-z-primary rounded-full"></div>}
+                                {conv.unreadCount > 0 && <div className="w-3 h-3 bg-z-primary rounded-full flex-shrink-0"></div>}
                             </div>
                         ))}
                     </div>
@@ -128,14 +131,17 @@ const Messenger: React.FC<MessengerProps> = ({ onClose, unreadCount, setUnreadCo
                                 ))}
                                 <div ref={messagesEndRef} />
                             </div>
-                            <form onSubmit={handleSendMessage} className="p-3 border-t dark:border-z-border-dark flex-shrink-0">
+                            <form onSubmit={handleSendMessage} className="p-3 border-t dark:border-z-border-dark flex-shrink-0 flex items-center space-x-2">
                                 <input
                                     type="text"
                                     value={newMessage}
                                     onChange={(e) => setNewMessage(e.target.value)}
                                     placeholder="Escribe un mensaje..."
-                                    className="w-full bg-z-bg-primary dark:bg-z-hover-dark rounded-full px-4 py-2 focus:outline-none"
+                                    className="flex-1 w-full bg-z-bg-primary dark:bg-z-hover-dark rounded-full px-4 py-2 focus:outline-none"
                                 />
+                                <button type="submit" className="p-2 rounded-full text-z-primary hover:bg-blue-100 dark:hover:bg-z-hover-dark transition-colors">
+                                    <SendIcon className="h-6 w-6"/>
+                                </button>
                             </form>
                         </>
                     ) : (

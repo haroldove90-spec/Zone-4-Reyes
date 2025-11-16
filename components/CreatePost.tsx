@@ -11,12 +11,14 @@ interface CreatePostProps {
 const CreatePost: React.FC<CreatePostProps> = ({ onAddPost }) => {
   const [input, setInput] = useState('');
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { user } = useAuth();
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      setError(null);
       const reader = new FileReader();
       reader.onloadend = () => {
         setImagePreview(reader.result as string);
@@ -27,7 +29,12 @@ const CreatePost: React.FC<CreatePostProps> = ({ onAddPost }) => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if ((!input.trim() && !imagePreview) || !user) return;
+    if ((!input.trim() && !imagePreview)) {
+        setError('No se puede crear una publicación vacía.');
+        setTimeout(() => setError(null), 3000);
+        return;
+    }
+    if (!user) return;
 
     const newPost: Post = {
       id: new Date().toISOString(),
@@ -42,6 +49,7 @@ const CreatePost: React.FC<CreatePostProps> = ({ onAddPost }) => {
     onAddPost(newPost);
     setInput('');
     setImagePreview(null);
+    setError(null);
     if(fileInputRef.current) {
         fileInputRef.current.value = "";
     }
@@ -56,9 +64,12 @@ const CreatePost: React.FC<CreatePostProps> = ({ onAddPost }) => {
         <form onSubmit={handleSubmit} className="flex-1">
           <textarea
             value={input}
-            onChange={(e) => setInput(e.target.value)}
+            onChange={(e) => {
+              setInput(e.target.value);
+              if (error) setError(null);
+            }}
             placeholder={`¿Qué estás pensando, ${user.name}?`}
-            className="w-full bg-z-bg-primary dark:bg-z-hover-dark rounded-2xl px-4 py-2.5 text-z-text-primary dark:text-z-text-primary-dark focus:outline-none placeholder:text-z-text-secondary dark:placeholder:text-z-text-secondary-dark hover:bg-gray-200 dark:hover:bg-z-bg-secondary-dark/60 transition-colors resize-none"
+            className={`w-full bg-z-bg-primary dark:bg-z-hover-dark rounded-2xl px-4 py-2.5 text-z-text-primary dark:text-z-text-primary-dark focus:outline-none placeholder:text-z-text-secondary dark:placeholder:text-z-text-secondary-dark hover:bg-gray-200 dark:hover:bg-z-bg-secondary-dark/60 transition-colors resize-none ${error ? 'ring-2 ring-red-500' : ''}`}
             rows={input || imagePreview ? 3 : 1}
           />
            {imagePreview && (
@@ -73,6 +84,7 @@ const CreatePost: React.FC<CreatePostProps> = ({ onAddPost }) => {
               </button>
             </div>
           )}
+          {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
           <button type="submit" className="hidden">Submit</button>
         </form>
       </div>

@@ -9,11 +9,15 @@ interface EditProfileModalProps {
 const EditProfileModal: React.FC<EditProfileModalProps> = ({ onClose }) => {
     const { user, updateUser } = useAuth();
     const [name, setName] = useState(user?.name || '');
+    const [nickname, setNickname] = useState(user?.nickname || '');
     const [bio, setBio] = useState(user?.bio || '');
+    const [location, setLocation] = useState(user?.location || '');
+    const [website, setWebsite] = useState(user?.website || '');
+    const [age, setAge] = useState(user?.age || '');
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        updateUser({ name, bio });
+        updateUser({ name, nickname, bio, location, website, age: Number(age) });
         onClose();
     };
 
@@ -25,7 +29,7 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({ onClose }) => {
                     <button onClick={onClose} className="text-2xl text-z-text-secondary dark:text-z-text-secondary-dark hover:text-z-text-primary dark:hover:text-z-text-primary-dark">&times;</button>
                 </div>
                 <form onSubmit={handleSubmit}>
-                    <div className="p-6 space-y-4">
+                    <div className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
                         <div>
                             <label htmlFor="name" className="block text-sm font-medium text-z-text-secondary dark:text-z-text-secondary-dark mb-1">Nombre</label>
                             <input
@@ -33,6 +37,46 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({ onClose }) => {
                                 id="name"
                                 value={name}
                                 onChange={(e) => setName(e.target.value)}
+                                className="w-full bg-z-bg-primary dark:bg-z-hover-dark rounded-md px-4 py-2.5 text-z-text-primary dark:text-z-text-primary-dark focus:outline-none focus:ring-2 focus:ring-z-primary/50"
+                            />
+                        </div>
+                        <div>
+                            <label htmlFor="nickname" className="block text-sm font-medium text-z-text-secondary dark:text-z-text-secondary-dark mb-1">Nickname</label>
+                            <input
+                                type="text"
+                                id="nickname"
+                                value={nickname}
+                                onChange={(e) => setNickname(e.target.value)}
+                                className="w-full bg-z-bg-primary dark:bg-z-hover-dark rounded-md px-4 py-2.5 text-z-text-primary dark:text-z-text-primary-dark focus:outline-none focus:ring-2 focus:ring-z-primary/50"
+                            />
+                        </div>
+                         <div>
+                            <label htmlFor="age" className="block text-sm font-medium text-z-text-secondary dark:text-z-text-secondary-dark mb-1">Edad</label>
+                            <input
+                                type="number"
+                                id="age"
+                                value={age}
+                                onChange={(e) => setAge(Number(e.target.value))}
+                                className="w-full bg-z-bg-primary dark:bg-z-hover-dark rounded-md px-4 py-2.5 text-z-text-primary dark:text-z-text-primary-dark focus:outline-none focus:ring-2 focus:ring-z-primary/50"
+                            />
+                        </div>
+                        <div>
+                            <label htmlFor="location" className="block text-sm font-medium text-z-text-secondary dark:text-z-text-secondary-dark mb-1">Ubicación</label>
+                            <input
+                                type="text"
+                                id="location"
+                                value={location}
+                                onChange={(e) => setLocation(e.target.value)}
+                                className="w-full bg-z-bg-primary dark:bg-z-hover-dark rounded-md px-4 py-2.5 text-z-text-primary dark:text-z-text-primary-dark focus:outline-none focus:ring-2 focus:ring-z-primary/50"
+                            />
+                        </div>
+                        <div>
+                            <label htmlFor="website" className="block text-sm font-medium text-z-text-secondary dark:text-z-text-secondary-dark mb-1">Sitio Web</label>
+                            <input
+                                type="text"
+                                id="website"
+                                value={website}
+                                onChange={(e) => setWebsite(e.target.value)}
                                 className="w-full bg-z-bg-primary dark:bg-z-hover-dark rounded-md px-4 py-2.5 text-z-text-primary dark:text-z-text-primary-dark focus:outline-none focus:ring-2 focus:ring-z-primary/50"
                             />
                         </div>

@@ -11,6 +11,7 @@ import BottomNavBar from './BottomNavBar';
 import ProfilePage from '../pages/ProfilePage';
 import FriendsPage from '../pages/FriendsPage';
 import AdCenterPage from '../pages/AdCenterPage';
+import SettingsPage from '../pages/SettingsPage';
 
 const MainLayout: React.FC = () => {
   const [posts, setPosts] = useState<Post[]>([]);
@@ -32,11 +33,13 @@ const MainLayout: React.FC = () => {
   const renderPage = () => {
       switch(currentPage) {
           case 'profile':
-              return <ProfilePage userPosts={posts.slice(0,2)} />; // Show some posts on profile
+              return <ProfilePage userPosts={posts.slice(0,2)} onAddPost={handleAddPost} />;
           case 'friends':
               return <FriendsPage />;
           case 'ads':
               return <AdCenterPage />;
+          case 'settings':
+              return <SettingsPage />;
           case 'feed':
           default:
               return <Feed posts={posts} onAddPost={handleAddPost} />;

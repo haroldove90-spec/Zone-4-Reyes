@@ -56,6 +56,11 @@ const Header: React.FC<HeaderProps> = ({ setCurrentPage }) => {
     setCurrentPage('profile');
   };
 
+  const handleSettingsClick = () => {
+    setIsMenuOpen(false);
+    setCurrentPage('settings');
+  };
+
   return (
     <header className="bg-z-bg-secondary dark:bg-z-bg-secondary-dark shadow-md fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-4 h-14 border-b border-transparent dark:border-z-border-dark">
       {/* Left Section */}
@@ -112,6 +117,7 @@ const Header: React.FC<HeaderProps> = ({ setCurrentPage }) => {
                 </div>
                 <div className="p-2">
                    <button
+                    onClick={handleSettingsClick}
                     className="w-full text-left flex items-center space-x-3 px-3 py-2.5 text-sm text-z-text-primary dark:text-z-text-primary-dark hover:bg-gray-100 dark:hover:bg-z-hover-dark rounded-md transition-colors"
                   >
                     <div className="p-2 bg-gray-200 dark:bg-z-border-dark rounded-full">
