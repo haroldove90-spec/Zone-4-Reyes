@@ -68,7 +68,24 @@ export const generateSocialFeed = async (): Promise<Post[]> => {
               imageUrl: { type: Type.STRING },
               likes: { type: Type.INTEGER },
               commentsCount: { type: Type.INTEGER },
-              comments: { type: Type.ARRAY, items: { type: Type.OBJECT } }
+              comments: {
+                type: Type.ARRAY,
+                items: {
+                  type: Type.OBJECT,
+                  properties: {
+                    id: { type: Type.STRING },
+                    user: {
+                      type: Type.OBJECT,
+                      properties: {
+                        name: { type: Type.STRING },
+                        avatarUrl: { type: Type.STRING },
+                      },
+                    },
+                    text: { type: Type.STRING },
+                    timestamp: { type: Type.STRING },
+                  },
+                },
+              },
             }
           }
         },
