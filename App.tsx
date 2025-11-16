@@ -7,6 +7,7 @@ import RightSidebar from './components/RightSidebar';
 import { Post } from './types';
 import { generateSocialFeed } from './services/geminiService';
 import { ThemeProvider } from './contexts/ThemeContext';
+import InstallPWA from './components/InstallPWA';
 
 const App: React.FC = () => {
   const [posts, setPosts] = useState<Post[]>([]);
@@ -34,6 +35,7 @@ const App: React.FC = () => {
           <Feed posts={posts} onAddPost={handleAddPost} />
           <RightSidebar />
         </div>
+        <InstallPWA />
       </div>
     </ThemeProvider>
   );
