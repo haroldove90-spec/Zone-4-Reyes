@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { supabase } from '../services/supabaseClient';
 import { Session, User as SupabaseUser } from '@supabase/supabase-js';
@@ -32,7 +31,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const formatProfile = (profileData: any, supabaseUser: SupabaseUser): AuthUser => ({
     id: supabaseUser.id,
-    email: supabaseUser.email!,
+    email: supabaseUser.email || '',
     name: profileData.name,
     avatarUrl: profileData.avatar_url,
     bio: profileData.bio,
@@ -45,6 +44,26 @@ const formatProfile = (profileData: any, supabaseUser: SupabaseUser): AuthUser =
     isAdmin: profileData.is_admin,
 });
 
+const getUserProfile = async (supabaseUser: SupabaseUser): Promise<AuthUser | null> => {
+    try {
+        const { data: profile, error } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', supabaseUser.id)
+            .single();
+
+        if (error) {
+            console.error('Error fetching profile:', error.message);
+            return null;
+        }
+
+        return profile ? formatProfile(profile, supabaseUser) : null;
+    } catch (e) {
+        console.error('Exception fetching profile', e);
+        return null;
+    }
+}
+
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<AuthUser | null>(null);
@@ -52,52 +71,30 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const checkSession = async () => {
-        try {
-            const { data: { session } } = await supabase.auth.getSession();
-            setSession(session);
-            if (session?.user) {
-                const { data: profile, error } = await supabase
-                    .from('profiles')
-                    .select('*')
-                    .eq('id', session.user.id)
-                    .single();
-                if (error) throw error;
-                if (profile) {
-                    setUser(formatProfile(profile, session.user));
-                }
-            }
-        } catch (error) {
-            console.error("Error in initial session fetch:", error);
-            setUser(null);
-        } finally {
-            setLoading(false);
+    const fetchInitialSession = async () => {
+        const { data: { session }, error } = await supabase.auth.getSession();
+
+        if (error) {
+            console.error("Error fetching initial session:", error.message);
         }
+        
+        setSession(session);
+        
+        if (session?.user) {
+            const profile = await getUserProfile(session.user);
+            setUser(profile);
+        }
+        
+        setLoading(false);
     };
 
-    checkSession();
+    fetchInitialSession();
 
     const { data: authListener } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
         setSession(session);
-        if (session?.user) {
-            try {
-                const { data: profile, error } = await supabase
-                    .from('profiles')
-                    .select('*')
-                    .eq('id', session.user.id)
-                    .single();
-                if (error) throw error;
-                if(profile) {
-                    setUser(formatProfile(profile, session.user));
-                }
-            } catch (error) {
-                 console.error("Error fetching profile on auth state change:", error);
-                 setUser(null);
-            }
-        } else {
-            setUser(null);
-        }
+        const profile = session?.user ? await getUserProfile(session.user) : null;
+        setUser(profile);
       }
     );
 
@@ -111,7 +108,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const signUp = async ({ name, email, password }) => {
-    // Pasa el nombre en los metadatos del usuario para que el trigger de la BD pueda acceder a él.
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -121,8 +117,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }
       }
     });
-
-    // El trigger se encarga de la creación del perfil, por lo que solo devolvemos el resultado de la autenticación.
     return { user: data.user, session: data.session, error };
   };
 

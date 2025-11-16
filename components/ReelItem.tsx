@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Post as PostType, User } from '../types';
 import { ThumbsUpIcon, MessageSquareIcon, Share2Icon } from './icons';
@@ -17,13 +16,17 @@ const ReelItem: React.FC<ReelItemProps> = ({ post, addNotification, isVisible })
   const { user } = useAuth();
 
   useEffect(() => {
+    const videoElement = videoRef.current;
+    if (!videoElement) return;
+
     if (isVisible) {
-      videoRef.current?.play();
+      // Autoplay can be blocked by browsers, so we handle the promise rejection.
+      videoElement.play().catch(error => {
+        console.warn("Video autoplay was prevented:", error);
+      });
     } else {
-      videoRef.current?.pause();
-      if(videoRef.current) {
-        videoRef.current.currentTime = 0;
-      }
+      videoElement.pause();
+      videoElement.currentTime = 0;
     }
   }, [isVisible]);
   
@@ -37,7 +40,7 @@ const ReelItem: React.FC<ReelItemProps> = ({ post, addNotification, isVisible })
 
   const handleVideoPress = () => {
     if (videoRef.current?.paused) {
-      videoRef.current?.play();
+      videoRef.current?.play().catch(error => console.warn("Video play failed", error));
     } else {
       videoRef.current?.pause();
     }
