@@ -153,10 +153,19 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       });
 
       if (profileError) {
-        // If profile creation fails, this is a problem, but the user is already created in auth.
+        // Handle the specific "duplicate key" error which is code '23505' for unique violation.
+        if (profileError.code === '23505') {
+            console.warn("Attempted to create a profile that already exists.", {userId: authData.user.id});
+            // This can happen due to a race condition. Provide a user-friendly error.
+            return {
+                user: authData.user,
+                session: authData.session,
+                error: { message: 'Ya existe un perfil para este usuario. Por favor, inicia sesión.' }
+            };
+        }
+        
+        // For any other profile error, return it to be displayed.
         console.error("Error creating profile for new user:", profileError);
-        // We still return the auth data, but the app might be in a weird state.
-        // In a real app, you might want to handle this more gracefully (e.g., delete the auth user).
         return { user: authData.user, session: authData.session, error: profileError };
       }
     }
