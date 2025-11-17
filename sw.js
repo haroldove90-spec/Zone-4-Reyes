@@ -60,6 +60,8 @@ self.addEventListener('fetch', event => {
   
   const url = new URL(event.request.url);
 
+  // For Supabase API calls, always go to the network. This prevents caching stale API data.
+  // If the network fails, provide a specific offline response.
   if (url.hostname.includes('supabase.co')) {
     event.respondWith(
       fetch(event.request).catch(() => {
@@ -72,27 +74,26 @@ self.addEventListener('fetch', event => {
     return;
   }
 
+  // Use a Network-First strategy for all other assets.
+  // This ensures the user gets the latest version of the app files if online,
+  // preventing issues with Vercel's preview deployments serving stale content.
   event.respondWith(
-    caches.match(event.request)
-      .then(response => {
-        if (response) {
-          return response;
+    fetch(event.request)
+      .then(networkResponse => {
+        // If the network request is successful, cache the response for offline use.
+        if (networkResponse && networkResponse.status === 200) {
+          const responseToCache = networkResponse.clone();
+          caches.open(CACHE_NAME)
+            .then(cache => {
+              cache.put(event.request, responseToCache);
+            });
         }
-        return fetch(event.request).then(
-          networkResponse => {
-            if (!networkResponse || networkResponse.status !== 200) {
-              return networkResponse;
-            }
-            const responseToCache = networkResponse.clone();
-            caches.open(CACHE_NAME)
-              .then(cache => {
-                if (event.request.method === 'GET') {
-                   cache.put(event.request, responseToCache);
-                }
-              });
-            return networkResponse;
-          }
-        );
+        return networkResponse;
+      })
+      .catch(() => {
+        // If the network request fails (e.g., user is offline),
+        // try to serve the asset from the cache.
+        return caches.match(event.request);
       })
   );
 });
