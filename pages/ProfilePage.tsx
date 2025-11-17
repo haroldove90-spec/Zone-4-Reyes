@@ -35,7 +35,7 @@ interface ProfilePageProps {
     userId: string;
     onAddPost: (content: string, mediaFiles: File[], postType?: 'standard' | 'report', group?: { id: string; name: string }, existingMedia?: Media[]) => Promise<void>;
     navigate: (page: string) => void;
-    addNotification: (text: string, user: User, postContent?: string) => void;
+    addNotification: (recipientId: string, text: string, postId?: string) => Promise<void>;
 }
 
 const formatProfileData = (profileData: any): AuthUser | null => {
@@ -157,7 +157,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ userId, onAddPost, navigate, 
                     .or(`and(requester_id.eq.${currentUser.id},addressee_id.eq.${userId}),and(requester_id.eq.${userId},addressee_id.eq.${currentUser.id})`));
             } else if (action === 'accept') {
                 ({ error } = await supabase.from('friendships').update({ status: 'accepted' }).match({ requester_id: userId, addressee_id: currentUser.id }));
-                if(!error) addNotification('ha aceptado tu solicitud de amistad.', currentUser);
+                if(!error) addNotification(userId, 'ha aceptado tu solicitud de amistad.');
             }
             if (error) throw error;
             checkFriendshipStatus();

@@ -1,7 +1,5 @@
 
 
-
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../services/supabaseClient';
@@ -10,7 +8,7 @@ import { UserCheckIcon, UsersPlusIcon, UserXIcon } from '../components/icons';
 
 interface FriendsPageProps {
   navigate: (path: string) => void;
-  addNotification: (text: string, user: User, postContent?: string) => void;
+  addNotification: (recipientId: string, text: string) => Promise<void>;
 }
 
 const UserCard: React.FC<{ user: User; children: React.ReactNode; onProfileClick: () => void; }> = ({ user, children, onProfileClick }) => (
@@ -116,7 +114,7 @@ const FriendsPage: React.FC<FriendsPageProps> = ({ navigate, addNotification }) 
                     .eq('requester_id', otherUserId)
                     .eq('addressee_id', currentUser.id);
                 if (error) throw error;
-                 addNotification(`ha aceptado tu solicitud de amistad.`, currentUser);
+                 addNotification(otherUserId, 'ha aceptado tu solicitud de amistad.');
             }
             if (action === 'decline') {
                  const { error } = await supabase

@@ -43,7 +43,7 @@ const MainLayout: React.FC = () => {
   const { user } = useAuth();
 
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
-  const [notificationCount, setNotificationCount] = useState(3);
+  const [notificationCount, setNotificationCount] = useState(0);
   const [friendRequests, setFriendRequests] = useState<User[]>([]);
 
   const fetchFriendRequests = useCallback(async () => {
@@ -71,21 +71,83 @@ const MainLayout: React.FC = () => {
       }
   }, [user]);
   
-  const addNotification = useCallback((text: string, user: User, postContent?: string) => {
-    const newNotification: AppNotification = {
-        id: new Date().toISOString(),
-        user: { id: user.id, name: user.name, avatarUrl: user.avatarUrl },
-        text,
-        timestamp: 'Justo ahora',
-        read: false,
-        postContent: postContent ? postContent.substring(0, 50) + '...' : undefined
+  const fetchNotifications = useCallback(async () => {
+    if (!user) {
+        setNotifications([]);
+        setNotificationCount(0);
+        return;
     };
-    setNotifications(prev => [newNotification, ...prev]);
-    setNotificationCount(prev => prev + 1);
-  }, []);
+    try {
+        const { data, error } = await supabase
+            .from('notifications')
+            .select('*, actor:profiles!actor_id(id, name, avatar_url), posts(content)')
+            .eq('user_id', user.id)
+            .order('created_at', { ascending: false })
+            .limit(50);
 
-  const resetNotificationCount = () => {
+        if (error) throw error;
+
+        const formattedNotifications: AppNotification[] = data.map((n: any) => ({
+            id: n.id,
+            user: {
+                id: n.actor.id,
+                name: n.actor.name,
+                avatarUrl: n.actor.avatar_url,
+            },
+            text: n.text,
+            timestamp: new Date(n.created_at).toLocaleString(),
+            read: n.read,
+            postContent: n.posts?.content ? n.posts.content.substring(0, 50) + '...' : undefined
+        }));
+
+        setNotifications(formattedNotifications);
+        setNotificationCount(formattedNotifications.filter(n => !n.read).length);
+
+    } catch (err) {
+        console.error("Error fetching notifications:", err);
+    }
+  }, [user]);
+
+  const addNotification = useCallback(async (
+    recipientId: string,
+    text: string,
+    postId?: string
+  ) => {
+      if (!user || recipientId === user.id) return;
+
+      try {
+          const { error } = await supabase.from('notifications').insert({
+              user_id: recipientId,
+              actor_id: user.id,
+              text: text,
+              post_id: postId,
+          });
+
+          if (error) throw error;
+      } catch (err: any) {
+          console.error("Error creating notification:", err.message);
+      }
+  }, [user]);
+
+  const resetNotificationCount = async () => {
+    if (!user || notificationCount === 0) return;
+    
+    const unreadIds = notifications.filter(n => !n.read).map(n => n.id);
+    
     setNotificationCount(0);
+    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+
+    try {
+        if (unreadIds.length > 0) {
+            const { error } = await supabase
+                .from('notifications')
+                .update({ read: true })
+                .in('id', unreadIds);
+            if (error) throw error;
+        }
+    } catch (err) {
+        console.error("Error marking notifications as read:", err);
+    }
   };
 
   useEffect(() => {
@@ -170,7 +232,8 @@ const MainLayout: React.FC = () => {
   useEffect(() => {
     fetchPosts();
     fetchFriendRequests();
-  }, [fetchPosts, fetchFriendRequests]);
+    fetchNotifications();
+  }, [fetchPosts, fetchFriendRequests, fetchNotifications]);
 
   const handleAddPost = async (content: string, mediaFiles: File[], postType: 'standard' | 'report' = 'standard', group?: { id: string; name: string }, existingMedia?: Media[]) => {
     if (!user) {

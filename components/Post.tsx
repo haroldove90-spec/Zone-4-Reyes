@@ -43,7 +43,7 @@ export const PostSkeleton: React.FC = () => (
 interface PostProps {
   post: PostType;
   index: number;
-  addNotification: (text: string, user: User, postContent?: string) => void;
+  addNotification: (recipientId: string, text: string, postId?: string) => Promise<void>;
   onAddPost: (content: string, mediaFiles: File[], postType?: 'standard' | 'report', group?: { id: string; name: string; }, existingMedia?: Media[]) => Promise<void>;
   navigate: (path: string) => void;
 }
@@ -162,9 +162,14 @@ const Post: React.FC<PostProps> = ({ post, index, addNotification, onAddPost, na
 
   const handleLike = async () => {
     if (!user) return;
+    const originalIsLiked = isLiked;
+
+    // Optimistic UI update
+    setIsLiked(!originalIsLiked);
+    setLikeCount(prev => originalIsLiked ? prev - 1 : prev + 1);
 
     try {
-        if (isLiked) {
+        if (originalIsLiked) {
             // Unlike
             const { error } = await supabase
                 .from('likes')
@@ -173,8 +178,6 @@ const Post: React.FC<PostProps> = ({ post, index, addNotification, onAddPost, na
                 .eq('user_id', user.id);
             
             if (error) throw error;
-            setIsLiked(false);
-            setLikeCount(prev => prev - 1);
         } else {
             // Like
             const { error } = await supabase
@@ -182,14 +185,16 @@ const Post: React.FC<PostProps> = ({ post, index, addNotification, onAddPost, na
                 .insert({ post_id: post.id, user_id: user.id });
 
             if (error) throw error;
-            setIsLiked(true);
-            setLikeCount(prev => prev + 1);
+            
             if(user.id !== author.id) {
-                addNotification(`le ha gustado tu publicación`, user, post.content);
+                addNotification(author.id, `le ha gustado tu publicación`, post.id);
             }
         }
     } catch (error) {
         console.error("Error handling like:", error);
+        // Revert UI on error
+        setIsLiked(originalIsLiked);
+        setLikeCount(prev => originalIsLiked ? prev + 1 : prev - 1);
     }
   };
   
@@ -212,7 +217,7 @@ const Post: React.FC<PostProps> = ({ post, index, addNotification, onAddPost, na
             setCommentsCount(prev => prev + 1);
             setNewComment('');
             if(user.id !== author.id) {
-                addNotification(`ha comentado tu publicación: "${newComment}"`, user, post.content);
+                 addNotification(author.id, `ha comentado tu publicación: "${newComment}"`, post.id);
             }
         }
     } catch (error) {
@@ -229,7 +234,7 @@ const Post: React.FC<PostProps> = ({ post, index, addNotification, onAddPost, na
     try {
         await onAddPost(sharedPostContent, [], 'standard', undefined, post.media);
         if(user.id !== author.id) {
-            addNotification(`reposteó tu publicación`, user, post.content);
+            addNotification(author.id, `reposteó tu publicación`);
         }
         setIsShareModalOpen(false);
     } catch(err) {

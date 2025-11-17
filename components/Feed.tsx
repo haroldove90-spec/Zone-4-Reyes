@@ -12,7 +12,7 @@ interface FeedProps {
     posts: PostType[];
     onAddPost: (content: string, mediaFiles: File[], postType?: 'standard' | 'report', group?: { id: string; name: string }, existingMedia?: Media[]) => Promise<void>;
     loading: boolean;
-    addNotification: (text: string, user: User, postContent?: string) => void;
+    addNotification: (recipientId: string, text: string, postId?: string) => Promise<void>;
     isNewUser?: boolean;
     navigate: (path: string) => void;
 }

@@ -7,7 +7,7 @@ import ShareModal from './modals/ShareModal';
 
 interface ReelItemProps {
   post: PostType;
-  addNotification: (text: string, user: User, postContent?: string) => void;
+  addNotification: (recipientId: string, text: string, postId?: string) => Promise<void>;
   isVisible: boolean;
   onAddPost: (content: string, mediaFiles: File[], postType?: 'standard' | 'report', group?: { id: string; name: string; }, existingMedia?: Media[]) => Promise<void>;
 }
@@ -37,7 +37,7 @@ const ReelItem: React.FC<ReelItemProps> = ({ post, addNotification, isVisible, o
     setIsLiked(!isLiked);
     setLikes(prev => isLiked ? prev - 1 : prev + 1);
     if (!isLiked && user) {
-        addNotification(`le ha gustado tu reel`, user, post.content);
+        addNotification(post.user.id, `le ha gustado tu reel`, post.id);
     }
   };
 
@@ -57,7 +57,7 @@ const ReelItem: React.FC<ReelItemProps> = ({ post, addNotification, isVisible, o
 
     try {
       await onAddPost(sharedPostContent, [], 'standard', undefined, post.media);
-      addNotification(`reposteaste el reel de ${authorName}`, user, post.content);
+      addNotification(post.user.id, `reposteó tu reel`);
       setIsShareModalOpen(false);
     } catch(err) {
       console.error("Error al repostear el reel:", err);

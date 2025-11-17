@@ -6,7 +6,7 @@ import ReelItem from '../components/ReelItem';
 
 interface ReelsPageProps {
   reels: Post[];
-  addNotification: (text: string, user: User, postContent?: string) => void;
+  addNotification: (recipientId: string, text: string, postId?: string) => Promise<void>;
   onAddPost: (content: string, mediaFiles: File[], postType?: 'standard' | 'report', group?: { id: string; name: string }, existingMedia?: Media[]) => Promise<void>;
 }
 
