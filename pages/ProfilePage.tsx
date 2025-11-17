@@ -1,5 +1,7 @@
 
 
+
+
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useAuth, AuthUser } from '../contexts/AuthContext';
 import { Post as PostType, Media, User, FriendshipStatus } from '../types';
@@ -38,6 +40,24 @@ interface ProfilePageProps {
     addNotification: (text: string, user: User, postContent?: string) => void;
 }
 
+const formatProfileData = (profileData: any): AuthUser | null => {
+    if (!profileData) return null;
+    return {
+        id: profileData.id,
+        email: profileData.email || '',
+        name: profileData.name,
+        avatarUrl: profileData.avatar_url,
+        bio: profileData.bio,
+        coverUrl: profileData.cover_url,
+        nickname: profileData.nickname,
+        age: profileData.age,
+        location: profileData.location,
+        website: profileData.website,
+        friendsCount: profileData.friends_count,
+        isAdmin: profileData.is_admin,
+    };
+};
+
 const ProfilePage: React.FC<ProfilePageProps> = ({ userId, onAddPost, navigate, addNotification }) => {
     const { user: currentUser, updateUser } = useAuth();
     const [profileUser, setProfileUser] = useState<AuthUser | null>(null);
@@ -56,7 +76,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ userId, onAddPost, navigate, 
         try {
             const { data, error } = await supabase.from('profiles').select('*').eq('id', userId).single();
             if (error) throw error;
-            setProfileUser(data);
+            setProfileUser(formatProfileData(data));
 
             const { data: postsData, error: postsError } = await supabase.from('posts').select('*, user:profiles(id, name, avatar_url), groups(id, name)').eq('user_id', userId).order('created_at', { ascending: false });
             if(postsError) throw postsError;
@@ -64,12 +84,28 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ userId, onAddPost, navigate, 
                 id: p.id.toString(), user: {id: p.user.id, name: p.user.name, avatarUrl: p.user.avatar_url}, timestamp: new Date(p.created_at).toLocaleString(), content: p.content, media: p.media, type: p.type, format: p.format, likes: 0, commentsCount: 0, comments: [], group: p.groups ? { id: p.groups.id, name: p.groups.name } : undefined,
             })));
             
-            const { data: friendsData, error: friendsError } = await supabase.rpc('get_friends', { user_id: userId });
-            if (friendsError) throw friendsError;
-            setFriends(friendsData.map((f: any) => ({ id: f.id, name: f.name, avatarUrl: f.avatar_url })));
+            // Fetch friends
+            const { data: friendships, error: friendshipsError } = await supabase
+                .from('friendships')
+                .select('requester_id, addressee_id')
+                .or(`requester_id.eq.${userId},addressee_id.eq.${userId}`)
+                .eq('status', 'accepted');
+            if (friendshipsError) throw friendshipsError;
 
-        } catch (error) {
-            console.error("Error fetching profile data:", error);
+            if (friendships && friendships.length > 0) {
+                const friendIds = friendships.map(f => f.requester_id === userId ? f.addressee_id : f.requester_id);
+                const { data: friendsData, error: friendsError } = await supabase
+                    .from('profiles')
+                    .select('id, name, avatar_url')
+                    .in('id', friendIds);
+                if (friendsError) throw friendsError;
+                setFriends(friendsData.map((f: any) => ({ id: f.id, name: f.name, avatarUrl: f.avatar_url })));
+            } else {
+                setFriends([]);
+            }
+
+        } catch (error: any) {
+            console.error("Error fetching profile data:", error.message || error);
             setProfileUser(null);
         } finally {
             setLoading(false);
@@ -80,11 +116,29 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ userId, onAddPost, navigate, 
         if (isOwnProfile || !currentUser) return;
         setFriendshipStatus('loading');
         try {
-            const { data, error } = await supabase.rpc('get_friendship_status', { user1_id: currentUser.id, user2_id: userId });
+            const { data, error } = await supabase
+                .from('friendships')
+                .select('status, requester_id')
+                .or(`(requester_id.eq.${currentUser.id},addressee_id.eq.${userId}),(requester_id.eq.${userId},addressee_id.eq.${currentUser.id})`)
+                .maybeSingle();
+
             if (error) throw error;
-            setFriendshipStatus(data as FriendshipStatus);
-        } catch (error) {
-            console.error("Error checking friendship status:", error);
+            
+            if (!data) {
+                setFriendshipStatus('not_friends');
+            } else if (data.status === 'accepted') {
+                setFriendshipStatus('friends');
+            } else if (data.status === 'pending') {
+                if (data.requester_id === currentUser.id) {
+                    setFriendshipStatus('pending_sent');
+                } else {
+                    setFriendshipStatus('pending_received');
+                }
+            } else {
+                setFriendshipStatus('not_friends');
+            }
+        } catch (error: any) {
+            console.error("Error checking friendship status:", error.message || error);
             setFriendshipStatus('not_friends');
         }
     }, [currentUser, userId, isOwnProfile]);
@@ -100,13 +154,14 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ userId, onAddPost, navigate, 
             let error;
             if (action === 'add') {
                 ({ error } = await supabase.from('friendships').insert({ requester_id: currentUser.id, addressee_id: userId, status: 'pending' }));
-            } else if (action === 'cancel') {
-                ({ error } = await supabase.rpc('remove_friend', { user1_id: currentUser.id, user2_id: userId }));
+            } else if (action === 'cancel' || action === 'remove') {
+                ({ error } = await supabase
+                    .from('friendships')
+                    .delete()
+                    .or(`(requester_id.eq.${currentUser.id},addressee_id.eq.${userId}),(requester_id.eq.${userId},addressee_id.eq.${currentUser.id})`));
             } else if (action === 'accept') {
                 ({ error } = await supabase.from('friendships').update({ status: 'accepted' }).match({ requester_id: userId, addressee_id: currentUser.id }));
                 if(!error) addNotification('ha aceptado tu solicitud de amistad.', currentUser);
-            } else if (action === 'remove') {
-                ({ error } = await supabase.rpc('remove_friend', { user1_id: currentUser.id, user2_id: userId }));
             }
             if (error) throw error;
             checkFriendshipStatus();

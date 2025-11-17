@@ -1,6 +1,7 @@
 
 
 
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../services/supabaseClient';
@@ -55,14 +56,43 @@ const FriendsPage: React.FC<FriendsPageProps> = ({ navigate, addNotification }) 
             );
 
             // Fetch friends
-            const { data: friendsData, error: friendsError } = await supabase.rpc('get_friends', { user_id: currentUser.id });
-            if (friendsError) throw friendsError;
-            setFriends(friendsData.map((f: any) => ({ id: f.id, name: f.name, avatarUrl: f.avatar_url })));
+            const { data: friendships, error: friendshipsError } = await supabase
+                .from('friendships')
+                .select('requester_id, addressee_id')
+                .or(`requester_id.eq.${currentUser.id},addressee_id.eq.${currentUser.id}`)
+                .eq('status', 'accepted');
+            if (friendshipsError) throw friendshipsError;
+            
+            const friendIds = friendships.map(f => f.requester_id === currentUser.id ? f.addressee_id : f.requester_id);
+            if (friendIds.length > 0) {
+                 const { data: friendsData, error: friendsError } = await supabase
+                    .from('profiles')
+                    .select('id, name, avatar_url')
+                    .in('id', friendIds);
+                if (friendsError) throw friendsError;
+                setFriends(friendsData.map((f: any) => ({ id: f.id, name: f.name, avatarUrl: f.avatar_url })));
+            } else {
+                setFriends([]);
+            }
 
             // Fetch suggestions
-            const { data: suggestionsData, error: suggestionsError } = await supabase.rpc('get_friend_suggestions', { user_id: currentUser.id });
+            const { data: existingRels, error: relsError } = await supabase
+                .from('friendships')
+                .select('requester_id, addressee_id')
+                .or(`requester_id.eq.${currentUser.id},addressee_id.eq.${currentUser.id}`);
+            if (relsError) throw relsError;
+
+            const existingIds = existingRels ? existingRels.flatMap(r => [r.requester_id, r.addressee_id]) : [];
+            const idsToExclude = [...new Set([...existingIds, currentUser.id])];
+
+            const { data: suggestionsData, error: suggestionsError } = await supabase
+                .from('profiles')
+                .select('id, name, avatar_url')
+                .not('id', 'in', `(${idsToExclude.join(',')})`)
+                .limit(10);
             if (suggestionsError) throw suggestionsError;
             setSuggestions(suggestionsData.map((s: any) => ({ id: s.id, name: s.name, avatarUrl: s.avatar_url })));
+
 
         } catch (error: any) {
             console.error("Error fetching friends data:", error.message || error);
@@ -97,7 +127,10 @@ const FriendsPage: React.FC<FriendsPageProps> = ({ navigate, addNotification }) 
                 if (error) throw error;
             }
             if (action === 'remove') {
-                const { error } = await supabase.rpc('remove_friend', { user1_id: currentUser.id, user2_id: otherUserId });
+                 const { error } = await supabase
+                    .from('friendships')
+                    .delete()
+                    .or(`(requester_id.eq.${currentUser.id},addressee_id.eq.${otherUserId}),(requester_id.eq.${otherUserId},addressee_id.eq.${currentUser.id})`);
                 if (error) throw error;
             }
             if(action === 'add') {

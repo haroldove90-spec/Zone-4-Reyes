@@ -1,7 +1,5 @@
 
 
-
-
 import React, { useState, useEffect, useCallback } from 'react';
 import Header from './Header';
 import LeftSidebar from './LeftSidebar';

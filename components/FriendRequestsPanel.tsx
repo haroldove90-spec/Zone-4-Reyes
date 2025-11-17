@@ -1,4 +1,7 @@
 
+
+
+
 import React from 'react';
 import { User } from '../types';
 import { supabase } from '../services/supabaseClient';
