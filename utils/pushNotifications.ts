@@ -41,10 +41,10 @@ export async function subscribeUser(userId: string) {
       });
 
       // Send to server (Supabase)
-      const { error } = await supabase.from('push_subscriptions').insert({
+      const { error } = await supabase.from('push_subscriptions').insert([{
         user_id: userId,
         subscription_object: newSubscription,
-      });
+      }]);
 
       if (error) {
           throw new Error('Failed to save push subscription: ' + error.message);

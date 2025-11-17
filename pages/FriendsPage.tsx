@@ -134,7 +134,7 @@ const FriendsPage: React.FC<FriendsPageProps> = ({ navigate, addNotification }) 
             if(action === 'add') {
                 const { error } = await supabase
                     .from('friendships')
-                    .insert({ requester_id: currentUser.id, addressee_id: otherUserId, status: 'pending' });
+                    .insert([{ requester_id: currentUser.id, addressee_id: otherUserId, status: 'pending' }]);
                 if (error) throw error;
             }
 

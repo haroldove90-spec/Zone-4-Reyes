@@ -153,12 +153,12 @@ const MainLayout: React.FC = () => {
       if (!user || recipientId === user.id) return;
 
       try {
-          const { error } = await supabase.from('notifications').insert({
+          const { error } = await supabase.from('notifications').insert([{
               user_id: recipientId,
               actor_id: user.id,
               text: text,
               post_id: postId,
-          });
+          }]);
 
           if (error) throw error;
       } catch (err: any) {
@@ -319,7 +319,7 @@ const MainLayout: React.FC = () => {
             fanpage_id: options?.fanpageId,
         };
 
-        const { error: insertError } = await supabase.from('posts').insert(postData).select().single();
+        const { error: insertError } = await supabase.from('posts').insert([postData]);
         if (insertError) throw new Error(`Error al guardar la publicación: ${insertError.message}`);
 
         await fetchPosts();

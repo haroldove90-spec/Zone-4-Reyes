@@ -86,11 +86,11 @@ const getUserProfile = async (supabaseUser: SupabaseUser): Promise<AuthUser> => 
     console.warn("Profile not found for user, creating a fallback profile.");
     const { data: newProfile, error: insertError } = await supabase
         .from('profiles')
-        .insert({
+        .insert([{
             id: supabaseUser.id,
             name: supabaseUser.email?.split('@')[0] || `user_${supabaseUser.id.substring(0, 5)}`,
             avatar_url: `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(supabaseUser.email?.split('@')[0] || supabaseUser.id)}`,
-        })
+        }])
         .select()
         .single();
 
@@ -162,12 +162,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     if (authData.user) {
       // After successful sign up, create a profile for the new user
-      const { error: profileError } = await supabase.from('profiles').insert({
+      const { error: profileError } = await supabase.from('profiles').insert([{
         id: authData.user.id,
         name,
         // Using a placeholder avatar, user can change it later
         avatar_url: `https://api.dicebear.com/7.x/initials/svg?seed=${name}`,
-      });
+      }]);
 
       if (profileError) {
         // Handle the specific "duplicate key" error which is code '23505' for unique violation.

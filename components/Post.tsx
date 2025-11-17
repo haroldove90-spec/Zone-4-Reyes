@@ -183,7 +183,7 @@ const Post: React.FC<PostProps> = ({ post, index, addNotification, onAddPost, na
             // Like
             const { error } = await supabase
                 .from('likes')
-                .insert({ post_id: post.id, user_id: user.id });
+                .insert([{ post_id: post.id, user_id: user.id }]);
 
             if (error) throw error;
             
@@ -206,7 +206,7 @@ const Post: React.FC<PostProps> = ({ post, index, addNotification, onAddPost, na
     try {
         const { data, error } = await supabase
             .from('comments')
-            .insert({ post_id: post.id, user_id: user.id, text: newComment })
+            .insert([{ post_id: post.id, user_id: user.id, text: newComment }])
             .select('*, profiles!user_id(id, name, avatar_url)')
             .single();
         

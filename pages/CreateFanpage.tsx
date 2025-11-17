@@ -67,14 +67,14 @@ const CreateFanpage: React.FC<CreateFanpageProps> = ({ navigate }) => {
                 coverUrl = data.publicUrl;
             }
 
-            const { error: insertError } = await supabase.from('fanpages').insert({
+            const { error: insertError } = await supabase.from('fanpages').insert([{
                 name,
                 category,
                 bio,
                 owner_id: user.id,
                 avatar_url: avatarUrl,
                 cover_url: coverUrl,
-            });
+            }]);
 
             if (insertError) throw insertError;
 
