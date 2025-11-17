@@ -117,18 +117,18 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ userId, onAddPost, navigate, 
             const { data, error } = await supabase
                 .from('friendships')
                 .select('status, requester_id')
-                .or(`(requester_id.eq.${currentUser.id},addressee_id.eq.${userId}),(requester_id.eq.${userId},addressee_id.eq.${currentUser.id})`)
+                .or(`and(requester_id.eq.${currentUser.id},addressee_id.eq.${userId}),and(requester_id.eq.${userId},addressee_id.eq.${currentUser.id})`)
                 .maybeSingle();
 
             if (error) throw error;
             
-            if (data?.status === 'accepted') {
-                setFriendshipStatus('friends');
-            } else if (data?.status === 'pending') {
-                if (data.requester_id === currentUser.id) {
-                    setFriendshipStatus('pending_sent');
+            if (data) {
+                if (data.status === 'accepted') {
+                    setFriendshipStatus('friends');
+                } else if (data.status === 'pending') {
+                    setFriendshipStatus(data.requester_id === currentUser.id ? 'pending_sent' : 'pending_received');
                 } else {
-                    setFriendshipStatus('pending_received');
+                    setFriendshipStatus('not_friends');
                 }
             } else {
                 setFriendshipStatus('not_friends');
@@ -154,7 +154,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ userId, onAddPost, navigate, 
                 ({ error } = await supabase
                     .from('friendships')
                     .delete()
-                    .or(`(requester_id.eq.${currentUser.id},addressee_id.eq.${userId}),(requester_id.eq.${userId},addressee_id.eq.${currentUser.id})`));
+                    .or(`and(requester_id.eq.${currentUser.id},addressee_id.eq.${userId}),and(requester_id.eq.${userId},addressee_id.eq.${currentUser.id})`));
             } else if (action === 'accept') {
                 ({ error } = await supabase.from('friendships').update({ status: 'accepted' }).match({ requester_id: userId, addressee_id: currentUser.id }));
                 if(!error) addNotification('ha aceptado tu solicitud de amistad.', currentUser);
@@ -189,13 +189,10 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ userId, onAddPost, navigate, 
         existingMedia?: Media[]
     ) => {
         try {
-            // This wrapper ensures that after a post is created via the onAddPost prop (from MainLayout),
-            // the profile-specific post list is re-fetched to show the new post immediately.
             await onAddPost(content, mediaFiles, postType, group, existingMedia);
-            fetchProfileData(); // Trigger a refresh of posts on the profile page.
+            await fetchProfileData();
         } catch (error) {
             console.error("Failed to add post and refresh profile:", error);
-            // Optionally, handle the error in the UI.
         }
     };
 

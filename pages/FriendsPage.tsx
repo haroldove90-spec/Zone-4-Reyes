@@ -88,7 +88,7 @@ const FriendsPage: React.FC<FriendsPageProps> = ({ navigate, addNotification }) 
             const { data: suggestionsData, error: suggestionsError } = await supabase
                 .from('profiles')
                 .select('id, name, avatar_url')
-                .not('id', 'in', idsToExclude)
+                .not('id', 'in', `(${idsToExclude.join(',')})`)
                 .limit(10);
             if (suggestionsError) throw suggestionsError;
             setSuggestions(suggestionsData.map((s: any) => ({ id: s.id, name: s.name, avatarUrl: s.avatar_url })));
@@ -130,7 +130,7 @@ const FriendsPage: React.FC<FriendsPageProps> = ({ navigate, addNotification }) 
                  const { error } = await supabase
                     .from('friendships')
                     .delete()
-                    .or(`(requester_id.eq.${currentUser.id},addressee_id.eq.${otherUserId}),(requester_id.eq.${otherUserId},addressee_id.eq.${currentUser.id})`);
+                    .or(`and(requester_id.eq.${currentUser.id},addressee_id.eq.${otherUserId}),and(requester_id.eq.${otherUserId},addressee_id.eq.${currentUser.id})`);
                 if (error) throw error;
             }
             if(action === 'add') {
