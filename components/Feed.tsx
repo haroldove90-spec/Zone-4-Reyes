@@ -1,4 +1,5 @@
 
+
 import React, { useState, useRef, useCallback } from 'react';
 import { Post as PostType, Media } from '../types';
 import CreatePost from './CreatePost';
@@ -11,6 +12,7 @@ import { AlertTriangleIcon } from './icons';
 interface FeedProps {
     posts: PostType[];
     onAddPost: (content: string, mediaFiles: File[], postType?: 'standard' | 'report', group?: { id: string; name: string }, existingMedia?: Media[]) => Promise<void>;
+    onUpdatePost: (postId: string, newContent: string) => Promise<void>;
     loading: boolean;
     addNotification: (recipientId: string, text: string, postId?: string) => Promise<void>;
     isNewUser?: boolean;
@@ -24,7 +26,7 @@ interface FeedProps {
     hasNewPosts?: boolean;
 }
 
-const Feed: React.FC<FeedProps> = ({ posts, onAddPost, loading, addNotification, isNewUser, navigate, loadMorePosts, hasMore, loadingMore, onRefresh, error, onRetry, hasNewPosts }) => {
+const Feed: React.FC<FeedProps> = ({ posts, onAddPost, onUpdatePost, loading, addNotification, isNewUser, navigate, loadMorePosts, hasMore, loadingMore, onRefresh, error, onRetry, hasNewPosts }) => {
   const [activeFilter, setActiveFilter] = useState<'all' | 'pages'>('all');
   const [isRefreshing, setIsRefreshing] = useState(false);
 
@@ -116,7 +118,7 @@ const Feed: React.FC<FeedProps> = ({ posts, onAddPost, loading, addNotification,
             return (
               <React.Fragment key={post.id}>
                  <div ref={isLastElement ? lastPostElementRef : null}>
-                    <Post post={post} index={index} addNotification={addNotification} onAddPost={onAddPost} navigate={navigate} />
+                    <Post post={post} index={index} addNotification={addNotification} onAddPost={onAddPost} onUpdatePost={onUpdatePost} navigate={navigate} />
                  </div>
                 {index === 1 && <AdPost />}
               </React.Fragment>

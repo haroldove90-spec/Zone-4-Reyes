@@ -1,6 +1,6 @@
 
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Post as PostType, Comment as CommentType, User, Media } from '../types';
 import { 
     ThumbsUpIcon, MessageSquareIcon, Share2Icon, MoreHorizontalIcon, SendIcon 
@@ -45,6 +45,7 @@ interface PostProps {
   index: number;
   addNotification: (recipientId: string, text: string, postId?: string) => Promise<void>;
   onAddPost: (content: string, mediaFiles: File[], postType?: 'standard' | 'report', options?: { group?: { id: string; name: string; }; fanpageId?: string; }, existingMedia?: Media[]) => Promise<void>;
+  onUpdatePost: (postId: string, newContent: string) => Promise<void>;
   navigate: (path: string) => void;
 }
 
@@ -58,7 +59,7 @@ const Comment: React.FC<{ comment: CommentType; navigate: (path: string) => void
     </div>
 );
 
-const Post: React.FC<PostProps> = ({ post, index, addNotification, onAddPost, navigate }) => {
+const Post: React.FC<PostProps> = ({ post, index, addNotification, onAddPost, onUpdatePost, navigate }) => {
   const { user } = useAuth();
   const [isLiked, setIsLiked] = useState(post.isLikedByCurrentUser || false);
   const [likeCount, setLikeCount] = useState(post.likes);
@@ -66,13 +67,30 @@ const Post: React.FC<PostProps> = ({ post, index, addNotification, onAddPost, na
   const [commentsCount, setCommentsCount] = useState(post.commentsCount);
   const [allCommentsLoaded, setAllCommentsLoaded] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [isAnimatingLike, setIsAnimatingLike] = useState(false);
+  const [isOptionsMenuOpen, setIsOptionsMenuOpen] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedContent, setEditedContent] = useState(post.content);
 
   const [newComment, setNewComment] = useState('');
   const commentInputRef = React.useRef<HTMLInputElement>(null);
+  const optionsMenuRef = useRef<HTMLDivElement>(null);
   
   const mediaCount = post.media?.length || 0;
   const author = post.fanpage || post.user;
-  const authorId = post.fanpage ? post.user.id : author.id; // The user ID of the author, regardless of fanpage
+  const authorId = post.user.id; 
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (optionsMenuRef.current && !optionsMenuRef.current.contains(event.target as Node)) {
+        setIsOptionsMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   const formatComment = (c: any): CommentType => {
       const commentUser = c.profiles 
@@ -110,6 +128,11 @@ const Post: React.FC<PostProps> = ({ post, index, addNotification, onAddPost, na
   const handleLike = async () => {
     if (!user) return;
     const originalIsLiked = isLiked;
+
+    if (!originalIsLiked) {
+      setIsAnimatingLike(true);
+      setTimeout(() => setIsAnimatingLike(false), 300);
+    }
 
     // Optimistic UI update
     setIsLiked(!originalIsLiked);
@@ -170,6 +193,15 @@ const Post: React.FC<PostProps> = ({ post, index, addNotification, onAddPost, na
     } catch (error) {
         console.error("Error adding comment:", error);
     }
+  };
+
+  const handleUpdatePost = async () => {
+    if (editedContent.trim() === post.content) {
+      setIsEditing(false);
+      return;
+    }
+    await onUpdatePost(post.id, editedContent.trim());
+    setIsEditing(false);
   };
 
   const handleInternalShare = async (comment: string) => {
@@ -233,14 +265,51 @@ const Post: React.FC<PostProps> = ({ post, index, addNotification, onAddPost, na
               <p className="text-sm text-z-text-secondary dark:text-z-text-secondary-dark">{post.timestamp}</p>
             </div>
           </div>
-          <div className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-z-hover-dark cursor-pointer transition-colors">
-             <MoreHorizontalIcon className="h-6 w-6 text-z-text-secondary dark:text-z-text-secondary-dark" />
-          </div>
+          {user?.id === authorId && (
+            <div className="relative" ref={optionsMenuRef}>
+              <div onClick={() => setIsOptionsMenuOpen(prev => !prev)} className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-z-hover-dark cursor-pointer transition-colors">
+                <MoreHorizontalIcon className="h-6 w-6 text-z-text-secondary dark:text-z-text-secondary-dark" />
+              </div>
+              {isOptionsMenuOpen && (
+                <div className="absolute right-0 mt-2 w-48 bg-z-bg-secondary dark:bg-z-bg-secondary-dark rounded-md shadow-lg py-1 z-20 border dark:border-z-border-dark animate-fadeIn">
+                  <button
+                    onClick={() => { setIsEditing(true); setIsOptionsMenuOpen(false); }}
+                    className="w-full text-left px-4 py-2 text-sm text-z-text-primary dark:text-z-text-primary-dark hover:bg-gray-100 dark:hover:bg-z-hover-dark"
+                  >
+                    Editar Publicación
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
         </div>
-        {post.content && <p className="my-3 text-z-text-primary dark:text-z-text-primary-dark text-[15px] leading-relaxed whitespace-pre-wrap">{post.content}</p>}
+        
+        <div className="my-3 text-z-text-primary dark:text-z-text-primary-dark text-[15px] leading-relaxed whitespace-pre-wrap">
+            {isEditing ? (
+                <div>
+                    <textarea
+                        value={editedContent}
+                        onChange={(e) => setEditedContent(e.target.value)}
+                        className="w-full bg-z-bg-primary dark:bg-z-hover-dark rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-z-primary"
+                        rows={4}
+                        autoFocus
+                    />
+                    <div className="flex justify-end space-x-2 mt-2">
+                        <button onClick={() => setIsEditing(false)} className="bg-gray-200 dark:bg-z-hover-dark text-sm font-semibold py-1.5 px-4 rounded-md hover:bg-gray-300">
+                            Cancelar
+                        </button>
+                        <button onClick={handleUpdatePost} className="bg-z-primary text-white text-sm font-semibold py-1.5 px-4 rounded-md hover:bg-z-dark-blue">
+                            Guardar
+                        </button>
+                    </div>
+                </div>
+            ) : (
+                <p>{post.content}</p>
+            )}
+        </div>
       </div>
 
-      {(post.media && mediaCount > 0) && (
+      {(!isEditing && post.media && mediaCount > 0) && (
         <div className="my-3 -mx-4 sm:mx-0">
             {mediaCount === 1 ? (
                 <div className="bg-black">
@@ -290,7 +359,7 @@ const Post: React.FC<PostProps> = ({ post, index, addNotification, onAddPost, na
             className="relative flex-1"
          >
             <div onClick={handleLike} className={`flex items-center justify-center space-x-2 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-z-hover-dark cursor-pointer transition-colors group ${isLiked ? 'text-z-primary' : ''}`}>
-                <ThumbsUpIcon className="h-6 w-6" />
+                <ThumbsUpIcon className={`h-6 w-6 transform transition-transform duration-200 ${isAnimatingLike ? 'scale-125' : 'scale-100'}`} />
                 <span className={`font-medium group-hover:text-z-text-primary dark:group-hover:text-z-text-primary-dark transition-colors ${isLiked ? 'text-z-primary' : ''}`}>Me gusta</span>
             </div>
          </div>

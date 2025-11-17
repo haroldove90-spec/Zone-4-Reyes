@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect, useCallback, lazy, Suspense } from 'react';
 import Header from './Header';
 import LeftSidebar from './LeftSidebar';
@@ -353,6 +354,29 @@ const MainLayout: React.FC = () => {
     }
   };
 
+  const handleUpdatePost = async (postId: string, newContent: string) => {
+    try {
+        const { data, error } = await supabase
+            .from('posts')
+            .update({ content: newContent })
+            .eq('id', postId)
+            .select()
+            .single();
+
+        if (error) throw error;
+
+        if (data) {
+            setPosts(prevPosts => prevPosts.map(p =>
+                p.id === postId ? { ...p, content: newContent } : p
+            ));
+        }
+    } catch (error: any) {
+        console.error("Error updating post:", error.message);
+        setError("No se pudo actualizar la publicación.");
+        throw error; // Re-throw to inform the caller component
+    }
+  };
+
   const handleAddGroup = (newGroup: Group) => setGroups(prev => [newGroup, ...prev]);
   const handleAddEvent = (newEvent: AppEvent) => setEvents(prev => [newEvent, ...prev]);
   
@@ -363,7 +387,7 @@ const MainLayout: React.FC = () => {
           case 'profile':
               const profileId = param || user?.id;
               if (!profileId) return <LoadingSpinner />;
-              return <ProfilePage key={profileId} userId={profileId} onAddPost={handleAddPost} navigate={navigate} addNotification={addNotification} />;
+              return <ProfilePage key={profileId} userId={profileId} onAddPost={handleAddPost} onUpdatePost={handleUpdatePost} navigate={navigate} addNotification={addNotification} />;
           case 'friends':
               return <FriendsPage navigate={navigate} addNotification={addNotification} />;
           case 'settings':
@@ -394,11 +418,11 @@ const MainLayout: React.FC = () => {
           case 'notifications':
               return <NotificationsPage notifications={notifications} navigate={navigate} />;
           case 'admin':
-              return user?.isAdmin ? <AdminDashboardPage /> : <Feed posts={[]} onAddPost={() => Promise.resolve()} loading={true} addNotification={() => Promise.resolve()} navigate={navigate} loadMorePosts={() => {}} hasMore={false} loadingMore={false} onRefresh={() => Promise.resolve()} onRetry={() => {}} error={null} />;
+              return user?.isAdmin ? <AdminDashboardPage /> : <Feed posts={[]} onAddPost={() => Promise.resolve()} onUpdatePost={() => Promise.resolve()} loading={true} addNotification={() => Promise.resolve()} navigate={navigate} loadMorePosts={() => {}} hasMore={false} loadingMore={false} onRefresh={() => Promise.resolve()} onRetry={() => {}} error={null} />;
           case 'feed':
           default:
               const isNewUser = user ? posts.filter(p => p.user && p.user.id === user.id).length === 0 && !loading : false;
-              return <Feed posts={posts.filter(p => p.type !== 'report' && p.format !== 'reel')} onAddPost={handleAddPost} loading={loading} addNotification={addNotification} isNewUser={isNewUser} navigate={navigate} loadMorePosts={() => loadMorePosts(false)} hasMore={hasMore} loadingMore={loadingMore} onRefresh={() => loadMorePosts(true)} error={posts.length === 0 ? error : null} onRetry={() => loadMorePosts(true)} hasNewPosts={hasNewPosts} />;
+              return <Feed posts={posts.filter(p => p.type !== 'report' && p.format !== 'reel')} onAddPost={handleAddPost} onUpdatePost={handleUpdatePost} loading={loading} addNotification={addNotification} isNewUser={isNewUser} navigate={navigate} loadMorePosts={() => loadMorePosts(false)} hasMore={hasMore} loadingMore={loadingMore} onRefresh={() => loadMorePosts(true)} error={posts.length === 0 ? error : null} onRetry={() => loadMorePosts(true)} hasNewPosts={hasNewPosts} />;
       }
   }
 

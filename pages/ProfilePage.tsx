@@ -34,6 +34,7 @@ const ProfilePageSkeleton: React.FC = () => (
 interface ProfilePageProps {
     userId: string;
     onAddPost: (content: string, mediaFiles: File[], postType?: 'standard' | 'report', group?: { id: string; name: string }, existingMedia?: Media[]) => Promise<void>;
+    onUpdatePost: (postId: string, newContent: string) => Promise<void>;
     navigate: (page: string) => void;
     addNotification: (recipientId: string, text: string, postId?: string) => Promise<void>;
 }
@@ -57,7 +58,7 @@ const formatProfileData = (profileData: any): AuthUser | null => {
     };
 };
 
-const ProfilePage: React.FC<ProfilePageProps> = ({ userId, onAddPost, navigate, addNotification }) => {
+const ProfilePage: React.FC<ProfilePageProps> = ({ userId, onAddPost, onUpdatePost, navigate, addNotification }) => {
     const { user: currentUser, updateUser } = useAuth();
     const [profileUser, setProfileUser] = useState<AuthUser | null>(null);
     const [userPosts, setUserPosts] = useState<PostType[]>([]);
@@ -65,6 +66,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ userId, onAddPost, navigate, 
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [loading, setLoading] = useState(true);
     const [friends, setFriends] = useState<User[]>([]);
+    const [activeTab, setActiveTab] = useState('posts');
 
     const coverPhotoInputRef = useRef<HTMLInputElement>(null);
     const profilePhotoInputRef = useRef<HTMLInputElement>(null);
@@ -238,7 +240,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ userId, onAddPost, navigate, 
         }
     };
 
-    const photos = userPosts.flatMap(p => p.media?.filter(m => m.type === 'image').map(m => m.url) || []).slice(0, 9);
+    const photos = userPosts.flatMap(p => p.media?.filter(m => m.type === 'image').map(m => m.url) || []);
     
     const renderFriendshipButton = () => {
         if (isOwnProfile) return <button onClick={() => setIsEditModalOpen(true)} className="bg-z-primary text-white font-semibold py-2 px-6 rounded-md hover:bg-z-dark-blue transition-colors">Editar Perfil</button>;
@@ -299,7 +301,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ userId, onAddPost, navigate, 
                             <button onClick={() => coverPhotoInputRef.current?.click()} className="absolute bottom-4 right-4 bg-white/80 dark:bg-black/50 hover:bg-white dark:hover:bg-black text-z-text-primary dark:text-z-text-primary-dark font-semibold py-2 px-4 rounded-md flex items-center space-x-2 transition-colors opacity-0 group-hover:opacity-100"><ImagePlusIcon className="h-5 w-5"/> <span>Editar foto de portada</span></button>
                         </>}
                     </div>
-                    <div className="p-4 flex flex-col sm:flex-row items-center sm:items-end -mt-16 sm:-mt-8 space-y-4 sm:space-y-0 sm:space-x-6 border-b dark:border-z-border-dark pb-4">
+                    <div className="p-4 flex flex-col sm:flex-row items-center sm:items-end -mt-16 sm:-mt-8 space-y-4 sm:space-y-0 sm:space-x-6 pb-4">
                         <div className={`relative group ${isOwnProfile ? 'cursor-pointer' : ''}`} onClick={() => isOwnProfile && profilePhotoInputRef.current?.click()}>
                             <img src={profileUser.avatarUrl} alt="Avatar del usuario" className="w-40 h-40 rounded-full border-4 border-z-bg-secondary dark:border-z-bg-secondary-dark" loading="lazy"/>
                             {isOwnProfile && <><div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"><ImagePlusIcon className="h-8 w-8 text-white"/></div><input type="file" ref={profilePhotoInputRef} onChange={handleProfilePhotoChange} className="hidden" accept="image/*" /></>}
@@ -313,52 +315,68 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ userId, onAddPost, navigate, 
                              <button className="bg-gray-200 dark:bg-z-hover-dark text-z-text-primary dark:text-z-text-primary-dark font-semibold py-2 px-4 rounded-md hover:bg-gray-300 dark:hover:bg-z-border-dark transition-colors"><MoreHorizontalIcon className="h-5 w-5"/></button>
                         </div>
                     </div>
+                    <div className="border-t dark:border-z-border-dark px-4">
+                        <nav className="flex space-x-2">
+                           <button onClick={() => setActiveTab('posts')} className={`py-3 px-4 font-semibold transition-colors ${activeTab === 'posts' ? 'text-z-primary border-b-2 border-z-primary' : 'text-z-text-secondary dark:text-z-text-secondary-dark hover:bg-gray-100 dark:hover:bg-z-hover-dark rounded-t-md'}`}>Publicaciones</button>
+                           <button onClick={() => setActiveTab('friends')} className={`py-3 px-4 font-semibold transition-colors ${activeTab === 'friends' ? 'text-z-primary border-b-2 border-z-primary' : 'text-z-text-secondary dark:text-z-text-secondary-dark hover:bg-gray-100 dark:hover:bg-z-hover-dark rounded-t-md'}`}>Amigos</button>
+                           <button onClick={() => setActiveTab('photos')} className={`py-3 px-4 font-semibold transition-colors ${activeTab === 'photos' ? 'text-z-primary border-b-2 border-z-primary' : 'text-z-text-secondary dark:text-z-text-secondary-dark hover:bg-gray-100 dark:hover:bg-z-hover-dark rounded-t-md'}`}>Fotos</button>
+                        </nav>
+                    </div>
                 </div>
 
                 <div className="p-0 md:p-4 grid grid-cols-1 md:grid-cols-5 gap-6">
-                    <div className="md:col-span-2 space-y-6 p-4 md:p-0">
-                        <div className="bg-z-bg-secondary dark:bg-z-bg-secondary-dark rounded-xl shadow-md p-4">
-                            <h2 className="text-xl font-bold mb-3 text-z-text-primary dark:text-z-text-primary-dark">Intro</h2>
-                            {profileUser.bio && <p className="text-center text-z-text-secondary dark:text-z-text-secondary-dark">{profileUser.bio}</p>}
-                            <ul className="mt-4 space-y-2">
-                                {profileUser.location && <li className="flex items-center space-x-3 text-z-text-primary dark:text-z-text-primary-dark"><MapPinIcon className="h-5 w-5 text-z-text-secondary"/><span>Vive en <b>{profileUser.location}</b></span></li>}
-                                {profileUser.age && <li className="flex items-center space-x-3 text-z-text-primary dark:text-z-text-primary-dark"><CakeIcon className="h-5 w-5 text-z-text-secondary"/><span>Tiene <b>{profileUser.age}</b> años</span></li>}
-                                {profileUser.website && <li className="flex items-center space-x-3 text-z-text-primary dark:text-z-text-primary-dark"><LinkIcon className="h-5 w-5 text-z-text-secondary"/><a href={`https://${profileUser.website}`} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline"><b>{profileUser.website}</b></a></li>}
-                            </ul>
-                        </div>
-                        <div className="bg-z-bg-secondary dark:bg-z-bg-secondary-dark rounded-xl shadow-md p-4">
-                            <div className="flex justify-between items-center mb-3">
-                                <h2 className="text-xl font-bold text-z-text-primary dark:text-z-text-primary-dark">Amigos</h2>
-                                <button onClick={() => navigate('friends')} className="text-sm text-z-primary hover:underline">Ver todos</button>
+                    {activeTab === 'posts' && (
+                        <>
+                            <div className="md:col-span-2 space-y-6 p-4 md:p-0">
+                                <div className="bg-z-bg-secondary dark:bg-z-bg-secondary-dark rounded-xl shadow-md p-4">
+                                    <h2 className="text-xl font-bold mb-3 text-z-text-primary dark:text-z-text-primary-dark">Intro</h2>
+                                    {profileUser.bio && <p className="text-center text-z-text-secondary dark:text-z-text-secondary-dark">{profileUser.bio}</p>}
+                                    <ul className="mt-4 space-y-2">
+                                        {profileUser.location && <li className="flex items-center space-x-3 text-z-text-primary dark:text-z-text-primary-dark"><MapPinIcon className="h-5 w-5 text-z-text-secondary"/><span>Vive en <b>{profileUser.location}</b></span></li>}
+                                        {profileUser.age && <li className="flex items-center space-x-3 text-z-text-primary dark:text-z-text-primary-dark"><CakeIcon className="h-5 w-5 text-z-text-secondary"/><span>Tiene <b>{profileUser.age}</b> años</span></li>}
+                                        {profileUser.website && <li className="flex items-center space-x-3 text-z-text-primary dark:text-z-text-primary-dark"><LinkIcon className="h-5 w-5 text-z-text-secondary"/><a href={`https://${profileUser.website}`} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline"><b>{profileUser.website}</b></a></li>}
+                                    </ul>
+                                </div>
                             </div>
-                             <p className="text-z-text-secondary dark:text-z-text-secondary-dark mb-3">{friends.length} amigos</p>
-                            <div className="grid grid-cols-3 gap-2">
-                                {friends.slice(0, 9).map(friend => (
-                                    <div key={friend.id} onClick={() => navigate(`profile/${friend.id}`)} className="cursor-pointer">
-                                        <img src={friend.avatarUrl} alt={friend.name} className="rounded-lg w-full aspect-square object-cover" loading="lazy"/>
-                                        <p className="text-xs font-semibold mt-1 text-z-text-primary dark:text-z-text-primary-dark truncate">{friend.name}</p>
-                                    </div>
+                            <div className="md:col-span-3">
+                                <div className="px-4 md:px-0">
+                                {isOwnProfile && <CreatePost onAddPost={handleAddProfilePost} />}
+                                </div>
+                                {userPosts.map((post, index) => (
+                                    <Post key={post.id} post={post} index={index} addNotification={addNotification} onAddPost={handleAddProfilePost} onUpdatePost={onUpdatePost} navigate={navigate} />
                                 ))}
                             </div>
+                        </>
+                    )}
+                     {activeTab === 'friends' && (
+                        <div className="md:col-span-5 bg-z-bg-secondary dark:bg-z-bg-secondary-dark rounded-xl shadow-md p-4">
+                            <h2 className="text-xl font-bold text-z-text-primary dark:text-z-text-primary-dark mb-4">Amigos ({friends.length})</h2>
+                            {friends.length > 0 ? (
+                                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                                    {friends.map(friend => (
+                                        <div key={friend.id} onClick={() => navigate(`profile/${friend.id}`)} className="cursor-pointer text-center">
+                                            <img src={friend.avatarUrl} alt={friend.name} className="rounded-lg w-full aspect-square object-cover" loading="lazy"/>
+                                            <p className="text-sm font-semibold mt-2 text-z-text-primary dark:text-z-text-primary-dark truncate">{friend.name}</p>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <p className="text-z-text-secondary dark:text-z-text-secondary-dark text-center py-8">Este usuario aún no tiene amigos.</p>
+                            )}
                         </div>
-                         <div className="bg-z-bg-secondary dark:bg-z-bg-secondary-dark rounded-xl shadow-md p-4">
-                            <div className="flex justify-between items-center mb-3">
-                                <h2 className="text-xl font-bold text-z-text-primary dark:text-z-text-primary-dark">Fotos</h2>
-                                <a href="#" className="text-sm text-z-primary hover:underline">Ver todas</a>
-                            </div>
-                            <div className="grid grid-cols-3 gap-2">
-                                {photos.map((photo, i) => <img key={i} src={photo} alt={`Foto ${i}`} className="rounded-lg w-full aspect-square object-cover" loading="lazy"/>)}
-                            </div>
+                    )}
+                    {activeTab === 'photos' && (
+                        <div className="md:col-span-5 bg-z-bg-secondary dark:bg-z-bg-secondary-dark rounded-xl shadow-md p-4">
+                             <h2 className="text-xl font-bold text-z-text-primary dark:text-z-text-primary-dark mb-4">Fotos ({photos.length})</h2>
+                             {photos.length > 0 ? (
+                                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2">
+                                    {photos.map((photo, i) => <div key={i} className="aspect-square bg-gray-200 dark:bg-z-hover-dark rounded-lg"><img src={photo} alt={`Foto ${i}`} className="rounded-lg w-full h-full object-cover" loading="lazy"/></div>)}
+                                </div>
+                              ) : (
+                                <p className="text-z-text-secondary dark:text-z-text-secondary-dark text-center py-8">Este usuario aún no tiene fotos en sus publicaciones.</p>
+                            )}
                         </div>
-                    </div>
-                    <div className="md:col-span-3">
-                        <div className="px-4 md:px-0">
-                           {isOwnProfile && <CreatePost onAddPost={handleAddProfilePost} />}
-                        </div>
-                        {userPosts.map((post, index) => (
-                            <Post key={post.id} post={post} index={index} addNotification={addNotification} onAddPost={handleAddProfilePost} navigate={navigate} />
-                        ))}
-                    </div>
+                    )}
                 </div>
             </div>
             {isEditModalOpen && <EditProfileModal onClose={() => setIsEditModalOpen(false)} />}
