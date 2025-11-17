@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Fanpage } from '../types';
 import { supabase } from '../services/supabaseClient';
@@ -141,15 +142,47 @@ const AdminDashboardPage: React.FC = () => {
     const handleToggleUserStatus = async (userId: string, currentStatus: boolean | undefined) => {
         const newStatus = currentStatus === false;
         const { error } = await supabase.from('profiles').update({ is_active: newStatus }).eq('id', userId);
-        if (error) console.error("Error updating user status:", error);
-        else fetchData();
+        if (error) {
+            console.error("Error updating user status:", error);
+            alert(`Error al actualizar el estado del usuario: ${error.message}`);
+        } else {
+            fetchData();
+        }
     };
 
     const handleToggleFanpageStatus = async (pageId: string, currentStatus: boolean | undefined) => {
         const newStatus = currentStatus === false;
         const { error } = await supabase.from('fanpages').update({ is_active: newStatus }).eq('id', pageId);
-        if (error) console.error("Error updating fanpage status:", error);
-        else fetchData();
+        if (error) {
+            console.error("Error updating fanpage status:", error);
+            alert(`Error al actualizar el estado de la página: ${error.message}`);
+        } else {
+            fetchData();
+        }
+    };
+
+    const handleDeleteFanpage = async (pageId: string) => {
+        if (window.confirm('¿Estás seguro de que quieres eliminar esta página? Esta acción no se puede deshacer.')) {
+            const { error } = await supabase.from('fanpages').delete().eq('id', pageId);
+            if (error) {
+                console.error("Error deleting fanpage:", error);
+                alert(`Error al eliminar la página: ${error.message}`);
+            } else {
+                fetchData();
+            }
+        }
+    };
+
+    const handleDeleteUser = async (userId: string) => {
+        if (window.confirm('ADVERTENCIA: Esto eliminará el perfil del usuario de la base de datos, pero NO eliminará la cuenta de autenticación. El usuario aún podrá iniciar sesión (aunque su perfil estará en blanco). Para una eliminación completa se requiere una operación de servidor. ¿Deseas continuar?')) {
+            const { error } = await supabase.from('profiles').delete().eq('id', userId);
+            if (error) {
+                console.error("Error deleting user profile:", error);
+                alert(`Error al eliminar el usuario: ${error.message}`);
+            } else {
+                fetchData();
+            }
+        }
     };
 
     return (
@@ -187,7 +220,8 @@ const AdminDashboardPage: React.FC = () => {
                                         <span className={`px-2 py-1 text-xs font-semibold rounded-full ${fp.is_active !== false ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>{fp.is_active !== false ? 'Activa' : 'Inactiva'}</span>
                                     </td>
                                     <td className="p-3">
-                                        <button onClick={() => handleToggleFanpageStatus(fp.id, fp.is_active)} className={`text-sm font-medium ${fp.is_active !== false ? 'text-red-500 hover:text-red-700' : 'text-green-500 hover:text-green-700'}`}>{fp.is_active !== false ? 'Desactivar' : 'Activar'}</button>
+                                        <button onClick={() => handleToggleFanpageStatus(fp.id, fp.is_active)} className={`text-sm font-medium ${fp.is_active !== false ? 'text-yellow-600 hover:text-yellow-800' : 'text-green-500 hover:text-green-700'}`}>{fp.is_active !== false ? 'Desactivar' : 'Activar'}</button>
+                                        <button onClick={() => handleDeleteFanpage(fp.id)} className="ml-4 text-sm font-medium text-red-500 hover:text-red-700">Eliminar</button>
                                     </td>
                                 </tr>)
                             )}
@@ -212,7 +246,8 @@ const AdminDashboardPage: React.FC = () => {
                                         <span className={`px-2 py-1 text-xs font-semibold rounded-full ${u.is_active !== false ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>{u.is_active !== false ? 'Activo' : 'Inactivo'}</span>
                                     </td>
                                     <td className="p-3">
-                                        <button onClick={() => handleToggleUserStatus(u.id, u.is_active)} className={`text-sm font-medium ${u.is_active !== false ? 'text-red-500 hover:text-red-700' : 'text-green-500 hover:text-green-700'}`}>{u.is_active !== false ? 'Desactivar' : 'Activar'}</button>
+                                        <button onClick={() => handleToggleUserStatus(u.id, u.is_active)} className={`text-sm font-medium ${u.is_active !== false ? 'text-yellow-600 hover:text-yellow-800' : 'text-green-500 hover:text-green-700'}`}>{u.is_active !== false ? 'Desactivar' : 'Activar'}</button>
+                                        <button onClick={() => handleDeleteUser(u.id)} className="ml-4 text-sm font-medium text-red-500 hover:text-red-700">Eliminar</button>
                                     </td>
                                 </tr>)
                             )}
