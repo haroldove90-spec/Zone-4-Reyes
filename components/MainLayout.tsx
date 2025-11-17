@@ -1,6 +1,6 @@
 
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, lazy, Suspense } from 'react';
 import Header from './Header';
 import LeftSidebar from './LeftSidebar';
 import Feed from './Feed';
@@ -8,26 +8,34 @@ import RightSidebar from './RightSidebar';
 import { Post, Fanpage, AppNotification, User, Group, AppEvent, Media } from '../types';
 import { FAKE_GROUPS, FAKE_EVENTS } from '../services/geminiService';
 import BottomNavBar from './BottomNavBar';
-import ProfilePage from '../pages/ProfilePage';
-import FriendsPage from '../pages/FriendsPage';
-import AdCenterPage from '../pages/AdCenterPage';
-import SettingsPage from '../pages/SettingsPage';
-import AdminDashboardPage from '../pages/AdminDashboardPage';
-import MyPages from '../pages/MyPages';
-import CreateFanpage from '../pages/CreateFanpage';
-import FanpageDetailPage from '../pages/FanpageDetailPage';
-import CitizenReportPage from '../pages/CitizenReportPage';
-import ReelsPage from '../pages/ReelsPage';
-import MarketplacePage from '../pages/MarketplacePage';
-import GroupsPage from '../pages/GroupsPage';
-import GroupDetailPage from '../pages/GroupDetailPage';
-import CreateGroupPage from '../pages/CreateGroupPage';
-import EventsPage from '../pages/EventsPage';
-import EventDetailPage from '../pages/EventDetailPage';
-import CreateEventPage from '../pages/CreateEventPage';
-import NotificationsPage from '../pages/NotificationsPage';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../services/supabaseClient';
+
+// Lazy load page components for code splitting
+const ProfilePage = lazy(() => import('../pages/ProfilePage'));
+const FriendsPage = lazy(() => import('../pages/FriendsPage'));
+const AdCenterPage = lazy(() => import('../pages/AdCenterPage'));
+const SettingsPage = lazy(() => import('../pages/SettingsPage'));
+const AdminDashboardPage = lazy(() => import('../pages/AdminDashboardPage'));
+const MyPages = lazy(() => import('../pages/MyPages'));
+const CreateFanpage = lazy(() => import('../pages/CreateFanpage'));
+const FanpageDetailPage = lazy(() => import('../pages/FanpageDetailPage'));
+const CitizenReportPage = lazy(() => import('../pages/CitizenReportPage'));
+const ReelsPage = lazy(() => import('../pages/ReelsPage'));
+const MarketplacePage = lazy(() => import('../pages/MarketplacePage'));
+const GroupsPage = lazy(() => import('../pages/GroupsPage'));
+const GroupDetailPage = lazy(() => import('../pages/GroupDetailPage'));
+const CreateGroupPage = lazy(() => import('../pages/CreateGroupPage'));
+const EventsPage = lazy(() => import('../pages/EventsPage'));
+const EventDetailPage = lazy(() => import('../pages/EventDetailPage'));
+const CreateEventPage = lazy(() => import('../pages/CreateEventPage'));
+const NotificationsPage = lazy(() => import('../pages/NotificationsPage'));
+
+const LoadingSpinner: React.FC = () => (
+    <div className="flex-grow pt-14 flex items-center justify-center" style={{ minHeight: 'calc(100vh - 3.5rem)' }}>
+        <div className="w-12 h-12 border-4 border-z-primary/30 border-t-z-primary rounded-full animate-spin"></div>
+    </div>
+);
 
 const MainLayout: React.FC = () => {
   const [posts, setPosts] = useState<Post[]>([]);
@@ -210,8 +218,9 @@ const MainLayout: React.FC = () => {
     try {
         const { data: postsData, error: postsError } = await supabase
             .from('posts')
-            .select('*, user:profiles!user_id(id, name, avatar_url), groups(id, name), fanpage:fanpages!fanpage_id(id, name, avatar_url)')
-            .order('created_at', { ascending: false });
+            .select('*, user:profiles!user_id(id, name, avatar_url, is_active), groups(id, name), fanpage:fanpages!fanpage_id(id, name, avatar_url, is_active), likes(count), comments(count)')
+            .order('created_at', { ascending: false })
+            .limit(20);
 
         if (postsError) throw postsError;
         if (!postsData) {
@@ -221,13 +230,24 @@ const MainLayout: React.FC = () => {
         }
         
         const activePosts = postsData.filter((p: any) => {
-             // Treat null or undefined is_active as true for backward compatibility
             const userIsActive = p.user ? (p.user.is_active !== false) : true;
             const fanpageIsActive = p.fanpage ? (p.fanpage.is_active !== false) : true;
-            
             return p.fanpage ? fanpageIsActive : userIsActive;
         });
+        
+        const postIds = activePosts.map(p => p.id);
+        let likedPostIds = new Set<string>();
 
+        if (user && postIds.length > 0) {
+            const { data: likesData, error: likesError } = await supabase
+                .from('likes')
+                .select('post_id')
+                .in('post_id', postIds)
+                .eq('user_id', user.id);
+            
+            if (likesError) console.error("Error fetching user likes:", likesError);
+            else if (likesData) likedPostIds = new Set(likesData.map(l => l.post_id));
+        }
 
         const fetchedPosts: Post[] = activePosts.map((p: any) => ({
             id: p.id.toString(),
@@ -239,11 +259,12 @@ const MainLayout: React.FC = () => {
             user: p.user 
                 ? { id: p.user.id, name: p.user.name, avatarUrl: p.user.avatar_url }
                 : { id: p.user_id || 'unknown', name: 'Usuario Desconocido', avatarUrl: 'https://static.vecteezy.com/system/resources/thumbnails/009/292/244/small/default-avatar-icon-of-social-media-user-vector.jpg' },
-            likes: 0,
-            commentsCount: 0,
+            likes: p.likes[0]?.count ?? 0,
+            commentsCount: p.comments[0]?.count ?? 0,
             comments: [],
             group: p.groups ? { id: p.groups.id, name: p.groups.name } : undefined,
             fanpage: p.fanpage ? { id: p.fanpage.id, name: p.fanpage.name, avatarUrl: p.fanpage.avatar_url } : undefined,
+            isLikedByCurrentUser: likedPostIds.has(p.id.toString()),
         }));
         setPosts(fetchedPosts);
 
@@ -252,7 +273,7 @@ const MainLayout: React.FC = () => {
     } finally {
         setLoading(false);
     }
-  }, []);
+  }, [user]);
   
   const fetchFanpages = useCallback(async () => {
       try {
@@ -395,7 +416,9 @@ const MainLayout: React.FC = () => {
       {currentPath !== 'reels' && <Header navigate={navigate} notificationCount={notificationCount} notifications={notifications} onNotificationsOpen={resetNotificationCount} friendRequests={friendRequests} onFriendRequestAction={fetchFriendRequests} />}
       <div className="flex">
         {currentPath !== 'reels' && <LeftSidebar navigate={navigate} />}
-        {renderPage()}
+        <Suspense fallback={<LoadingSpinner />}>
+            {renderPage()}
+        </Suspense>
         {currentPath !== 'reels' && <RightSidebar friends={friends} navigate={navigate} />}
       </div>
       {currentPath !== 'reels' && <BottomNavBar navigate={navigate} activePath={currentPath} />}

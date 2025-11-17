@@ -60,10 +60,10 @@ const Comment: React.FC<{ comment: CommentType; navigate: (path: string) => void
 
 const Post: React.FC<PostProps> = ({ post, index, addNotification, onAddPost, navigate }) => {
   const { user } = useAuth();
-  const [isLiked, setIsLiked] = useState(false);
-  const [likeCount, setLikeCount] = useState(0);
+  const [isLiked, setIsLiked] = useState(post.isLikedByCurrentUser || false);
+  const [likeCount, setLikeCount] = useState(post.likes);
   const [comments, setComments] = useState<CommentType[]>([]);
-  const [commentsCount, setCommentsCount] = useState(0);
+  const [commentsCount, setCommentsCount] = useState(post.commentsCount);
   const [allCommentsLoaded, setAllCommentsLoaded] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
 
@@ -86,60 +86,6 @@ const Post: React.FC<PostProps> = ({ post, index, addNotification, onAddPost, na
           user: commentUser
       };
   };
-  
-  useEffect(() => {
-    const fetchPostDetails = async () => {
-        try {
-            // Fetch likes
-            const { count: likesData, error: likesError } = await supabase
-                .from('likes')
-                .select('*', { count: 'exact' })
-                .eq('post_id', post.id);
-    
-            if (likesError) throw likesError;
-            if (likesData !== null) setLikeCount(likesData);
-    
-            if(user) {
-                 const { data: userLike, error: userLikeError } = await supabase
-                    .from('likes')
-                    .select('*')
-                    .eq('post_id', post.id)
-                    .eq('user_id', user.id)
-                    .maybeSingle();
-    
-                if (userLikeError) throw userLikeError;
-                if(userLike) {
-                    setIsLiked(true);
-                }
-            }
-    
-            // Fetch initial comments (latest 2)
-            const { data: commentsData, count: commentsCountData, error: commentsError } = await supabase
-                .from('comments')
-                .select('*, profiles!user_id(id, name, avatar_url)', { count: 'exact' })
-                .eq('post_id', post.id)
-                .order('created_at', { ascending: false })
-                .limit(2);
-    
-            if (commentsError) throw commentsError;
-            if (commentsData) {
-                const formattedComments: CommentType[] = commentsData.map(formatComment).reverse();
-                setComments(formattedComments);
-            }
-            if (commentsCountData !== null) {
-                setCommentsCount(commentsCountData);
-                 if (commentsData && commentsCountData <= commentsData.length) {
-                    setAllCommentsLoaded(true);
-                }
-            }
-        } catch (error) {
-            console.error(`Error fetching details for post ${post.id}:`, (error as any).message || error);
-        }
-    };
-
-    fetchPostDetails();
-  }, [post.id, user]);
-
 
   const handleLoadAllComments = async () => {
     if (allCommentsLoaded) return;
@@ -358,13 +304,13 @@ const Post: React.FC<PostProps> = ({ post, index, addNotification, onAddPost, na
          </div>
       </div>
       
-      {comments.length > 0 && <div className="border-t border-gray-200/80 dark:border-z-border-dark mx-4 mt-1"></div>}
+      {(comments.length > 0 || (!allCommentsLoaded && commentsCount > 0)) && <div className="border-t border-gray-200/80 dark:border-z-border-dark mx-4 mt-1"></div>}
       
       <div className="p-4 pt-2">
         {comments.map(comment => <Comment key={comment.id} comment={comment} navigate={navigate} />)}
-        {!allCommentsLoaded && commentsCount > comments.length && (
+        {!allCommentsLoaded && commentsCount > 0 && (
             <button onClick={handleLoadAllComments} className="text-sm font-semibold text-z-text-secondary dark:text-z-text-secondary-dark mt-2 hover:underline">
-                {`Ver ${commentsCount - comments.length} comentarios más`}
+                {`Ver ${comments.length > 0 ? 'todos los' : ''} ${commentsCount} comentarios`}
             </button>
         )}
         <div className="flex items-center space-x-2 mt-4">

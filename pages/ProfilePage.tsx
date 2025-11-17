@@ -85,11 +85,41 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ userId, onAddPost, navigate, 
                 return;
             }
 
-
-            const { data: postsData, error: postsError } = await supabase.from('posts').select('*, user:profiles!user_id(id, name, avatar_url), groups(id, name)').eq('user_id', userId).order('created_at', { ascending: false });
+            const { data: postsData, error: postsError } = await supabase
+                .from('posts')
+                .select('*, user:profiles!user_id(id, name, avatar_url), groups(id, name), likes(count), comments(count)')
+                .eq('user_id', userId)
+                .order('created_at', { ascending: false });
+            
             if(postsError) throw postsError;
-            setUserPosts(postsData.map((p: any) => ({
-                id: p.id.toString(), user: {id: p.user.id, name: p.user.name, avatarUrl: p.user.avatar_url}, timestamp: new Date(p.created_at).toLocaleString(), content: p.content, media: p.media, type: p.type, format: p.format, likes: 0, commentsCount: 0, comments: [], group: p.groups ? { id: p.groups.id, name: p.groups.name } : undefined,
+
+            const postIds = (postsData || []).map(p => p.id);
+            let likedPostIds = new Set<string>();
+
+            if (currentUser && postIds.length > 0) {
+                const { data: likesData, error: likesError } = await supabase
+                    .from('likes')
+                    .select('post_id')
+                    .in('post_id', postIds)
+                    .eq('user_id', currentUser.id);
+                
+                if (likesError) console.error("Error fetching user likes for profile:", likesError);
+                else if (likesData) likedPostIds = new Set(likesData.map(l => l.post_id));
+            }
+            
+            setUserPosts((postsData || []).map((p: any) => ({
+                id: p.id.toString(), 
+                user: {id: p.user.id, name: p.user.name, avatarUrl: p.user.avatar_url}, 
+                timestamp: new Date(p.created_at).toLocaleString(), 
+                content: p.content, 
+                media: p.media, 
+                type: p.type, 
+                format: p.format, 
+                likes: p.likes[0]?.count ?? 0,
+                commentsCount: p.comments[0]?.count ?? 0,
+                comments: [], 
+                group: p.groups ? { id: p.groups.id, name: p.groups.name } : undefined,
+                isLikedByCurrentUser: likedPostIds.has(p.id.toString())
             })));
             
             // Fetch friends
@@ -118,7 +148,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ userId, onAddPost, navigate, 
         } finally {
             setLoading(false);
         }
-    }, [userId, currentUser?.isAdmin]);
+    }, [userId, currentUser]);
 
     const checkFriendshipStatus = useCallback(async () => {
         if (isOwnProfile || !currentUser) return;
@@ -160,6 +190,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ userId, onAddPost, navigate, 
             let error;
             if (action === 'add') {
                 ({ error } = await supabase.from('friendships').insert({ requester_id: currentUser.id, addressee_id: userId, status: 'pending' }));
+                 if(!error) addNotification(userId, 'te ha enviado una solicitud de amistad.');
             } else if (action === 'cancel' || action === 'remove') {
                 ({ error } = await supabase
                     .from('friendships')

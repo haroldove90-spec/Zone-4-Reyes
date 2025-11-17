@@ -58,6 +58,7 @@ export interface Post {
   format?: 'post' | 'reel';
   group?: { id: string; name: string };
   fanpage?: { id: string; name: string; avatarUrl: string; };
+  isLikedByCurrentUser?: boolean;
 }
 
 export interface AppNotification {

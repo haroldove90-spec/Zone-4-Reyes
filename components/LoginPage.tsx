@@ -93,7 +93,7 @@ const LoginPage: React.FC = () => {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-z-primary text-white font-bold py-2.5 px-4 rounded-lg hover:bg-z-dark-blue transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-z-primary dark:focus:ring-offset-z-bg-secondary-dark transform hover:scale-[1.02] disabled:bg-gray-400"
+              className="w-full bg-z-primary text-white font-bold py-2.5 px-4 rounded-lg hover:bg-z-dark-blue transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-z-primary dark:focus:ring-offset-z-bg-secondary-dark disabled:bg-gray-400"
             >
               {loading ? 'Cargando...' : (isLoginView ? 'Iniciar Sesión' : 'Registrarse')}
             </button>
