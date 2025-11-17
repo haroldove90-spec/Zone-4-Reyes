@@ -1,5 +1,5 @@
 
-const CACHE_NAME = 'zone4reyes-v1.1';
+const CACHE_NAME = 'zone4reyes-v1.2';
 const URLS_TO_CACHE = [
   '/',
   '/index.html',
@@ -74,26 +74,28 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  // Use a Network-First strategy for all other assets.
-  // This ensures the user gets the latest version of the app files if online,
-  // preventing issues with Vercel's preview deployments serving stale content.
+  // Stale-While-Revalidate strategy for all other assets.
+  // This serves content from cache immediately for speed, then updates the cache in the background.
   event.respondWith(
-    fetch(event.request)
-      .then(networkResponse => {
-        // If the network request is successful, cache the response for offline use.
-        if (networkResponse && networkResponse.status === 200) {
-          const responseToCache = networkResponse.clone();
-          caches.open(CACHE_NAME)
-            .then(cache => {
-              cache.put(event.request, responseToCache);
-            });
-        }
-        return networkResponse;
-      })
-      .catch(() => {
-        // If the network request fails (e.g., user is offline),
-        // try to serve the asset from the cache.
-        return caches.match(event.request);
-      })
+    caches.open(CACHE_NAME).then(cache => {
+      return cache.match(event.request).then(cachedResponse => {
+        const fetchPromise = fetch(event.request).then(networkResponse => {
+          // If the network request is successful, update the cache.
+          if (networkResponse && networkResponse.status === 200) {
+            cache.put(event.request, networkResponse.clone());
+          }
+          return networkResponse;
+        }).catch(err => {
+            // The network request failed. If we have a cached response, it was already served.
+            // This catch prevents an unhandled promise rejection in the console.
+            if (!cachedResponse) {
+              console.error('SW: Network request failed and no cache available for:', event.request.url);
+            }
+        });
+
+        // Return the cached response immediately if it exists, otherwise wait for the network response.
+        return cachedResponse || fetchPromise;
+      });
+    })
   );
 });

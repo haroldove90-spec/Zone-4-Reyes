@@ -4,7 +4,10 @@ import ReactDOM from 'react-dom/client';
 import App from './App';
 import { AuthProvider } from './contexts/AuthContext';
 
+/*
 // Register the service worker for Progressive Web App functionality.
+// NOTE: This has been disabled due to a cross-origin error in the current execution environment.
+// The Service Worker's origin must match the application's origin, which is not the case here.
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/sw.js').then(registration => {
@@ -35,7 +38,7 @@ if ('serviceWorker' in navigator) {
     });
   });
 }
-
+*/
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {
