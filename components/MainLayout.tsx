@@ -218,7 +218,7 @@ const MainLayout: React.FC = () => {
     try {
         const { data: postsData, error: postsError } = await supabase
             .from('posts')
-            .select('*, user:profiles!user_id(id, name, avatar_url, is_active), groups(id, name), fanpage:fanpages!fanpage_id(id, name, avatar_url, is_active), likes(count), comments(count)')
+            .select('*, user:profiles!user_id(id, name, avatar_url), groups(id, name), fanpage:fanpages!fanpage_id(id, name, avatar_url), likes(count), comments(count)')
             .order('created_at', { ascending: false })
             .limit(20);
 
@@ -229,13 +229,7 @@ const MainLayout: React.FC = () => {
             return;
         }
         
-        const activePosts = postsData.filter((p: any) => {
-            const userIsActive = p.user ? (p.user.is_active !== false) : true;
-            const fanpageIsActive = p.fanpage ? (p.fanpage.is_active !== false) : true;
-            return p.fanpage ? fanpageIsActive : userIsActive;
-        });
-        
-        const postIds = activePosts.map(p => p.id);
+        const postIds = postsData.map(p => p.id);
         let likedPostIds = new Set<string>();
 
         if (user && postIds.length > 0) {
@@ -249,7 +243,7 @@ const MainLayout: React.FC = () => {
             else if (likesData) likedPostIds = new Set(likesData.map(l => l.post_id));
         }
 
-        const fetchedPosts: Post[] = activePosts.map((p: any) => ({
+        const fetchedPosts: Post[] = postsData.map((p: any) => ({
             id: p.id.toString(),
             timestamp: new Date(p.created_at).toLocaleString(),
             content: p.content,

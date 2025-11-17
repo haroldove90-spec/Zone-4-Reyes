@@ -220,7 +220,7 @@ const AdminDashboardPage: React.FC = () => {
                                         <span className={`px-2 py-1 text-xs font-semibold rounded-full ${fp.is_active !== false ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>{fp.is_active !== false ? 'Activa' : 'Inactiva'}</span>
                                     </td>
                                     <td className="p-3">
-                                        <button onClick={() => handleToggleFanpageStatus(fp.id, fp.is_active)} className={`text-sm font-medium ${fp.is_active !== false ? 'text-yellow-600 hover:text-yellow-800' : 'text-green-500 hover:text-green-700'}`}>{fp.is_active !== false ? 'Desactivar' : 'Activar'}</button>
+                                        <button onClick={() => handleToggleFanpageStatus(fp.id, fp.is_active)} disabled className={`text-sm font-medium ${fp.is_active !== false ? 'text-yellow-600 hover:text-yellow-800' : 'text-green-500 hover:text-green-700'} disabled:opacity-50 disabled:cursor-not-allowed`}>{fp.is_active !== false ? 'Desactivar' : 'Activar'}</button>
                                         <button onClick={() => handleDeleteFanpage(fp.id)} className="ml-4 text-sm font-medium text-red-500 hover:text-red-700">Eliminar</button>
                                     </td>
                                 </tr>)
@@ -246,7 +246,7 @@ const AdminDashboardPage: React.FC = () => {
                                         <span className={`px-2 py-1 text-xs font-semibold rounded-full ${u.is_active !== false ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>{u.is_active !== false ? 'Activo' : 'Inactivo'}</span>
                                     </td>
                                     <td className="p-3">
-                                        <button onClick={() => handleToggleUserStatus(u.id, u.is_active)} className={`text-sm font-medium ${u.is_active !== false ? 'text-yellow-600 hover:text-yellow-800' : 'text-green-500 hover:text-green-700'}`}>{u.is_active !== false ? 'Desactivar' : 'Activar'}</button>
+                                        <button onClick={() => handleToggleUserStatus(u.id, u.is_active)} disabled className={`text-sm font-medium ${u.is_active !== false ? 'text-yellow-600 hover:text-yellow-800' : 'text-green-500 hover:text-green-700'} disabled:opacity-50 disabled:cursor-not-allowed`}>{u.is_active !== false ? 'Desactivar' : 'Activar'}</button>
                                         <button onClick={() => handleDeleteUser(u.id)} className="ml-4 text-sm font-medium text-red-500 hover:text-red-700">Eliminar</button>
                                     </td>
                                 </tr>)
