@@ -1,32 +1,51 @@
 
+
 import React, { useState } from 'react';
-import { Group } from '../types';
+import { useAuth } from '../contexts/AuthContext';
+import { supabase } from '../services/supabaseClient';
 
 interface CreateGroupPageProps {
-    onAddGroup: (group: Group) => void;
     navigate: (path: string) => void;
 }
 
-const CreateGroupPage: React.FC<CreateGroupPageProps> = ({ onAddGroup, navigate }) => {
+const CreateGroupPage: React.FC<CreateGroupPageProps> = ({ navigate }) => {
+    const { user } = useAuth();
     const [name, setName] = useState('');
     const [description, setDescription] = useState('');
     const [isPrivate, setIsPrivate] = useState(false);
+    const [loading, setLoading] = useState(false);
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!name || !description) return;
+        if (!name || !description || !user) return;
+        setLoading(true);
 
-        const newGroup: Group = {
-            id: `g${Date.now()}`,
-            name,
-            description,
-            isPrivate,
-            memberCount: 1,
-            avatarUrl: `https://picsum.photos/seed/${name.replace(/\s/g, '')}/200`,
-            coverUrl: `https://picsum.photos/seed/${name.replace(/\s/g, '')}cover/1600/400`,
-        };
-        onAddGroup(newGroup);
-        navigate('groups');
+        try {
+            const { data, error } = await supabase
+                .from('groups')
+                .insert({
+                    name,
+                    description,
+                    is_private: isPrivate,
+                    avatar_url: `https://picsum.photos/seed/${name.replace(/\s/g, '')}/200`,
+                    cover_url: `https://picsum.photos/seed/${name.replace(/\s/g, '')}cover/1600/400`,
+                })
+                .select()
+                .single();
+            
+            if (error) throw error;
+            
+            // Add creator as the first member
+            await supabase.from('group_members').insert({ group_id: data.id, user_id: user.id, role: 'admin' });
+            
+            navigate('groups');
+
+        } catch (err) {
+            console.error("Error creating group:", err);
+            // Optionally, set an error state to show the user
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
@@ -52,7 +71,9 @@ const CreateGroupPage: React.FC<CreateGroupPageProps> = ({ onAddGroup, navigate 
                             <option value="true">Privado</option>
                         </select>
                     </div>
-                    <button type="submit" className="w-full bg-z-primary text-white font-bold py-2.5 rounded-lg hover:bg-z-dark-blue disabled:bg-gray-400" disabled={!name || !description}>Crear Grupo</button>
+                    <button type="submit" className="w-full bg-z-primary text-white font-bold py-2.5 rounded-lg hover:bg-z-dark-blue disabled:bg-gray-400" disabled={!name || !description || loading}>
+                        {loading ? 'Creando...' : 'Crear Grupo'}
+                    </button>
                 </form>
             </div>
         </main>

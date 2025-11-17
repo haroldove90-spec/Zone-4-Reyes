@@ -1,37 +1,54 @@
 
+
 import React, { useState } from 'react';
-import { AppEvent } from '../types';
 import { useAuth } from '../contexts/AuthContext';
+import { supabase } from '../services/supabaseClient';
 
 interface CreateEventPageProps {
-    onAddEvent: (event: AppEvent) => void;
     navigate: (path: string) => void;
 }
 
-const CreateEventPage: React.FC<CreateEventPageProps> = ({ onAddEvent, navigate }) => {
+const CreateEventPage: React.FC<CreateEventPageProps> = ({ navigate }) => {
     const { user } = useAuth();
     const [name, setName] = useState('');
     const [date, setDate] = useState('');
     const [location, setLocation] = useState('');
     const [description, setDescription] = useState('');
+    const [loading, setLoading] = useState(false);
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!name || !date || !location || !description || !user) return;
+        setLoading(true);
 
-        const newEvent: AppEvent = {
-            id: `e${Date.now()}`,
-            name,
-            date,
-            location,
-            description,
-            organizer: user,
-            attendees: 1,
-            coverUrl: `https://picsum.photos/seed/${name.replace(/\s/g, '')}/1600/900`,
-            creationDate: new Date().toISOString(),
-        };
-        onAddEvent(newEvent);
-        navigate('events');
+        try {
+            const newEventData = {
+                name,
+                date,
+                location,
+                description,
+                organizer_user_id: user.id,
+                cover_url: `https://picsum.photos/seed/${name.replace(/\s/g, '')}/1600/900`,
+            };
+    
+            const { data, error } = await supabase
+                .from('events')
+                .insert(newEventData)
+                .select()
+                .single();
+                
+            if (error) throw error;
+            
+            // The creator should attend their own event
+            await supabase.from('event_attendees').insert({ event_id: data.id, user_id: user.id });
+
+            navigate('events');
+        } catch (err) {
+            console.error("Error creating event:", err);
+             // Optionally, set an error state to show the user
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
@@ -58,7 +75,9 @@ const CreateEventPage: React.FC<CreateEventPageProps> = ({ onAddEvent, navigate 
                         <label htmlFor="event-desc" className="block text-sm font-medium mb-1 text-z-text-secondary dark:text-z-text-secondary-dark">Descripción</label>
                         <textarea id="event-desc" value={description} onChange={e => setDescription(e.target.value)} rows={4} required className="w-full bg-z-bg-primary dark:bg-z-hover-dark rounded-md p-2.5 resize-none" placeholder="Describe de qué trata tu evento..."></textarea>
                     </div>
-                    <button type="submit" className="w-full bg-z-primary text-white font-bold py-2.5 rounded-lg hover:bg-z-dark-blue disabled:bg-gray-400" disabled={!name || !description || !date || !location}>Crear Evento</button>
+                    <button type="submit" className="w-full bg-z-primary text-white font-bold py-2.5 rounded-lg hover:bg-z-dark-blue disabled:bg-gray-400" disabled={!name || !description || !date || !location || loading}>
+                        {loading ? 'Creando...' : 'Crear Evento'}
+                    </button>
                 </form>
             </div>
         </main>
