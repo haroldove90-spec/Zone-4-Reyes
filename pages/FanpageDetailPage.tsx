@@ -1,4 +1,5 @@
 
+
 import React, { useState } from 'react';
 import { Fanpage, Post as PostType, Media } from '../types';
 import Post from '../components/Post';
@@ -47,6 +48,22 @@ const FanpageDetailPage: React.FC<FanpageDetailPageProps> = ({ fanpage, posts, o
           }));
       }
   };
+
+  if (fanpage.is_active === false && !currentUser?.isAdmin) {
+    return (
+        <main className="flex-grow pt-14 lg:ml-20 xl:ml-80 lg:mr-72 overflow-x-hidden flex items-center justify-center" style={{ minHeight: 'calc(100vh - 3.5rem)' }}>
+            <div className="text-center p-8 bg-z-bg-secondary dark:bg-z-bg-secondary-dark rounded-lg shadow-md max-w-sm mx-auto">
+                <h2 className="text-2xl font-bold text-z-text-primary dark:text-z-text-primary-dark">Página Desactivada</h2>
+                <p className="text-z-text-secondary dark:text-z-text-secondary-dark mt-2">
+                    Esta página ha sido desactivada por un administrador.
+                </p>
+                <button onClick={() => navigate('feed')} className="mt-6 bg-z-primary text-white font-semibold py-2 px-6 rounded-md hover:bg-z-dark-blue transition-colors">
+                    Volver al Inicio
+                </button>
+            </div>
+        </main>
+    );
+  }
 
 
   return (

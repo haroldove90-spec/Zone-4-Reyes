@@ -6,10 +6,11 @@ export interface User {
   id: string;
   name: string;
   avatarUrl: string;
+  is_active?: boolean;
 }
 
 export interface Group {
-  id: string;
+  id:string;
   name: string;
   description: string;
   memberCount: number;
@@ -91,6 +92,7 @@ export interface Fanpage {
     bio: string;
     ownerId: string;
     ownerEmail?: string;
+    is_active?: boolean;
 }
 
 export interface AppEvent {

@@ -53,6 +53,7 @@ const formatProfileData = (profileData: any): AuthUser | null => {
         website: profileData.website,
         friendsCount: profileData.friends_count,
         isAdmin: profileData.is_admin,
+        is_active: profileData.is_active,
     };
 };
 
@@ -74,7 +75,16 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ userId, onAddPost, navigate, 
         try {
             const { data, error } = await supabase.from('profiles').select('*').eq('id', userId).single();
             if (error) throw error;
-            setProfileUser(formatProfileData(data));
+            const fetchedProfile = formatProfileData(data);
+            setProfileUser(fetchedProfile);
+
+            if (fetchedProfile?.is_active === false && !currentUser?.isAdmin) {
+                setUserPosts([]);
+                setFriends([]);
+                setLoading(false);
+                return;
+            }
+
 
             const { data: postsData, error: postsError } = await supabase.from('posts').select('*, user:profiles!user_id(id, name, avatar_url), groups(id, name)').eq('user_id', userId).order('created_at', { ascending: false });
             if(postsError) throw postsError;
@@ -108,7 +118,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ userId, onAddPost, navigate, 
         } finally {
             setLoading(false);
         }
-    }, [userId]);
+    }, [userId, currentUser?.isAdmin]);
 
     const checkFriendshipStatus = useCallback(async () => {
         if (isOwnProfile || !currentUser) return;
@@ -229,6 +239,22 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ userId, onAddPost, navigate, 
             </div>
         </main>
     );
+
+    if (profileUser.is_active === false && !currentUser?.isAdmin) {
+         return (
+            <main className="flex-grow pt-14 lg:ml-20 xl:ml-80 lg:mr-72 overflow-x-hidden flex items-center justify-center" style={{ minHeight: 'calc(100vh - 3.5rem)' }}>
+                <div className="text-center p-8 bg-z-bg-secondary dark:bg-z-bg-secondary-dark rounded-lg shadow-md max-w-sm mx-auto">
+                    <h2 className="text-2xl font-bold text-z-text-primary dark:text-z-text-primary-dark">Perfil Desactivado</h2>
+                    <p className="text-z-text-secondary dark:text-z-text-secondary-dark mt-2">
+                        Esta cuenta ha sido desactivada por un administrador.
+                    </p>
+                    <button onClick={() => navigate('feed')} className="mt-6 bg-z-primary text-white font-semibold py-2 px-6 rounded-md hover:bg-z-dark-blue transition-colors">
+                        Volver al Inicio
+                    </button>
+                </div>
+            </main>
+        );
+    }
 
     return (
         <main className="flex-grow pt-14 lg:ml-20 xl:ml-80 lg:mr-72 overflow-x-hidden">

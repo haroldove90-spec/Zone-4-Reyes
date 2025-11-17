@@ -169,7 +169,7 @@ const MainLayout: React.FC = () => {
     try {
         const { data: postsData, error: postsError } = await supabase
             .from('posts')
-            .select('*, user:profiles!user_id(id, name, avatar_url), groups(id, name), fanpage:fanpages!fanpage_id(id, name, avatar_url)')
+            .select('*, user:profiles!user_id(id, name, avatar_url, is_active), groups(id, name), fanpage:fanpages!fanpage_id(id, name, avatar_url, is_active)')
             .order('created_at', { ascending: false });
 
         if (postsError) throw postsError;
@@ -178,8 +178,17 @@ const MainLayout: React.FC = () => {
             setLoading(false);
             return;
         }
+        
+        const activePosts = postsData.filter((p: any) => {
+             // Treat null or undefined is_active as true for backward compatibility
+            const userIsActive = p.user ? p.user.is_active !== false : true;
+            const fanpageIsActive = p.fanpage ? p.fanpage.is_active !== false : true;
 
-        const fetchedPosts: Post[] = postsData.map((p: any) => ({
+            return p.fanpage ? fanpageIsActive : userIsActive;
+        });
+
+
+        const fetchedPosts: Post[] = activePosts.map((p: any) => ({
             id: p.id.toString(),
             timestamp: new Date(p.created_at).toLocaleString(),
             content: p.content,
@@ -215,7 +224,8 @@ const MainLayout: React.FC = () => {
               avatarUrl: p.avatar_url,
               coverUrl: p.cover_url,
               bio: p.bio,
-              ownerId: p.owner_id
+              ownerId: p.owner_id,
+              is_active: p.is_active
           }));
           setFanpages(formattedPages);
       } catch (err) {

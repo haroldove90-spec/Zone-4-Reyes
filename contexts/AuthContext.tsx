@@ -15,6 +15,7 @@ export interface AuthUser {
   website?: string;
   friendsCount?: number;
   isAdmin?: boolean;
+  is_active?: boolean;
 }
 
 interface AuthContextType {
@@ -42,6 +43,7 @@ const formatProfile = (profileData: any, supabaseUser: SupabaseUser): AuthUser =
     website: profileData.website,
     friendsCount: profileData.friends_count,
     isAdmin: profileData.is_admin,
+    is_active: profileData.is_active,
 });
 
 const getUserProfile = async (supabaseUser: SupabaseUser): Promise<AuthUser | null> => {
