@@ -27,6 +27,16 @@ const App: React.FC = () => {
     };
   }, []);
 
+  useEffect(() => {
+    if (!loading && !user) {
+      // When user logs out or session expires, clear the hash
+      // to ensure they are on the root path for the login page.
+      if (window.location.hash && window.location.hash !== '#') {
+        window.location.hash = '';
+      }
+    }
+  }, [user, loading]);
+
   const handleRefresh = () => {
     if (waitingWorker) {
       waitingWorker.postMessage({ type: 'SKIP_WAITING' });

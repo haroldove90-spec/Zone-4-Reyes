@@ -1,6 +1,5 @@
 
 
-
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useAuth, AuthUser } from '../contexts/AuthContext';
 import { Post as PostType, Media, User, FriendshipStatus } from '../types';
@@ -123,11 +122,9 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ userId, onAddPost, navigate, 
 
             if (error) throw error;
             
-            if (!data) {
-                setFriendshipStatus('not_friends');
-            } else if (data.status === 'accepted') {
+            if (data?.status === 'accepted') {
                 setFriendshipStatus('friends');
-            } else if (data.status === 'pending') {
+            } else if (data?.status === 'pending') {
                 if (data.requester_id === currentUser.id) {
                     setFriendshipStatus('pending_sent');
                 } else {
@@ -183,6 +180,24 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ userId, onAddPost, navigate, 
 
     const handleCoverPhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => { if (e.target.files?.[0]) handlePhotoUpload(e.target.files[0], 'cover'); };
     const handleProfilePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => { if (e.target.files?.[0]) handlePhotoUpload(e.target.files[0], 'profile'); };
+
+    const handleAddProfilePost = async (
+        content: string,
+        mediaFiles: File[],
+        postType?: 'standard' | 'report',
+        group?: { id: string; name: string },
+        existingMedia?: Media[]
+    ) => {
+        try {
+            // This wrapper ensures that after a post is created via the onAddPost prop (from MainLayout),
+            // the profile-specific post list is re-fetched to show the new post immediately.
+            await onAddPost(content, mediaFiles, postType, group, existingMedia);
+            fetchProfileData(); // Trigger a refresh of posts on the profile page.
+        } catch (error) {
+            console.error("Failed to add post and refresh profile:", error);
+            // Optionally, handle the error in the UI.
+        }
+    };
 
     const photos = userPosts.flatMap(p => p.media?.filter(m => m.type === 'image').map(m => m.url) || []).slice(0, 9);
     
@@ -283,10 +298,10 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ userId, onAddPost, navigate, 
                     </div>
                     <div className="md:col-span-3">
                         <div className="px-4 md:px-0">
-                           {isOwnProfile && <CreatePost onAddPost={onAddPost} />}
+                           {isOwnProfile && <CreatePost onAddPost={handleAddProfilePost} />}
                         </div>
                         {userPosts.map((post, index) => (
-                            <Post key={post.id} post={post} index={index} addNotification={addNotification} onAddPost={onAddPost} navigate={navigate} />
+                            <Post key={post.id} post={post} index={index} addNotification={addNotification} onAddPost={handleAddProfilePost} navigate={navigate} />
                         ))}
                     </div>
                 </div>
