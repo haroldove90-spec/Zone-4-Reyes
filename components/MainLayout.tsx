@@ -218,7 +218,7 @@ const MainLayout: React.FC = () => {
     try {
         const { data: postsData, error: postsError } = await supabase
             .from('posts')
-            .select('*, user:profiles!user_id(id, name, avatar_url, is_active), groups(id, name), fanpage:fanpages!fanpage_id(id, name, avatar_url, is_active), likes(count), comments(count)')
+            .select('*, user:profiles!user_id(id, name, avatar_url, is_active), groups(id, name), fanpage:fanpages(id, name, avatar_url, is_active), likes(count), comments(count)')
             .order('created_at', { ascending: false })
             .limit(20);
 
