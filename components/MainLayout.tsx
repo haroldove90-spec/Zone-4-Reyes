@@ -43,6 +43,7 @@ const MainLayout: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [pageToFetch, setPageToFetch] = useState(1);
   const [hasMore, setHasMore] = useState(true);
+  const [hasNewPosts, setHasNewPosts] = useState(false);
 
   const [groups, setGroups] = useState<Group[]>(FAKE_GROUPS);
   const [events, setEvents] = useState<AppEvent[]>(FAKE_EVENTS);
@@ -204,6 +205,7 @@ const MainLayout: React.FC = () => {
           setPosts([]); // Clear posts for initial load
           setHasMore(true); // Reset hasMore
           setPageToFetch(1); // Reset page counter
+          setHasNewPosts(false);
       } else {
           setLoadingMore(true);
       }
@@ -239,6 +241,7 @@ const MainLayout: React.FC = () => {
           const fetchedPosts: Post[] = postsData.map((p: any) => ({
               id: p.id.toString(),
               timestamp: new Date(p.created_at).toLocaleString(),
+              db_created_at: p.created_at,
               content: p.content, media: p.media, type: p.type, format: p.format,
               user: p.user ? { id: p.user.id, name: p.user.name, avatarUrl: p.user.avatar_url } : { id: p.user_id || 'unknown', name: 'Usuario Desconocido', avatarUrl: '...' },
               likes: p.likes[0]?.count ?? 0, commentsCount: p.comments[0]?.count ?? 0, comments: [],
@@ -284,6 +287,47 @@ const MainLayout: React.FC = () => {
         fetchFriends();
     }
   }, [user, fetchFriendRequests, fetchNotifications, fetchFanpages, fetchFriends]);
+
+  useEffect(() => {
+    // This effect creates a real-time subscription to the posts table to check for new entries.
+    // It's a "smarter" way to notify the user about new content without constant polling.
+    if (currentPath !== 'feed' || hasNewPosts) {
+      return;
+    }
+
+    const channel = supabase.channel('realtime-posts');
+    
+    channel
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'posts' }, payload => {
+        // Ignore inserts from the current user, as their feed will refresh automatically.
+        if (payload.new.user_id === user?.id) {
+          return;
+        }
+
+        // Check if the incoming post is actually newer than the newest one we have.
+        const isNewer = posts.length === 0 || (posts[0].db_created_at && new Date(payload.new.created_at) > new Date(posts[0].db_created_at));
+        
+        if (isNewer) {
+          setHasNewPosts(true);
+          // Once we've detected new posts, we can remove this specific channel.
+          // A new one will be created if the user refreshes and is back on the feed.
+          supabase.removeChannel(channel);
+        }
+      })
+      .subscribe((status, error) => {
+          if (status === 'SUBSCRIBED') {
+              console.log('Successfully subscribed to realtime posts for new post notifications!');
+          }
+          if (status === 'CHANNEL_ERROR' || error) {
+              console.error('Realtime subscription error:', error);
+          }
+      });
+      
+    // Cleanup: always remove the channel when the component/effect re-runs or unmounts.
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [currentPath, user?.id, posts, hasNewPosts]);
 
   const handleAddPost = async (content: string, mediaFiles: File[], postType: 'standard' | 'report' = 'standard', options?: { group?: { id: string; name: string; }; fanpageId?: string; }, existingMedia?: Media[]) => {
     if (!user) throw new Error("No estás autenticado.");
@@ -354,7 +398,7 @@ const MainLayout: React.FC = () => {
           case 'feed':
           default:
               const isNewUser = user ? posts.filter(p => p.user && p.user.id === user.id).length === 0 && !loading : false;
-              return <Feed posts={posts.filter(p => p.type !== 'report' && p.format !== 'reel')} onAddPost={handleAddPost} loading={loading} addNotification={addNotification} isNewUser={isNewUser} navigate={navigate} loadMorePosts={() => loadMorePosts(false)} hasMore={hasMore} loadingMore={loadingMore} onRefresh={() => loadMorePosts(true)} error={posts.length === 0 ? error : null} onRetry={() => loadMorePosts(true)} />;
+              return <Feed posts={posts.filter(p => p.type !== 'report' && p.format !== 'reel')} onAddPost={handleAddPost} loading={loading} addNotification={addNotification} isNewUser={isNewUser} navigate={navigate} loadMorePosts={() => loadMorePosts(false)} hasMore={hasMore} loadingMore={loadingMore} onRefresh={() => loadMorePosts(true)} error={posts.length === 0 ? error : null} onRetry={() => loadMorePosts(true)} hasNewPosts={hasNewPosts} />;
       }
   }
 

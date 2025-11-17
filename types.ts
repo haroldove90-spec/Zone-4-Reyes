@@ -59,6 +59,7 @@ export interface Post {
   group?: { id: string; name: string };
   fanpage?: { id: string; name: string; avatarUrl: string; };
   isLikedByCurrentUser?: boolean;
+  db_created_at?: string;
 }
 
 export interface AppNotification {

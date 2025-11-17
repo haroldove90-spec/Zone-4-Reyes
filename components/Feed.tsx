@@ -21,9 +21,10 @@ interface FeedProps {
     onRefresh: () => Promise<void>;
     error: string | null;
     onRetry: () => void;
+    hasNewPosts?: boolean;
 }
 
-const Feed: React.FC<FeedProps> = ({ posts, onAddPost, loading, addNotification, isNewUser, navigate, loadMorePosts, hasMore, loadingMore, onRefresh, error, onRetry }) => {
+const Feed: React.FC<FeedProps> = ({ posts, onAddPost, loading, addNotification, isNewUser, navigate, loadMorePosts, hasMore, loadingMore, onRefresh, error, onRetry, hasNewPosts }) => {
   const [activeFilter, setActiveFilter] = useState<'all' | 'pages'>('all');
   const [isRefreshing, setIsRefreshing] = useState(false);
 
@@ -63,15 +64,18 @@ const Feed: React.FC<FeedProps> = ({ posts, onAddPost, loading, addNotification,
           <CreatePost onAddPost={onAddPost} isNewUser={isNewUser} />
         </div>
 
-        <div className="mb-4">
-            <button
-                onClick={handleRefreshClick}
-                disabled={isRefreshing || loading}
-                className="w-full text-center bg-z-bg-secondary dark:bg-z-bg-secondary-dark py-2 px-4 rounded-lg border dark:border-z-border-dark text-z-primary font-semibold hover:bg-gray-100 dark:hover:bg-z-hover-dark transition-colors duration-200 disabled:opacity-60 disabled:cursor-not-allowed"
-            >
-                {isRefreshing ? 'Cargando...' : 'Cargar nuevas publicaciones'}
-            </button>
-        </div>
+        {hasNewPosts && (
+            <div className="sticky top-[62px] z-40 my-4 flex justify-center animate-fadeIn">
+                <button
+                    onClick={handleRefreshClick}
+                    disabled={isRefreshing}
+                    className="text-center bg-z-primary shadow-lg text-white py-2 px-5 rounded-full font-semibold hover:bg-z-dark-blue transition-all duration-300 flex items-center space-x-2 disabled:bg-z-primary/70 disabled:cursor-wait"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5"><path d="M12 19V5"/><path d="m5 12 7-7 7 7"/></svg>
+                    <span>Ver nuevas publicaciones</span>
+                </button>
+            </div>
+        )}
 
         <div className="flex items-center space-x-2 mb-4 border-b dark:border-z-border-dark">
             <button 
