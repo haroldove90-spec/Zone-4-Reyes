@@ -1,6 +1,7 @@
 
 
 
+
 import React, { useState, useEffect, useCallback } from 'react';
 import Header from './Header';
 import LeftSidebar from './LeftSidebar';
@@ -25,6 +26,7 @@ import CreateGroupPage from '../pages/CreateGroupPage';
 import EventsPage from '../pages/EventsPage';
 import EventDetailPage from '../pages/EventDetailPage';
 import CreateEventPage from '../pages/CreateEventPage';
+import NotificationsPage from '../pages/NotificationsPage';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../services/supabaseClient';
 
@@ -51,19 +53,23 @@ const MainLayout: React.FC = () => {
       try {
           const { data, error } = await supabase
               .from('friendships')
-              .select('requester_id, profiles!friendships_requester_id_fkey(id, name, avatar_url)')
+              .select('requester_id, profiles!requester_id(id, name, avatar_url)')
               .eq('addressee_id', user.id)
               .eq('status', 'pending');
 
           if (error) throw error;
-          const requests = data.map((req: any) => ({
-              id: req.profiles.id,
-              name: req.profiles.name,
-              avatarUrl: req.profiles.avatar_url,
-          }));
+          
+          const requests = data
+              .filter((req: any) => req.profiles) // Filter out requests where user profile might be missing
+              .map((req: any) => ({
+                  id: req.profiles.id,
+                  name: req.profiles.name,
+                  avatarUrl: req.profiles.avatar_url,
+              }));
+
           setFriendRequests(requests);
-      } catch (error) {
-          console.error("Error fetching friend requests:", error);
+      } catch (error: any) {
+          console.error("Error fetching friend requests:", error.message || error);
       }
   }, [user]);
   
@@ -259,6 +265,8 @@ const MainLayout: React.FC = () => {
               return event ? <EventDetailPage event={event} /> : <div>Evento no encontrado</div>;
           case 'create-event':
               return <CreateEventPage onAddEvent={handleAddEvent} navigate={navigate} />;
+          case 'notifications':
+              return <NotificationsPage notifications={notifications} navigate={navigate} />;
           case 'admin':
               return user?.isAdmin ? <AdminDashboardPage fanpages={fanpages}/> : <Feed posts={posts.filter(p => p.type !== 'report' && p.format !== 'reel')} onAddPost={handleAddPost} loading={loading} addNotification={addNotification} navigate={navigate} />;
           case 'feed':

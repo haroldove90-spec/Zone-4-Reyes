@@ -128,7 +128,7 @@ const Header: React.FC<HeaderProps> = ({ navigate, notificationCount, notificati
               <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">{notificationCount}</span>
             )}
           </div>
-          {isNotificationsOpen && <NotificationsPanel notifications={notifications} />}
+          {isNotificationsOpen && <NotificationsPanel notifications={notifications} navigate={navigate} />}
         </div>
         <div className="relative" ref={menuRef}>
           <img

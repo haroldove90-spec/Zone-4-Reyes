@@ -1,12 +1,14 @@
 
+
 import React from 'react';
 import { AppNotification } from '../types';
 
 interface NotificationsPanelProps {
     notifications: AppNotification[];
+    navigate: (path: string) => void;
 }
 
-const NotificationsPanel: React.FC<NotificationsPanelProps> = ({ notifications }) => {
+const NotificationsPanel: React.FC<NotificationsPanelProps> = ({ notifications, navigate }) => {
     return (
         <div className="absolute right-0 mt-2 w-80 md:w-96 bg-z-bg-secondary dark:bg-z-bg-secondary-dark rounded-md shadow-lg z-50 border dark:border-z-border-dark animate-fadeIn">
             <div className="p-4 border-b dark:border-z-border-dark flex justify-between items-center">
@@ -16,10 +18,10 @@ const NotificationsPanel: React.FC<NotificationsPanelProps> = ({ notifications }
             <div className="py-2 max-h-96 overflow-y-auto">
                 {notifications.length > 0 ? notifications.map((notification) => (
                     <div key={notification.id} className="flex items-start p-3 space-x-3 hover:bg-gray-100 dark:hover:bg-z-hover-dark cursor-pointer transition-colors">
-                        <img src={notification.user.avatarUrl} alt={notification.user.name} className="h-14 w-14 rounded-full" loading="lazy"/>
+                        <img src={notification.user.avatarUrl} alt={notification.user.name} className="h-14 w-14 rounded-full cursor-pointer" loading="lazy" onClick={() => navigate(`profile/${notification.user.id}`)}/>
                         <div className="flex-1">
                             <p className="text-sm text-z-text-primary dark:text-z-text-primary-dark">
-                                <span className="font-bold">{notification.user.name}</span> {notification.text}
+                                <span className="font-bold cursor-pointer hover:underline" onClick={() => navigate(`profile/${notification.user.id}`)}>{notification.user.name}</span> {notification.text}
                             </p>
                              {notification.postContent && <p className="text-sm text-z-text-secondary dark:text-z-text-secondary-dark mt-1 p-2 bg-gray-100 dark:bg-z-hover-dark rounded-md">"{notification.postContent}"</p>}
                             <p className="text-xs text-z-primary font-bold mt-1">{notification.timestamp}</p>
@@ -31,7 +33,7 @@ const NotificationsPanel: React.FC<NotificationsPanelProps> = ({ notifications }
                 )}
             </div>
              <div className="text-center p-2 border-t dark:border-z-border-dark">
-                <a href="#" className="text-sm font-bold text-z-primary hover:underline">Ver todas</a>
+                <button onClick={() => navigate('notifications')} className="text-sm font-bold text-z-primary hover:underline">Ver todas</button>
             </div>
         </div>
     );

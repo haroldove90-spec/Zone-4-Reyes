@@ -5,7 +5,6 @@ import { useAuth, AuthUser } from '../contexts/AuthContext';
 import { Post as PostType, Media, User, FriendshipStatus } from '../types';
 import Post, { PostSkeleton } from '../components/Post';
 import CreatePost from '../components/CreatePost';
-// FIX: Replaced non-existent 'UserPlusIcon' with the exported 'UsersPlusIcon'.
 import { MoreHorizontalIcon, ImagePlusIcon, MapPinIcon, LinkIcon, CakeIcon, UsersIcon, PhotoIcon, FlagIcon, UsersPlusIcon, UserCheckIcon, UserXIcon } from '../components/icons';
 import EditProfileModal from '../components/modals/EditProfileModal';
 import { supabase } from '../services/supabaseClient';
@@ -137,7 +136,6 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ userId, onAddPost, navigate, 
         if (isOwnProfile) return <button onClick={() => setIsEditModalOpen(true)} className="bg-z-primary text-white font-semibold py-2 px-6 rounded-md hover:bg-z-dark-blue transition-colors">Editar Perfil</button>;
         switch (friendshipStatus) {
             case 'loading': return <button className="bg-gray-200 dark:bg-z-hover-dark font-semibold py-2 px-6 rounded-md" disabled>Cargando...</button>;
-            // FIX: Replaced non-existent 'UserPlusIcon' with 'UsersPlusIcon'.
             case 'not_friends': return <button onClick={() => handleFriendAction('add')} className="bg-z-primary text-white font-semibold py-2 px-4 rounded-md hover:bg-z-dark-blue flex items-center space-x-2"><UsersPlusIcon className="h-5 w-5"/><span>Agregar amigo</span></button>;
             case 'pending_sent': return <button onClick={() => handleFriendAction('cancel')} className="bg-gray-300 dark:bg-z-border-dark font-semibold py-2 px-4 rounded-md hover:bg-gray-400">Cancelar solicitud</button>;
             case 'pending_received': return (
@@ -152,7 +150,19 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ userId, onAddPost, navigate, 
     };
 
     if (loading) return <ProfilePageSkeleton />;
-    if (!profileUser) return <main className="flex-grow pt-20 text-center text-z-text-secondary dark:text-z-text-secondary-dark">Usuario no encontrado.</main>;
+    if (!profileUser) return (
+        <main className="flex-grow pt-14 lg:ml-20 xl:ml-80 lg:mr-72 overflow-x-hidden flex items-center justify-center" style={{ minHeight: 'calc(100vh - 3.5rem)' }}>
+            <div className="text-center p-8 bg-z-bg-secondary dark:bg-z-bg-secondary-dark rounded-lg shadow-md max-w-sm mx-auto">
+                <h2 className="text-2xl font-bold text-z-text-primary dark:text-z-text-primary-dark">Usuario no encontrado</h2>
+                <p className="text-z-text-secondary dark:text-z-text-secondary-dark mt-2">
+                    El perfil que estás buscando no existe, ha sido eliminado o no está disponible.
+                </p>
+                <button onClick={() => navigate('feed')} className="mt-6 bg-z-primary text-white font-semibold py-2 px-6 rounded-md hover:bg-z-dark-blue transition-colors">
+                    Volver al Inicio
+                </button>
+            </div>
+        </main>
+    );
 
     return (
         <main className="flex-grow pt-14 lg:ml-20 xl:ml-80 lg:mr-72 overflow-x-hidden">
