@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { supabase } from '../services/supabaseClient';
 import { Session, User as SupabaseUser } from '@supabase/supabase-js';
@@ -111,37 +112,46 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Failsafe timer to prevent getting stuck on the loading screen
-    const loadingTimeout = setTimeout(() => {
-        if (loading) {
-            console.warn("Auth state check timed out. Forcing UI load.");
+    const initializeSession = async () => {
+        try {
+            const { data: { session }, error } = await supabase.auth.getSession();
+            if (error) throw error;
+            
+            setSession(session);
+            if (session?.user) {
+                const profile = await getUserProfile(session.user);
+                setUser(profile);
+            } else {
+                setUser(null);
+            }
+        } catch (error) {
+            console.error("Error initializing session:", error);
+            setUser(null);
+        } finally {
             setLoading(false);
         }
-    }, 15000); // 15 seconds timeout
+    };
+
+    initializeSession();
 
     const { data: authListener } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
         try {
-          setSession(session);
-          if (session?.user) {
-            const profile = await getUserProfile(session.user);
-            setUser(profile);
-          } else {
-            setUser(null);
-          }
+            setSession(session);
+            if (session?.user) {
+                const profile = await getUserProfile(session.user);
+                setUser(profile);
+            } else {
+                setUser(null);
+            }
         } catch (error) {
-          console.error("Error handling auth state change:", error);
-          setUser(null);
-        } finally {
-          // The timeout should only be cleared after all async operations are complete.
-          clearTimeout(loadingTimeout);
-          setLoading(false);
+            console.error("Error on auth state change:", error);
+            setUser(null); // Clear user on error
         }
       }
     );
 
     return () => {
-      clearTimeout(loadingTimeout);
       authListener.subscription.unsubscribe();
     };
   }, []);
