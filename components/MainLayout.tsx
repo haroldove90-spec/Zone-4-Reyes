@@ -212,6 +212,9 @@ const MainLayout: React.FC = () => {
       const to = from + POSTS_PER_PAGE - 1;
 
       try {
+          if (isInitial) {
+            setError(null); // Clear previous errors on a full refresh
+          }
           const { data: postsData, error: postsError } = await supabase
               .from('posts')
               .select('*, user:profiles!user_id(id, name, avatar_url), groups(id, name), fanpage:fanpages!fanpage_id(id, name, avatar_url), likes(count), comments(count)')
@@ -280,7 +283,7 @@ const MainLayout: React.FC = () => {
         fetchFanpages();
         fetchFriends();
     }
-  }, [user, loadMorePosts, fetchFriendRequests, fetchNotifications, fetchFanpages, fetchFriends]);
+  }, [user, fetchFriendRequests, fetchNotifications, fetchFanpages, fetchFriends]);
 
   const handleAddPost = async (content: string, mediaFiles: File[], postType: 'standard' | 'report' = 'standard', options?: { group?: { id: string; name: string; }; fanpageId?: string; }, existingMedia?: Media[]) => {
     if (!user) throw new Error("No estás autenticado.");
@@ -347,11 +350,11 @@ const MainLayout: React.FC = () => {
           case 'notifications':
               return <NotificationsPage notifications={notifications} navigate={navigate} />;
           case 'admin':
-              return user?.isAdmin ? <AdminDashboardPage /> : <Feed posts={[]} onAddPost={() => Promise.resolve()} loading={true} addNotification={() => Promise.resolve()} navigate={navigate} loadMorePosts={() => {}} hasMore={false} loadingMore={false} onRefresh={() => Promise.resolve()} />;
+              return user?.isAdmin ? <AdminDashboardPage /> : <Feed posts={[]} onAddPost={() => Promise.resolve()} loading={true} addNotification={() => Promise.resolve()} navigate={navigate} loadMorePosts={() => {}} hasMore={false} loadingMore={false} onRefresh={() => Promise.resolve()} onRetry={() => {}} error={null} />;
           case 'feed':
           default:
               const isNewUser = user ? posts.filter(p => p.user && p.user.id === user.id).length === 0 && !loading : false;
-              return <Feed posts={posts.filter(p => p.type !== 'report' && p.format !== 'reel')} onAddPost={handleAddPost} loading={loading} addNotification={addNotification} isNewUser={isNewUser} navigate={navigate} loadMorePosts={() => loadMorePosts(false)} hasMore={hasMore} loadingMore={loadingMore} onRefresh={() => loadMorePosts(true)} />;
+              return <Feed posts={posts.filter(p => p.type !== 'report' && p.format !== 'reel')} onAddPost={handleAddPost} loading={loading} addNotification={addNotification} isNewUser={isNewUser} navigate={navigate} loadMorePosts={() => loadMorePosts(false)} hasMore={hasMore} loadingMore={loadingMore} onRefresh={() => loadMorePosts(true)} error={posts.length === 0 ? error : null} onRetry={() => loadMorePosts(true)} />;
       }
   }
 

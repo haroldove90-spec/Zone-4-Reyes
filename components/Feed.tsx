@@ -6,6 +6,7 @@ import Post, { PostSkeleton } from './Post';
 import AdBanner from './AdBanner';
 import MobileSearch from './MobileSearch';
 import AdPost from './AdPost';
+import { AlertTriangleIcon } from './icons';
 
 interface FeedProps {
     posts: PostType[];
@@ -18,9 +19,11 @@ interface FeedProps {
     hasMore: boolean;
     loadingMore: boolean;
     onRefresh: () => Promise<void>;
+    error: string | null;
+    onRetry: () => void;
 }
 
-const Feed: React.FC<FeedProps> = ({ posts, onAddPost, loading, addNotification, isNewUser, navigate, loadMorePosts, hasMore, loadingMore, onRefresh }) => {
+const Feed: React.FC<FeedProps> = ({ posts, onAddPost, loading, addNotification, isNewUser, navigate, loadMorePosts, hasMore, loadingMore, onRefresh, error, onRetry }) => {
   const [activeFilter, setActiveFilter] = useState<'all' | 'pages'>('all');
   const [isRefreshing, setIsRefreshing] = useState(false);
 
@@ -90,6 +93,18 @@ const Feed: React.FC<FeedProps> = ({ posts, onAddPost, loading, addNotification,
                 <PostSkeleton />
                 <PostSkeleton />
                 <PostSkeleton />
+            </div>
+        ) : error ? (
+            <div className="text-center py-10 text-z-text-secondary dark:text-z-text-secondary-dark bg-z-bg-secondary dark:bg-z-bg-secondary-dark rounded-lg shadow-md">
+                <AlertTriangleIcon className="h-12 w-12 text-red-500 mx-auto mb-4" />
+                <p className="font-semibold text-lg text-z-text-primary dark:text-z-text-primary-dark mb-2">¡Ups! Algo salió mal</p>
+                <p className="mb-4">{error}</p>
+                <button
+                    onClick={onRetry}
+                    className="bg-z-primary text-white font-semibold py-2 px-6 rounded-md hover:bg-z-dark-blue transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-z-primary dark:focus:ring-offset-z-bg-secondary-dark"
+                >
+                    Reintentar
+                </button>
             </div>
         ) : filteredPosts.length > 0 ? (
           filteredPosts.map((post, index) => {
