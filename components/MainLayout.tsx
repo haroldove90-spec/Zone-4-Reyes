@@ -396,7 +396,7 @@ const MainLayout: React.FC = () => {
       <div className="flex">
         {currentPath !== 'reels' && <LeftSidebar navigate={navigate} />}
         {renderPage()}
-        {currentPath !== 'reels' && <RightSidebar friends={friends} />}
+        {currentPath !== 'reels' && <RightSidebar friends={friends} navigate={navigate} />}
       </div>
       {currentPath !== 'reels' && <BottomNavBar navigate={navigate} activePath={currentPath} />}
     </div>
