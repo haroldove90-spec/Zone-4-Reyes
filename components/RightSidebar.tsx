@@ -1,15 +1,11 @@
 
-import React from 'react';
 
-const contacts = [
-  { name: 'John Doe', avatarUrl: 'https://picsum.photos/id/1011/200' },
-  { name: 'Jane Smith', avatarUrl: 'https://picsum.photos/id/1025/200' },
-  { name: 'Alice Johnson', avatarUrl: 'https://picsum.photos/id/1027/200' },
-  { name: 'Bob Williams', avatarUrl: 'https://picsum.photos/id/103/200' },
-  { name: 'Charlie Brown', avatarUrl: 'https://picsum.photos/id/1040/200' },
-  { name: 'Diana Prince', avatarUrl: 'https://picsum.photos/id/106/200' },
-  { name: 'Ethan Hunt', avatarUrl: 'https://picsum.photos/id/107/200' },
-];
+import React from 'react';
+import { User } from '../types';
+
+interface RightSidebarProps {
+  friends: User[];
+}
 
 const ContactItem: React.FC<{ name: string; avatarUrl: string }> = ({ name, avatarUrl }) => (
   <div className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-z-hover-dark cursor-pointer transition-colors duration-200">
@@ -21,14 +17,20 @@ const ContactItem: React.FC<{ name: string; avatarUrl: string }> = ({ name, avat
   </div>
 );
 
-const RightSidebar: React.FC = () => {
+const RightSidebar: React.FC<RightSidebarProps> = ({ friends }) => {
   return (
     <aside className="hidden lg:block w-72 pt-16 px-4 fixed right-0 h-full">
       <div className="flex flex-col space-y-2 mt-4">
         <h2 className="text-z-text-secondary dark:text-z-text-secondary-dark font-semibold text-lg mb-2">Contactos</h2>
-        {contacts.map((contact) => (
-          <ContactItem key={contact.name} name={contact.name} avatarUrl={contact.avatarUrl} />
-        ))}
+        {friends.length > 0 ? (
+          friends.map((friend) => (
+            <ContactItem key={friend.id} name={friend.name} avatarUrl={friend.avatarUrl} />
+          ))
+        ) : (
+           <p className="text-sm text-center text-z-text-secondary dark:text-z-text-secondary-dark p-4">
+              Tus amigos aparecerán aquí. ¡Busca a personas que conoces!
+           </p>
+        )}
       </div>
     </aside>
   );

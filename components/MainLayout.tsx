@@ -41,6 +41,7 @@ const MainLayout: React.FC = () => {
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [notificationCount, setNotificationCount] = useState(0);
   const [friendRequests, setFriendRequests] = useState<User[]>([]);
+  const [friends, setFriends] = useState<User[]>([]);
 
   const fetchFriendRequests = useCallback(async () => {
       if (!user) return;
@@ -65,6 +66,46 @@ const MainLayout: React.FC = () => {
       } catch (error: any) {
           console.error("Error fetching friend requests:", error.message || error);
       }
+  }, [user]);
+
+  const fetchFriends = useCallback(async () => {
+    if (!user) return;
+    try {
+      const { data: friendships, error: friendshipsError } = await supabase
+        .from('friendships')
+        .select('requester_id, addressee_id')
+        .or(`requester_id.eq.${user.id},addressee_id.eq.${user.id}`)
+        .eq('status', 'accepted');
+
+      if (friendshipsError) throw friendshipsError;
+
+      const friendIds = friendships.map(f =>
+        f.requester_id === user.id ? f.addressee_id : f.requester_id
+      );
+
+      if (friendIds.length === 0) {
+        setFriends([]);
+        return;
+      }
+
+      const { data: friendsData, error: friendsError } = await supabase
+        .from('profiles')
+        .select('id, name, avatar_url')
+        .in('id', friendIds);
+
+      if (friendsError) throw friendsError;
+
+      const formattedFriends: User[] = friendsData.map((f: any) => ({
+        id: f.id,
+        name: f.name,
+        avatarUrl: f.avatar_url,
+      }));
+      setFriends(formattedFriends);
+
+    } catch (error: any) {
+      console.error("Error fetching friends:", error.message || error);
+      setFriends([]);
+    }
   }, [user]);
   
   const fetchNotifications = useCallback(async () => {
@@ -169,7 +210,7 @@ const MainLayout: React.FC = () => {
     try {
         const { data: postsData, error: postsError } = await supabase
             .from('posts')
-            .select('*, user:profiles!user_id(id, name, avatar_url), groups(id, name), fanpage:fanpages!fanpage_id(id, name, avatar_url, is_active)')
+            .select('*, user:profiles!user_id(id, name, avatar_url, is_active), groups(id, name), fanpage:fanpages!fanpage_id(id, name, avatar_url, is_active)')
             .order('created_at', { ascending: false });
 
         if (postsError) throw postsError;
@@ -239,7 +280,8 @@ const MainLayout: React.FC = () => {
     fetchFriendRequests();
     fetchNotifications();
     fetchFanpages();
-  }, [fetchPosts, fetchFriendRequests, fetchNotifications, fetchFanpages]);
+    fetchFriends();
+  }, [fetchPosts, fetchFriendRequests, fetchNotifications, fetchFanpages, fetchFriends]);
 
   const handleAddPost = async (content: string, mediaFiles: File[], postType: 'standard' | 'report' = 'standard', options?: { group?: { id: string; name: string; }; fanpageId?: string; }, existingMedia?: Media[]) => {
     if (!user) {
@@ -353,7 +395,7 @@ const MainLayout: React.FC = () => {
       <div className="flex">
         {currentPath !== 'reels' && <LeftSidebar navigate={navigate} />}
         {renderPage()}
-        {currentPath !== 'reels' && <RightSidebar />}
+        {currentPath !== 'reels' && <RightSidebar friends={friends} />}
       </div>
       {currentPath !== 'reels' && <BottomNavBar navigate={navigate} activePath={currentPath} />}
     </div>
