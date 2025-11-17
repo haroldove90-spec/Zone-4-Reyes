@@ -3,12 +3,11 @@
 
 
 import React, { useState, useRef, useEffect } from 'react';
-import { BellIcon, MessageCircleIcon, SearchIcon, LogOutIcon, CogIcon, FlagIcon, UsersIcon, ShieldCheckIcon } from './icons';
+import { BellIcon, SearchIcon, LogOutIcon, CogIcon, FlagIcon, UsersIcon, ShieldCheckIcon } from './icons';
 import ThemeToggle from './ThemeToggle';
 import { useAuth } from '../contexts/AuthContext';
 import NotificationsPanel from './NotificationsPanel';
 import { AppNotification, User } from '../types';
-import Messenger from './Messenger';
 import FriendRequestsPanel from './FriendRequestsPanel';
 
 interface HeaderProps {
@@ -24,14 +23,10 @@ const Header: React.FC<HeaderProps> = ({ navigate, notificationCount, notificati
   const { user, logout } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
-  const [isMessengerOpen, setIsMessengerOpen] = useState(false);
   const [isFriendsOpen, setIsFriendsOpen] = useState(false);
-
-  const [messageCount, setMessageCount] = useState(5);
 
   const menuRef = useRef<HTMLDivElement>(null);
   const notificationsRef = useRef<HTMLDivElement>(null);
-  const messengerRef = useRef<HTMLDivElement>(null);
   const friendsRef = useRef<HTMLDivElement>(null);
 
 
@@ -59,10 +54,6 @@ const Header: React.FC<HeaderProps> = ({ navigate, notificationCount, notificati
       onNotificationsOpen();
     }
   };
-  
-  const handleMessengerClick = () => {
-    setIsMessengerOpen(!isMessengerOpen);
-  }
   
   const handleFriendsClick = () => {
     setIsFriendsOpen(!isFriendsOpen);
@@ -118,15 +109,6 @@ const Header: React.FC<HeaderProps> = ({ navigate, notificationCount, notificati
           {isFriendsOpen && <FriendRequestsPanel requests={friendRequests} onAction={onFriendRequestAction} navigate={navigate} />}
         </div>
 
-        <div className="relative" ref={messengerRef}>
-          <div className="p-2.5 bg-z-bg-primary dark:bg-z-bg-secondary-dark rounded-full cursor-pointer hover:bg-gray-200 dark:hover:bg-z-hover-dark transition-transform hover:scale-110 relative" title="Messenger" onClick={handleMessengerClick}>
-            <MessageCircleIcon className="h-6 w-6 text-z-text-primary dark:text-z-text-primary-dark" />
-            {messageCount > 0 && (
-              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">{messageCount}</span>
-            )}
-          </div>
-          {isMessengerOpen && <Messenger onClose={() => setIsMessengerOpen(false)} unreadCount={messageCount} setUnreadCount={setMessageCount}/>}
-        </div>
         <div className="relative" ref={notificationsRef}>
           <div className="p-2.5 bg-z-bg-primary dark:bg-z-bg-secondary-dark rounded-full cursor-pointer hover:bg-gray-200 dark:hover:bg-z-hover-dark transition-transform hover:scale-110 relative" title="Notificaciones" onClick={handleNotificationsClick}>
             <BellIcon className="h-6 w-6 text-z-text-primary dark:text-z-text-primary-dark" />

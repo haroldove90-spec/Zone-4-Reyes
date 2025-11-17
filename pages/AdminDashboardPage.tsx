@@ -1,5 +1,7 @@
 
 
+
+
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Fanpage } from '../types';
 import { supabase } from '../services/supabaseClient';
@@ -161,30 +163,6 @@ const AdminDashboardPage: React.FC = () => {
         }
     };
 
-    const handleDeleteFanpage = async (pageId: string) => {
-        if (window.confirm('¿Estás seguro de que quieres eliminar esta página? Esta acción no se puede deshacer.')) {
-            const { error } = await supabase.from('fanpages').delete().eq('id', pageId);
-            if (error) {
-                console.error("Error deleting fanpage:", error);
-                alert(`Error al eliminar la página: ${error.message}`);
-            } else {
-                fetchData();
-            }
-        }
-    };
-
-    const handleDeleteUser = async (userId: string) => {
-        if (window.confirm('ADVERTENCIA: Esto eliminará el perfil del usuario de la base de datos, pero NO eliminará la cuenta de autenticación. El usuario aún podrá iniciar sesión (aunque su perfil estará en blanco). Para una eliminación completa se requiere una operación de servidor. ¿Deseas continuar?')) {
-            const { error } = await supabase.from('profiles').delete().eq('id', userId);
-            if (error) {
-                console.error("Error deleting user profile:", error);
-                alert(`Error al eliminar el usuario: ${error.message}`);
-            } else {
-                fetchData();
-            }
-        }
-    };
-
     return (
         <main className="flex-grow pt-14 lg:ml-20 xl:ml-80 lg:mr-72 overflow-x-hidden p-4 md:p-6">
             <h1 className="text-3xl font-bold text-z-text-primary dark:text-z-text-primary-dark mb-6">Panel de Administrador</h1>
@@ -221,7 +199,6 @@ const AdminDashboardPage: React.FC = () => {
                                     </td>
                                     <td className="p-3">
                                         <button onClick={() => handleToggleFanpageStatus(fp.id, fp.is_active)} disabled className={`text-sm font-medium ${fp.is_active !== false ? 'text-yellow-600 hover:text-yellow-800' : 'text-green-500 hover:text-green-700'} disabled:opacity-50 disabled:cursor-not-allowed`}>{fp.is_active !== false ? 'Desactivar' : 'Activar'}</button>
-                                        <button onClick={() => handleDeleteFanpage(fp.id)} className="ml-4 text-sm font-medium text-red-500 hover:text-red-700">Eliminar</button>
                                     </td>
                                 </tr>)
                             )}
@@ -247,7 +224,6 @@ const AdminDashboardPage: React.FC = () => {
                                     </td>
                                     <td className="p-3">
                                         <button onClick={() => handleToggleUserStatus(u.id, u.is_active)} disabled className={`text-sm font-medium ${u.is_active !== false ? 'text-yellow-600 hover:text-yellow-800' : 'text-green-500 hover:text-green-700'} disabled:opacity-50 disabled:cursor-not-allowed`}>{u.is_active !== false ? 'Desactivar' : 'Activar'}</button>
-                                        <button onClick={() => handleDeleteUser(u.id)} className="ml-4 text-sm font-medium text-red-500 hover:text-red-700">Eliminar</button>
                                     </td>
                                 </tr>)
                             )}

@@ -1,5 +1,7 @@
 
 
+
+
 import React, { useState, useEffect, useCallback, lazy, Suspense } from 'react';
 import Header from './Header';
 import LeftSidebar from './LeftSidebar';
@@ -14,15 +16,12 @@ import { supabase } from '../services/supabaseClient';
 // Lazy load page components for code splitting
 const ProfilePage = lazy(() => import('../pages/ProfilePage'));
 const FriendsPage = lazy(() => import('../pages/FriendsPage'));
-const AdCenterPage = lazy(() => import('../pages/AdCenterPage'));
 const SettingsPage = lazy(() => import('../pages/SettingsPage'));
 const AdminDashboardPage = lazy(() => import('../pages/AdminDashboardPage'));
 const MyPages = lazy(() => import('../pages/MyPages'));
 const CreateFanpage = lazy(() => import('../pages/CreateFanpage'));
 const FanpageDetailPage = lazy(() => import('../pages/FanpageDetailPage'));
 const CitizenReportPage = lazy(() => import('../pages/CitizenReportPage'));
-const ReelsPage = lazy(() => import('../pages/ReelsPage'));
-const MarketplacePage = lazy(() => import('../pages/MarketplacePage'));
 const GroupsPage = lazy(() => import('../pages/GroupsPage'));
 const GroupDetailPage = lazy(() => import('../pages/GroupDetailPage'));
 const CreateGroupPage = lazy(() => import('../pages/CreateGroupPage'));
@@ -361,8 +360,6 @@ const MainLayout: React.FC = () => {
               return <ProfilePage key={profileId} userId={profileId} onAddPost={handleAddPost} navigate={navigate} addNotification={addNotification} />;
           case 'friends':
               return <FriendsPage navigate={navigate} addNotification={addNotification} />;
-          case 'ads':
-              return <AdCenterPage />;
           case 'settings':
               return <SettingsPage />;
           case 'my-pages':
@@ -374,12 +371,6 @@ const MainLayout: React.FC = () => {
               return fanpage ? <FanpageDetailPage fanpage={fanpage} posts={posts.filter(p => p.fanpage?.id === param)} onAddPost={handleAddPost} navigate={navigate} addNotification={addNotification} /> : <div>Página no encontrada</div>;
           case 'report':
               return <CitizenReportPage reportPosts={posts.filter(p => p.type === 'report')} onAddPost={handleAddPost} navigate={navigate} />;
-          case 'reels':
-              // Reels section is disabled, show feed instead.
-              const isNewUserForReelsFallback = user ? posts.filter(p => p.user && p.user.id === user.id).length === 0 && !loading : false;
-              return <Feed posts={posts.filter(p => p.type !== 'report' && p.format !== 'reel')} onAddPost={handleAddPost} loading={loading} addNotification={addNotification} isNewUser={isNewUserForReelsFallback} navigate={navigate} />;
-          case 'marketplace':
-              return <MarketplacePage />;
           case 'groups':
               return <GroupsPage navigate={navigate} groups={groups} />;
           case 'group':

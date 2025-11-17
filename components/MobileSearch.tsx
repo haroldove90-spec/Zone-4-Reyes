@@ -1,5 +1,5 @@
 import React from 'react';
-import { SearchIcon, PhotoIcon, CameraIcon } from './icons';
+import { SearchIcon, PhotoIcon } from './icons';
 
 const MobileSearch: React.FC = () => {
   return (
@@ -12,11 +12,8 @@ const MobileSearch: React.FC = () => {
           <input
             type="text"
             placeholder="Buscar en Zone4Reyes"
-            className="bg-z-bg-secondary dark:bg-z-hover-dark text-z-text-primary dark:text-z-text-primary-dark rounded-full py-2.5 pl-10 pr-12 w-full focus:outline-none focus:ring-2 focus:ring-z-primary/50 transition-colors"
+            className="bg-z-bg-secondary dark:bg-z-hover-dark text-z-text-primary dark:text-z-text-primary-dark rounded-full py-2.5 pl-10 pr-4 w-full focus:outline-none focus:ring-2 focus:ring-z-primary/50 transition-colors"
           />
-          <button className="absolute inset-y-0 right-0 pr-3 flex items-center cursor-pointer group" title="Búsqueda por imagen">
-            <CameraIcon className="h-5 w-5 text-gray-500 dark:text-z-text-secondary-dark group-hover:text-z-text-primary dark:group-hover:text-z-text-primary-dark transition-colors" />
-          </button>
         </div>
         <div>
           <label htmlFor="mobile-file-upload" className="p-3 bg-z-bg-secondary dark:bg-z-hover-dark rounded-full cursor-pointer hover:bg-gray-200 dark:hover:bg-z-border-dark transition-colors inline-block">
