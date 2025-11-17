@@ -46,58 +46,62 @@ const formatProfile = (profileData: any, supabaseUser: SupabaseUser): AuthUser =
     is_active: profileData.is_active,
 });
 
-const getUserProfile = async (supabaseUser: SupabaseUser): Promise<AuthUser | null> => {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 10000); // Increased timeout to 10s
+const createMinimalUser = (supabaseUser: SupabaseUser): AuthUser => ({
+    id: supabaseUser.id,
+    email: supabaseUser.email || '',
+    name: supabaseUser.email?.split('@')[0] || `user_${supabaseUser.id.substring(0, 5)}`,
+    avatarUrl: `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(supabaseUser.email?.split('@')[0] || supabaseUser.id)}`,
+    bio: '',
+    coverUrl: 'https://i.imgur.com/62vORzS.png',
+    nickname: '',
+    age: undefined,
+    location: '',
+    website: '',
+    friendsCount: 0,
+    isAdmin: false,
+    is_active: true,
+});
 
-    try {
-        const { data: profile, error } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', supabaseUser.id)
-            .abortSignal(controller.signal)
-            .single();
+const getUserProfile = async (supabaseUser: SupabaseUser): Promise<AuthUser> => {
+    // 1. Attempt to fetch the user's profile.
+    const { data: profile, error: selectError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', supabaseUser.id)
+        .single();
 
-        clearTimeout(timeout);
-
-        if (error) {
-            // "PGRST116" means "0 rows returned". If the profile doesn't exist, create one.
-            if (error.code === 'PGRST116') { 
-                console.warn("Profile not found for user, attempting to create a fallback profile.");
-                const { data: newProfile, error: insertError } = await supabase
-                    .from('profiles')
-                    .insert({
-                        id: supabaseUser.id,
-                        name: supabaseUser.email?.split('@')[0] || `user_${supabaseUser.id.substring(0, 5)}`,
-                        avatar_url: `https://api.dicebear.com/7.x/initials/svg?seed=${supabaseUser.email?.split('@')[0] || supabaseUser.id}`,
-                    })
-                    .select()
-                    .single();
-
-                if (insertError) {
-                    console.error("Failed to create fallback profile:", insertError.message);
-                    return null;
-                }
-                
-                console.log("Fallback profile created successfully.");
-                return newProfile ? formatProfile(newProfile, supabaseUser) : null;
-
-            } else if (error.name === 'AbortError') {
-                console.warn('Profile fetch timed out after 10 seconds.');
-            } else {
-                console.error('Error fetching profile:', error.message);
-            }
-            return null;
-        }
-
-        return profile ? formatProfile(profile, supabaseUser) : null;
-    } catch (e: any) {
-        clearTimeout(timeout);
-         if (e.name !== 'AbortError') {
-            console.error('Exception while fetching or creating profile', e);
-        }
-        return null;
+    // 2. If the profile exists, format and return it.
+    if (profile) {
+        return formatProfile(profile, supabaseUser);
     }
+
+    // 3. If there was an error, but it's NOT a "not found" error, log it and return a minimal user.
+    // PostgREST error code PGRST116 means "Not a single row was returned".
+    if (selectError && selectError.code !== 'PGRST116') {
+        console.error('Error fetching profile:', selectError.message);
+        return createMinimalUser(supabaseUser);
+    }
+
+    // 4. If we are here, it means the profile was not found. We need to create one.
+    console.warn("Profile not found for user, creating a fallback profile.");
+    const { data: newProfile, error: insertError } = await supabase
+        .from('profiles')
+        .insert({
+            id: supabaseUser.id,
+            name: supabaseUser.email?.split('@')[0] || `user_${supabaseUser.id.substring(0, 5)}`,
+            avatar_url: `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(supabaseUser.email?.split('@')[0] || supabaseUser.id)}`,
+        })
+        .select()
+        .single();
+
+    // 5. If the insert operation fails, log the error and return a minimal user.
+    if (insertError) {
+        console.error("Failed to create fallback profile:", insertError.message);
+        return createMinimalUser(supabaseUser);
+    }
+
+    // 6. If the insert was successful, return the newly created profile (or a minimal one as a last resort).
+    return newProfile ? formatProfile(newProfile, supabaseUser) : createMinimalUser(supabaseUser);
 }
 
 
@@ -117,7 +121,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     const { data: authListener } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
-        clearTimeout(loadingTimeout); // Clear the failsafe timer on a successful response
         try {
           setSession(session);
           if (session?.user) {
@@ -130,6 +133,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           console.error("Error handling auth state change:", error);
           setUser(null);
         } finally {
+          // The timeout should only be cleared after all async operations are complete.
+          clearTimeout(loadingTimeout);
           setLoading(false);
         }
       }

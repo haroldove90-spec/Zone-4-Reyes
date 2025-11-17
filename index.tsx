@@ -6,7 +6,7 @@ import { AuthProvider } from './contexts/AuthContext';
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js').then(registration => {
+    navigator.serviceWorker.register(new URL('/sw.js', window.location.origin)).then(registration => {
       console.log('ServiceWorker registration successful with scope: ', registration.scope);
       
       // This fires when the service worker controlling this page changes.

@@ -6,6 +6,7 @@ import LeftSidebar from './LeftSidebar';
 import Feed from './Feed';
 import RightSidebar from './RightSidebar';
 import { Post, Fanpage, AppNotification, User, Group, AppEvent, Media } from '../types';
+import { FAKE_GROUPS, FAKE_EVENTS } from '../services/geminiService';
 import BottomNavBar from './BottomNavBar';
 import ProfilePage from '../pages/ProfilePage';
 import FriendsPage from '../pages/FriendsPage';
@@ -31,8 +32,8 @@ import { supabase } from '../services/supabaseClient';
 const MainLayout: React.FC = () => {
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
-  const [groups, setGroups] = useState<Group[]>([]);
-  const [events, setEvents] = useState<AppEvent[]>([]);
+  const [groups, setGroups] = useState<Group[]>(FAKE_GROUPS);
+  const [events, setEvents] = useState<AppEvent[]>(FAKE_EVENTS);
   const [fanpages, setFanpages] = useState<Fanpage[]>([]);
   const [currentPath, setCurrentPath] = useState(window.location.hash.substring(1) || 'feed');
   const { user } = useAuth();
@@ -209,7 +210,7 @@ const MainLayout: React.FC = () => {
     try {
         const { data: postsData, error: postsError } = await supabase
             .from('posts')
-            .select('*, user:profiles!user_id(id, name, avatar_url, is_active), groups(id, name), fanpage:fanpages!fanpage_id(id, name, avatar_url, is_active)')
+            .select('*, user:profiles!user_id(id, name, avatar_url), groups(id, name), fanpage:fanpages!fanpage_id(id, name, avatar_url)')
             .order('created_at', { ascending: false });
 
         if (postsError) throw postsError;
@@ -220,8 +221,10 @@ const MainLayout: React.FC = () => {
         }
         
         const activePosts = postsData.filter((p: any) => {
+             // Treat null or undefined is_active as true for backward compatibility
             const userIsActive = p.user ? (p.user.is_active !== false) : true;
             const fanpageIsActive = p.fanpage ? (p.fanpage.is_active !== false) : true;
+            
             return p.fanpage ? fanpageIsActive : userIsActive;
         });
 
@@ -270,65 +273,6 @@ const MainLayout: React.FC = () => {
           console.error("Error fetching fanpages:", err);
       }
   }, []);
-  
-  const fetchGroups = useCallback(async () => {
-    try {
-        const { data, error } = await supabase
-            .from('groups')
-            .select('*, group_members(count)');
-
-        if (error) throw error;
-        
-        const formattedGroups = data.map((g: any) => ({
-            id: g.id,
-            name: g.name,
-            description: g.description,
-            coverUrl: g.cover_url,
-            avatarUrl: g.avatar_url,
-            isPrivate: g.is_private,
-            memberCount: g.group_members[0]?.count || 0,
-        }));
-        setGroups(formattedGroups);
-    } catch (err: any) {
-        console.error("Error fetching groups:", err.message || err);
-    }
-  }, []);
-
-  const fetchEvents = useCallback(async () => {
-    try {
-        const { data, error } = await supabase
-            .from('events')
-            .select(`
-                *,
-                organizer_user:profiles!organizer_user_id(id, name, avatarUrl:avatar_url),
-                organizer_fanpage:fanpages!organizer_fanpage_id(id, name, avatarUrl:avatar_url, category, coverUrl:cover_url, bio, ownerId:owner_id),
-                event_attendees(count)
-            `);
-            
-        if (error) throw error;
-        
-        const formattedEvents: AppEvent[] = data.map((e: any) => {
-            const organizer = e.organizer_fanpage 
-                ? { ...e.organizer_fanpage } 
-                : { ...e.organizer_user };
-            
-            return {
-                id: e.id,
-                name: e.name,
-                description: e.description,
-                date: e.date,
-                location: e.location,
-                coverUrl: e.cover_url,
-                organizer,
-                attendees: e.event_attendees[0]?.count || 0,
-                creationDate: e.created_at,
-            };
-        });
-        setEvents(formattedEvents);
-    } catch (err: any) {
-        console.error("Error fetching events:", err.message || err);
-    }
-  }, []);
 
 
   useEffect(() => {
@@ -337,9 +281,7 @@ const MainLayout: React.FC = () => {
     fetchNotifications();
     fetchFanpages();
     fetchFriends();
-    fetchGroups();
-    fetchEvents();
-  }, [fetchPosts, fetchFriendRequests, fetchNotifications, fetchFanpages, fetchFriends, fetchGroups, fetchEvents]);
+  }, [fetchPosts, fetchFriendRequests, fetchNotifications, fetchFanpages, fetchFriends]);
 
   const handleAddPost = async (content: string, mediaFiles: File[], postType: 'standard' | 'report' = 'standard', options?: { group?: { id: string; name: string; }; fanpageId?: string; }, existingMedia?: Media[]) => {
     if (!user) {
@@ -390,6 +332,9 @@ const MainLayout: React.FC = () => {
         throw error;
     }
   };
+
+  const handleAddGroup = (newGroup: Group) => setGroups(prev => [newGroup, ...prev]);
+  const handleAddEvent = (newEvent: AppEvent) => setEvents(prev => [newEvent, ...prev]);
   
   const renderPage = () => {
       const [path, param] = currentPath.split('/');
@@ -415,7 +360,7 @@ const MainLayout: React.FC = () => {
           case 'report':
               return <CitizenReportPage reportPosts={posts.filter(p => p.type === 'report')} onAddPost={handleAddPost} navigate={navigate} />;
           case 'reels':
-              // FIX: `onAddPost` was passed instead of `handleAddPost`.
+// FIX: Changed 'onAddPost' to 'handleAddPost' to pass the correct function prop.
               return <ReelsPage reels={posts.filter(p => p.format === 'reel')} addNotification={addNotification} onAddPost={handleAddPost} />;
           case 'marketplace':
               return <MarketplacePage />;
@@ -425,14 +370,14 @@ const MainLayout: React.FC = () => {
               const group = groups.find(g => g.id === param);
               return group ? <GroupDetailPage group={group} posts={posts.filter(p => p.group?.id === param)} onAddPost={handleAddPost} navigate={navigate} /> : <div>Grupo no encontrado</div>;
           case 'create-group':
-                return <CreateGroupPage navigate={navigate} />;
+                return <CreateGroupPage onAddGroup={handleAddGroup} navigate={navigate} />;
           case 'events':
               return <EventsPage navigate={navigate} events={events} />;
           case 'event':
               const event = events.find(e => e.id === param);
               return event ? <EventDetailPage event={event} /> : <div>Evento no encontrado</div>;
           case 'create-event':
-              return <CreateEventPage navigate={navigate} />;
+              return <CreateEventPage onAddEvent={handleAddEvent} navigate={navigate} />;
           case 'notifications':
               return <NotificationsPage notifications={notifications} navigate={navigate} />;
           case 'admin':

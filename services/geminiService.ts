@@ -1,62 +1,24 @@
 
 import { Group, Product, User, AppEvent, Fanpage } from '../types';
 
-// FIX: Add fake products data for marketplace page.
+export const FAKE_GROUPS: Group[] = [
+    { id: 'g1', name: 'Vecinos de Reyes Iztacala', description: 'Un grupo para conectar con tus vecinos, compartir noticias y organizar eventos locales.', memberCount: 254, coverUrl: 'https://picsum.photos/id/1016/1600/400', avatarUrl: 'https://picsum.photos/id/101/200', isPrivate: false },
+    { id: 'g2', name: 'Amantes del Cine y Series', description: 'Para discutir los últimos estrenos, teorías de fans y clásicos del cine.', memberCount: 88, coverUrl: 'https://picsum.photos/id/122/1600/400', avatarUrl: 'https://picsum.photos/id/211/200', isPrivate: true },
+];
+
+const FAKE_SELLER: User = { id: 'seller1', name: 'Tiendita Local', avatarUrl: 'https://picsum.photos/id/75/200' };
 export const FAKE_PRODUCTS: Product[] = [
-  {
-    id: 'prod1',
-    name: 'Bicicleta de Montaña Rodada 29',
-    price: '$4,500',
-    imageUrl: 'https://picsum.photos/seed/bike/400/400',
-    seller: { id: 'u2', name: 'Jane Smith', avatarUrl: 'https://picsum.photos/id/1025/200' },
-  },
-  {
-    id: 'prod2',
-    name: 'Laptop Gamer Core i7, 16GB RAM',
-    price: '$22,000',
-    imageUrl: 'https://picsum.photos/seed/laptop/400/400',
-    seller: { id: 'u3', name: 'John Doe', avatarUrl: 'https://picsum.photos/id/1011/200' },
-  },
-  {
-    id: 'prod3',
-    name: 'Silla de Oficina Ergonómica',
-    price: '$1,800',
-    imageUrl: 'https://picsum.photos/seed/chair/400/400',
-    seller: { id: 'u4', name: 'Alice Johnson', avatarUrl: 'https://picsum.photos/id/1027/200' },
-  },
-  {
-    id: 'prod4',
-    name: 'Consola de Videojuegos Última Generación',
-    price: '$13,500',
-    imageUrl: 'https://picsum.photos/seed/console/400/400',
-    seller: { id: 'u5', name: 'Bob Williams', avatarUrl: 'https://picsum.photos/id/103/200' },
-  },
-    {
-    id: 'prod5',
-    name: 'Cámara Fotográfica DSLR con Lente 18-55mm',
-    price: '$9,800',
-    imageUrl: 'https://picsum.photos/seed/camera/400/400',
-    seller: { id: 'u6', name: 'Charlie Brown', avatarUrl: 'https://picsum.photos/id/1040/200' },
-  },
-  {
-    id: 'prod6',
-    name: 'Tenis para Correr, Talla 27 MX',
-    price: '$1,200',
-    imageUrl: 'https://picsum.photos/seed/shoes/400/400',
-    seller: { id: 'u7', name: 'Diana Prince', avatarUrl: 'https://picsum.photos/id/1067/200' },
-  },
-  {
-    id: 'prod7',
-    name: 'Juego de Herramientas 120 piezas',
-    price: '$950',
-    imageUrl: 'https://picsum.photos/seed/tools/400/400',
-    seller: { id: 'u8', name: 'Bruce Wayne', avatarUrl: 'https://picsum.photos/id/1074/200' },
-  },
-  {
-    id: 'prod8',
-    name: 'Smartphone 128GB, Desbloqueado',
-    price: '$7,300',
-    imageUrl: 'https://picsum.photos/seed/phone/400/400',
-    seller: { id: 'u9', name: 'Clark Kent', avatarUrl: 'https://picsum.photos/id/1084/200' },
-  },
+    { id: 'prod1', name: 'Café de grano premium', price: '$250 MXN', imageUrl: 'https://picsum.photos/id/30/400/400', seller: FAKE_SELLER },
+    { id: 'prod2', name: 'Artesanía hecha a mano', price: '$400 MXN', imageUrl: 'https://picsum.photos/id/48/400/400', seller: FAKE_SELLER },
+    { id: 'prod3', name: 'Playera con diseño local', price: '$300 MXN', imageUrl: 'https://picsum.photos/id/54/400/400', seller: FAKE_SELLER },
+    { id: 'prod4', name: 'Libro de autor local', price: '$150 MXN', imageUrl: 'https://picsum.photos/id/24/400/400', seller: FAKE_SELLER },
+];
+
+const FAKE_USER_ORGANIZER: User = { id: 'organizer1', name: 'Comité Vecinal', avatarUrl: 'https://picsum.photos/id/88/200'};
+// FIX: Added missing 'ownerId' property to satisfy the Fanpage type.
+const FAKE_FANPAGE_ORGANIZER: Fanpage = { id: 'fp1', name: 'El Rincón del Café', category: 'Cafetería', bio: '', ownerId: 'organizer1', ownerEmail: '', avatarUrl: 'https://picsum.photos/id/55/200', coverUrl: ''};
+
+export const FAKE_EVENTS: AppEvent[] = [
+    { id: 'e1', name: 'Kermés Anual de la Colonia', description: '¡Ven a disfrutar con toda tu familia! Tendremos antojitos, juegos mecánicos y música en vivo.', date: 'SÁB, 25 NOV, 12:00 PM', location: 'Parque Central de Reyes Iztacala', coverUrl: 'https://picsum.photos/id/1019/1600/900', organizer: FAKE_USER_ORGANIZER, attendees: 125, creationDate: '2024-10-15T10:00:00Z' },
+    { id: 'e2', name: 'Noche de Acústico', description: 'Disfruta de una velada con música acústica en vivo y el mejor café de la zona.', date: 'VIE, 1 DIC, 8:00 PM', location: 'El Rincón del Café', coverUrl: 'https://picsum.photos/id/1082/1600/900', organizer: FAKE_FANPAGE_ORGANIZER, attendees: 40, creationDate: '2024-10-20T15:30:00Z' },
 ];
