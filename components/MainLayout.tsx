@@ -203,6 +203,7 @@ const MainLayout: React.FC = () => {
           setLoading(true);
           setPosts([]); // Clear posts for initial load
           setHasMore(true); // Reset hasMore
+          setPageToFetch(1); // Reset page counter
       } else {
           setLoadingMore(true);
       }
@@ -279,7 +280,7 @@ const MainLayout: React.FC = () => {
         fetchFanpages();
         fetchFriends();
     }
-  }, [user]);
+  }, [user, loadMorePosts, fetchFriendRequests, fetchNotifications, fetchFanpages, fetchFriends]);
 
   const handleAddPost = async (content: string, mediaFiles: File[], postType: 'standard' | 'report' = 'standard', options?: { group?: { id: string; name: string; }; fanpageId?: string; }, existingMedia?: Media[]) => {
     if (!user) throw new Error("No estás autenticado.");
@@ -346,11 +347,11 @@ const MainLayout: React.FC = () => {
           case 'notifications':
               return <NotificationsPage notifications={notifications} navigate={navigate} />;
           case 'admin':
-              return user?.isAdmin ? <AdminDashboardPage /> : <Feed posts={[]} onAddPost={() => Promise.resolve()} loading={true} addNotification={() => Promise.resolve()} navigate={navigate} loadMorePosts={() => {}} hasMore={false} loadingMore={false} />;
+              return user?.isAdmin ? <AdminDashboardPage /> : <Feed posts={[]} onAddPost={() => Promise.resolve()} loading={true} addNotification={() => Promise.resolve()} navigate={navigate} loadMorePosts={() => {}} hasMore={false} loadingMore={false} onRefresh={() => Promise.resolve()} />;
           case 'feed':
           default:
               const isNewUser = user ? posts.filter(p => p.user && p.user.id === user.id).length === 0 && !loading : false;
-              return <Feed posts={posts.filter(p => p.type !== 'report' && p.format !== 'reel')} onAddPost={handleAddPost} loading={loading} addNotification={addNotification} isNewUser={isNewUser} navigate={navigate} loadMorePosts={() => loadMorePosts(false)} hasMore={hasMore} loadingMore={loadingMore} />;
+              return <Feed posts={posts.filter(p => p.type !== 'report' && p.format !== 'reel')} onAddPost={handleAddPost} loading={loading} addNotification={addNotification} isNewUser={isNewUser} navigate={navigate} loadMorePosts={() => loadMorePosts(false)} hasMore={hasMore} loadingMore={loadingMore} onRefresh={() => loadMorePosts(true)} />;
       }
   }
 

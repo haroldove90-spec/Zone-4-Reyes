@@ -17,10 +17,12 @@ interface FeedProps {
     loadMorePosts: () => void;
     hasMore: boolean;
     loadingMore: boolean;
+    onRefresh: () => Promise<void>;
 }
 
-const Feed: React.FC<FeedProps> = ({ posts, onAddPost, loading, addNotification, isNewUser, navigate, loadMorePosts, hasMore, loadingMore }) => {
+const Feed: React.FC<FeedProps> = ({ posts, onAddPost, loading, addNotification, isNewUser, navigate, loadMorePosts, hasMore, loadingMore, onRefresh }) => {
   const [activeFilter, setActiveFilter] = useState<'all' | 'pages'>('all');
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const observer = useRef<IntersectionObserver>();
   const lastPostElementRef = useCallback(node => {
@@ -34,6 +36,17 @@ const Feed: React.FC<FeedProps> = ({ posts, onAddPost, loading, addNotification,
       if (node) observer.current.observe(node);
   }, [loadingMore, hasMore, loadMorePosts]);
 
+  const handleRefreshClick = async () => {
+    setIsRefreshing(true);
+    try {
+        await onRefresh();
+    } catch (e) {
+        console.error("Error refreshing feed", e);
+    } finally {
+        setIsRefreshing(false);
+    }
+  };
+
   const filteredPosts = activeFilter === 'pages'
     ? posts.filter(p => !!p.fanpage)
     : posts;
@@ -45,6 +58,16 @@ const Feed: React.FC<FeedProps> = ({ posts, onAddPost, loading, addNotification,
         <AdBanner />
         <div className="mb-6">
           <CreatePost onAddPost={onAddPost} isNewUser={isNewUser} />
+        </div>
+
+        <div className="mb-4">
+            <button
+                onClick={handleRefreshClick}
+                disabled={isRefreshing || loading}
+                className="w-full text-center bg-z-bg-secondary dark:bg-z-bg-secondary-dark py-2 px-4 rounded-lg border dark:border-z-border-dark text-z-primary font-semibold hover:bg-gray-100 dark:hover:bg-z-hover-dark transition-colors duration-200 disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+                {isRefreshing ? 'Cargando...' : 'Cargar nuevas publicaciones'}
+            </button>
         </div>
 
         <div className="flex items-center space-x-2 mb-4 border-b dark:border-z-border-dark">
