@@ -210,7 +210,7 @@ const MainLayout: React.FC = () => {
     try {
         const { data: postsData, error: postsError } = await supabase
             .from('posts')
-            .select('*, user:profiles!user_id(id, name, avatar_url, is_active), groups(id, name), fanpage:fanpages!fanpage_id(id, name, avatar_url, is_active)')
+            .select('*, user:profiles!user_id(id, name, avatar_url), groups(id, name), fanpage:fanpages!fanpage_id(id, name, avatar_url)')
             .order('created_at', { ascending: false });
 
         if (postsError) throw postsError;
@@ -222,9 +222,9 @@ const MainLayout: React.FC = () => {
         
         const activePosts = postsData.filter((p: any) => {
              // Treat null or undefined is_active as true for backward compatibility
-            const userIsActive = p.user ? p.user.is_active !== false : true;
-            const fanpageIsActive = p.fanpage ? p.fanpage.is_active !== false : true;
-
+            const userIsActive = p.user ? (p.user.is_active !== false) : true;
+            const fanpageIsActive = p.fanpage ? (p.fanpage.is_active !== false) : true;
+            
             return p.fanpage ? fanpageIsActive : userIsActive;
         });
 
