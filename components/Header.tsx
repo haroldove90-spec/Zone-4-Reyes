@@ -1,8 +1,9 @@
 
 
 
+
 import React, { useState, useRef, useEffect } from 'react';
-import { BellIcon, MessageCircleIcon, SearchIcon, LogOutIcon, CogIcon, FlagIcon, UsersIcon } from './icons';
+import { BellIcon, MessageCircleIcon, SearchIcon, LogOutIcon, CogIcon, FlagIcon, UsersIcon, ShieldCheckIcon } from './icons';
 import ThemeToggle from './ThemeToggle';
 import { useAuth } from '../contexts/AuthContext';
 import NotificationsPanel from './NotificationsPanel';
@@ -148,6 +149,20 @@ const Header: React.FC<HeaderProps> = ({ navigate, notificationCount, notificati
                    </div>
                 </div>
                 <div className="p-2">
+                  {user?.isAdmin && (
+                    <>
+                      <button
+                        onClick={() => { navigate('admin'); setIsMenuOpen(false); }}
+                        className="w-full text-left flex items-center space-x-3 px-3 py-2.5 text-sm text-z-text-primary dark:text-z-text-primary-dark hover:bg-gray-100 dark:hover:bg-z-hover-dark rounded-md transition-colors"
+                      >
+                        <div className="p-2 bg-gray-200 dark:bg-z-border-dark rounded-full">
+                          <ShieldCheckIcon className="h-5 w-5" />
+                        </div>
+                        <span>Cambiar a rol de Admin</span>
+                      </button>
+                      <div className="border-t border-gray-200 dark:border-z-border-dark my-1 mx-3"></div>
+                    </>
+                  )}
                    <button
                     onClick={handleSettingsClick}
                     className="w-full text-left flex items-center space-x-3 px-3 py-2.5 text-sm text-z-text-primary dark:text-z-text-primary-dark hover:bg-gray-100 dark:hover:bg-z-hover-dark rounded-md transition-colors"
