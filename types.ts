@@ -89,7 +89,8 @@ export interface Fanpage {
     avatarUrl: string;
     coverUrl: string;
     bio: string;
-    ownerEmail: string;
+    ownerId: string;
+    ownerEmail?: string;
 }
 
 export interface AppEvent {

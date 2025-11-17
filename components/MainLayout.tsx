@@ -28,15 +28,9 @@ import NotificationsPage from '../pages/NotificationsPage';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../services/supabaseClient';
 
-const MOCK_FANPAGES: Fanpage[] = [
-    { id: 'fp1', name: 'El Rincón del Café', category: 'Cafetería', bio: 'El mejor café de Reyes Iztacala.', ownerEmail: 'admin@example.com', avatarUrl: 'https://picsum.photos/id/55/200', coverUrl: 'https://picsum.photos/id/225/1600/400' },
-    { id: 'fp2', name: 'Gaming Zone', category: 'Videojuegos', bio: 'Tu comunidad de gaming.', ownerEmail: 'carlos@example.com', avatarUrl: 'https://picsum.photos/id/44/200', coverUrl: 'https://picsum.photos/id/99/1600/400' },
-];
-
 const MainLayout: React.FC = () => {
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
-  const [fanpages, setFanpages] = useState<Fanpage[]>(MOCK_FANPAGES);
   const [groups, setGroups] = useState<Group[]>(FAKE_GROUPS);
   const [events, setEvents] = useState<AppEvent[]>(FAKE_EVENTS);
   const [currentPath, setCurrentPath] = useState(window.location.hash.substring(1) || 'feed');
@@ -284,7 +278,6 @@ const MainLayout: React.FC = () => {
     }
   };
 
-  const handleAddPage = (newPage: Fanpage) => setFanpages(prev => [newPage, ...prev]);
   const handleAddGroup = (newGroup: Group) => setGroups(prev => [newGroup, ...prev]);
   const handleAddEvent = (newEvent: AppEvent) => setEvents(prev => [newEvent, ...prev]);
   
@@ -303,12 +296,13 @@ const MainLayout: React.FC = () => {
           case 'settings':
               return <SettingsPage />;
           case 'my-pages':
-              return <MyPages myPages={fanpages.filter(p => p.ownerEmail === user?.email)} navigate={navigate} />;
+              return <MyPages navigate={navigate} />;
           case 'create-fanpage':
-              return <CreateFanpage onAddPage={handleAddPage} navigate={navigate} />;
+              return <CreateFanpage navigate={navigate} />;
           case 'report':
               return <CitizenReportPage reportPosts={posts.filter(p => p.type === 'report')} onAddPost={handleAddPost} navigate={navigate} />;
           case 'reels':
+// FIX: Changed 'onAddPost' to 'handleAddPost' to pass the correct function prop.
               return <ReelsPage reels={posts.filter(p => p.format === 'reel')} addNotification={addNotification} onAddPost={handleAddPost} />;
           case 'marketplace':
               return <MarketplacePage />;
@@ -329,7 +323,7 @@ const MainLayout: React.FC = () => {
           case 'notifications':
               return <NotificationsPage notifications={notifications} navigate={navigate} />;
           case 'admin':
-              return user?.isAdmin ? <AdminDashboardPage fanpages={fanpages}/> : <Feed posts={posts.filter(p => p.type !== 'report' && p.format !== 'reel')} onAddPost={handleAddPost} loading={loading} addNotification={addNotification} navigate={navigate} />;
+              return user?.isAdmin ? <AdminDashboardPage /> : <Feed posts={posts.filter(p => p.type !== 'report' && p.format !== 'reel')} onAddPost={handleAddPost} loading={loading} addNotification={addNotification} navigate={navigate} />;
           case 'feed':
           default:
               const isNewUser = user ? posts.filter(p => p.user && p.user.id === user.id).length === 0 && !loading : false;

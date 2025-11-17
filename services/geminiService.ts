@@ -15,7 +15,8 @@ export const FAKE_PRODUCTS: Product[] = [
 ];
 
 const FAKE_USER_ORGANIZER: User = { id: 'organizer1', name: 'Comité Vecinal', avatarUrl: 'https://picsum.photos/id/88/200'};
-const FAKE_FANPAGE_ORGANIZER: Fanpage = { id: 'fp1', name: 'El Rincón del Café', category: 'Cafetería', bio: '', ownerEmail: '', avatarUrl: 'https://picsum.photos/id/55/200', coverUrl: ''};
+// FIX: Added missing 'ownerId' property to satisfy the Fanpage type.
+const FAKE_FANPAGE_ORGANIZER: Fanpage = { id: 'fp1', name: 'El Rincón del Café', category: 'Cafetería', bio: '', ownerId: 'organizer1', ownerEmail: '', avatarUrl: 'https://picsum.photos/id/55/200', coverUrl: ''};
 
 export const FAKE_EVENTS: AppEvent[] = [
     { id: 'e1', name: 'Kermés Anual de la Colonia', description: '¡Ven a disfrutar con toda tu familia! Tendremos antojitos, juegos mecánicos y música en vivo.', date: 'SÁB, 25 NOV, 12:00 PM', location: 'Parque Central de Reyes Iztacala', coverUrl: 'https://picsum.photos/id/1019/1600/900', organizer: FAKE_USER_ORGANIZER, attendees: 125, creationDate: '2024-10-15T10:00:00Z' },

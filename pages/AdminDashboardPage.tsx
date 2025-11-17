@@ -1,6 +1,8 @@
 
-import React from 'react';
+
+import React, { useState, useEffect, useCallback } from 'react';
 import { Fanpage } from '../types';
+import { supabase } from '../services/supabaseClient';
 
 // Mock data, as it was in MainLayout
 const MOCK_USERS = [
@@ -11,10 +13,6 @@ const MOCK_USERS = [
     { name: 'Jane Smith', email: 'jane@example.com', joined: '2023-09-14' },
     { name: 'Alice Johnson', email: 'alice@example.com', joined: '2023-09-12' },
 ];
-
-interface AdminDashboardPageProps {
-    fanpages: Fanpage[];
-}
 
 const UserChart: React.FC<{ data: { label: string, value: number }[] }> = ({ data }) => {
     const maxValue = Math.max(...data.map(d => d.value), 1); // Avoid division by zero
@@ -30,7 +28,41 @@ const UserChart: React.FC<{ data: { label: string, value: number }[] }> = ({ dat
     );
 };
 
-const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({ fanpages }) => {
+const AdminDashboardPage: React.FC = () => {
+    const [fanpages, setFanpages] = useState<Fanpage[]>([]);
+    const [loadingPages, setLoadingPages] = useState(true);
+
+    const fetchFanpages = useCallback(async () => {
+        setLoadingPages(true);
+        try {
+            const { data, error } = await supabase
+                .from('fanpages')
+                .select('*, owner:profiles!owner_id(email)');
+                
+            if (error) throw error;
+            
+            const formattedPages = data.map((p: any) => ({
+                id: p.id,
+                name: p.name,
+                category: p.category,
+                avatarUrl: p.avatar_url,
+                coverUrl: p.cover_url,
+                bio: p.bio,
+                ownerId: p.owner_id,
+                ownerEmail: p.owner?.email || 'N/A'
+            }));
+            setFanpages(formattedPages);
+        } catch (err) {
+            console.error("Error fetching fanpages for admin:", err);
+        } finally {
+            setLoadingPages(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        fetchFanpages();
+    }, [fetchFanpages]);
+
     const chartData = [
         { label: 'Jul', value: 12 }, { label: 'Ago', value: 19 }, { label: 'Sep', value: 32 }, { label: 'Oct', value: 48 },
     ];
@@ -39,7 +71,7 @@ const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({ fanpages }) => 
             <h1 className="text-3xl font-bold text-z-text-primary dark:text-z-text-primary-dark mb-6">Panel de Administrador</h1>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
                 <div className="bg-z-bg-secondary dark:bg-z-bg-secondary-dark p-5 rounded-xl shadow animate-slideInUp" style={{animationDelay: '100ms'}}><h3 className="text-z-text-secondary dark:text-z-text-secondary-dark text-sm font-semibold">Usuarios Totales</h3><p className="text-3xl font-bold">{MOCK_USERS.length}</p></div>
-                <div className="bg-z-bg-secondary dark:bg-z-bg-secondary-dark p-5 rounded-xl shadow animate-slideInUp" style={{animationDelay: '200ms'}}><h3 className="text-z-text-secondary dark:text-z-text-secondary-dark text-sm font-semibold">Páginas Totales</h3><p className="text-3xl font-bold">{fanpages.length}</p></div>
+                <div className="bg-z-bg-secondary dark:bg-z-bg-secondary-dark p-5 rounded-xl shadow animate-slideInUp" style={{animationDelay: '200ms'}}><h3 className="text-z-text-secondary dark:text-z-text-secondary-dark text-sm font-semibold">Páginas Totales</h3><p className="text-3xl font-bold">{loadingPages ? '...' : fanpages.length}</p></div>
                 <div className="bg-z-bg-secondary dark:bg-z-bg-secondary-dark p-5 rounded-xl shadow animate-slideInUp" style={{animationDelay: '300ms'}}><h3 className="text-z-text-secondary dark:text-z-text-secondary-dark text-sm font-semibold">Usuarios Activos Hoy</h3><p className="text-3xl font-bold">12</p></div>
                 <div className="bg-z-bg-secondary dark:bg-z-bg-secondary-dark p-5 rounded-xl shadow animate-slideInUp" style={{animationDelay: '400ms'}}><h3 className="text-z-text-secondary dark:text-z-text-secondary-dark text-sm font-semibold">Reportes</h3><p className="text-3xl font-bold">3</p></div>
             </div>
@@ -53,7 +85,13 @@ const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({ fanpages }) => 
                 <div className="overflow-x-auto">
                     <table className="w-full text-left">
                         <thead><tr className="border-b dark:border-z-border-dark"><th className="p-3 text-sm font-semibold text-z-text-secondary dark:text-z-text-secondary-dark">Nombre</th><th className="p-3 text-sm font-semibold text-z-text-secondary dark:text-z-text-secondary-dark">Categoría</th><th className="p-3 text-sm font-semibold text-z-text-secondary dark:text-z-text-secondary-dark">Propietario</th></tr></thead>
-                        <tbody>{fanpages.map(fp => <tr key={fp.id} className="border-b dark:border-z-border-dark hover:bg-gray-50 dark:hover:bg-z-hover-dark transition-colors"><td className="p-3">{fp.name}</td><td className="p-3">{fp.category}</td><td className="p-3">{fp.ownerEmail}</td></tr>)}</tbody>
+                        <tbody>
+                            {loadingPages ? (
+                                <tr><td colSpan={3} className="text-center p-4">Cargando páginas...</td></tr>
+                            ) : (
+                                fanpages.map(fp => <tr key={fp.id} className="border-b dark:border-z-border-dark hover:bg-gray-50 dark:hover:bg-z-hover-dark transition-colors"><td className="p-3">{fp.name}</td><td className="p-3">{fp.category}</td><td className="p-3">{fp.ownerEmail}</td></tr>)
+                            )}
+                        </tbody>
                     </table>
                 </div>
             </div>
