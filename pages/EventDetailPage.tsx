@@ -17,6 +17,7 @@ const EventDetailPage: React.FC<EventDetailPageProps> = ({ event }) => {
   };
 
   const organizer = 'ownerEmail' in event.organizer ? event.organizer as any : event.organizer;
+  const creationDate = new Date(event.creationDate).toLocaleDateString('es-MX', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
 
   return (
     <main className="flex-grow pt-14 lg:ml-20 xl:ml-80 lg:mr-72 overflow-x-hidden">
@@ -42,6 +43,7 @@ const EventDetailPage: React.FC<EventDetailPageProps> = ({ event }) => {
                             <div>
                                 <p className="text-sm text-z-text-secondary dark:text-z-text-secondary-dark">Organizado por</p>
                                 <p className="font-bold text-z-text-primary dark:text-z-text-primary-dark">{organizer.name}</p>
+                                <p className="text-xs text-z-text-secondary dark:text-z-text-secondary-dark mt-1">Publicado el {creationDate}</p>
                             </div>
                         </div>
                         <button 

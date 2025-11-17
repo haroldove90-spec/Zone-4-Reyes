@@ -88,7 +88,7 @@ const FriendsPage: React.FC<FriendsPageProps> = ({ navigate, addNotification }) 
             const { data: suggestionsData, error: suggestionsError } = await supabase
                 .from('profiles')
                 .select('id, name, avatar_url')
-                .not('id', 'in', `(${idsToExclude.join(',')})`)
+                .not('id', 'in', idsToExclude)
                 .limit(10);
             if (suggestionsError) throw suggestionsError;
             setSuggestions(suggestionsData.map((s: any) => ({ id: s.id, name: s.name, avatarUrl: s.avatar_url })));

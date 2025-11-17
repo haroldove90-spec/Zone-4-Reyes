@@ -28,6 +28,7 @@ const CreateEventPage: React.FC<CreateEventPageProps> = ({ onAddEvent, navigate 
             organizer: user,
             attendees: 1,
             coverUrl: `https://picsum.photos/seed/${name.replace(/\s/g, '')}/1600/900`,
+            creationDate: new Date().toISOString(),
         };
         onAddEvent(newEvent);
         navigate('events');

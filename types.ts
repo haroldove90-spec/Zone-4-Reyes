@@ -101,4 +101,5 @@ export interface AppEvent {
   coverUrl: string;
   organizer: User | Fanpage;
   attendees: number;
+  creationDate: string;
 }

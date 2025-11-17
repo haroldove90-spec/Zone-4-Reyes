@@ -1,7 +1,6 @@
 
 
 
-
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useAuth, AuthUser } from '../contexts/AuthContext';
 import { Post as PostType, Media, User, FriendshipStatus } from '../types';
@@ -78,7 +77,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ userId, onAddPost, navigate, 
             if (error) throw error;
             setProfileUser(formatProfileData(data));
 
-            const { data: postsData, error: postsError } = await supabase.from('posts').select('*, user:profiles(id, name, avatar_url), groups(id, name)').eq('user_id', userId).order('created_at', { ascending: false });
+            const { data: postsData, error: postsError } = await supabase.from('posts').select('*, user:profiles!user_id(id, name, avatar_url), groups(id, name)').eq('user_id', userId).order('created_at', { ascending: false });
             if(postsError) throw postsError;
             setUserPosts(postsData.map((p: any) => ({
                 id: p.id.toString(), user: {id: p.user.id, name: p.user.name, avatarUrl: p.user.avatar_url}, timestamp: new Date(p.created_at).toLocaleString(), content: p.content, media: p.media, type: p.type, format: p.format, likes: 0, commentsCount: 0, comments: [], group: p.groups ? { id: p.groups.id, name: p.groups.name } : undefined,

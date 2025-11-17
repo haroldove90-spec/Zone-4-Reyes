@@ -8,19 +8,26 @@ interface EventsPageProps {
   events: AppEvent[];
 }
 
-const EventCard: React.FC<{ event: AppEvent; onClick: () => void }> = ({ event, onClick }) => (
-    <div onClick={onClick} className="bg-z-bg-secondary dark:bg-z-bg-secondary-dark rounded-lg shadow-md overflow-hidden group cursor-pointer flex flex-col sm:flex-row">
-        <img src={event.coverUrl} alt={event.name} className="w-full sm:w-48 h-32 sm:h-auto object-cover" />
-        <div className="p-4 flex flex-col justify-between">
-            <div>
-                <p className="text-sm font-bold text-z-primary">{event.date}</p>
-                <h3 className="text-xl font-bold text-z-text-primary dark:text-z-text-primary-dark group-hover:underline mt-1">{event.name}</h3>
-                <p className="text-sm text-z-text-secondary dark:text-z-text-secondary-dark mt-1 flex items-center"><MapPinIcon className="w-4 h-4 mr-1.5"/>{event.location}</p>
+const EventCard: React.FC<{ event: AppEvent; onClick: () => void }> = ({ event, onClick }) => {
+    const creationDate = new Date(event.creationDate).toLocaleDateString('es-MX', { year: 'numeric', month: 'long', day: 'numeric' });
+    
+    return (
+        <div onClick={onClick} className="bg-z-bg-secondary dark:bg-z-bg-secondary-dark rounded-lg shadow-md overflow-hidden group cursor-pointer flex flex-col sm:flex-row">
+            <img src={event.coverUrl} alt={event.name} className="w-full sm:w-48 h-32 sm:h-auto object-cover" />
+            <div className="p-4 flex flex-col flex-grow justify-between">
+                <div>
+                    <p className="text-sm font-bold text-z-primary">{event.date}</p>
+                    <h3 className="text-xl font-bold text-z-text-primary dark:text-z-text-primary-dark group-hover:underline mt-1">{event.name}</h3>
+                    <p className="text-sm text-z-text-secondary dark:text-z-text-secondary-dark mt-1 flex items-center"><MapPinIcon className="w-4 h-4 mr-1.5"/>{event.location}</p>
+                </div>
+                <div className="flex justify-between items-center mt-2 text-sm text-z-text-secondary dark:text-z-text-secondary-dark">
+                    <span>{event.attendees} asistentes</span>
+                    <span>Publicado el {creationDate}</span>
+                </div>
             </div>
-            <p className="text-sm text-z-text-secondary dark:text-z-text-secondary-dark mt-2">{event.attendees} asistentes</p>
         </div>
-    </div>
-);
+    );
+};
 
 const EventsPage: React.FC<EventsPageProps> = ({ navigate, events }) => {
     return (

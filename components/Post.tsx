@@ -115,7 +115,7 @@ const Post: React.FC<PostProps> = ({ post, index, addNotification, onAddPost, na
             // Fetch initial comments (latest 2)
             const { data: commentsData, count: commentsCountData, error: commentsError } = await supabase
                 .from('comments')
-                .select('*, profiles(id, name, avatar_url)', { count: 'exact' })
+                .select('*, profiles!user_id(id, name, avatar_url)', { count: 'exact' })
                 .eq('post_id', post.id)
                 .order('created_at', { ascending: false })
                 .limit(2);
@@ -145,7 +145,7 @@ const Post: React.FC<PostProps> = ({ post, index, addNotification, onAddPost, na
     try {
         const { data: commentsData, error: commentsError } = await supabase
             .from('comments')
-            .select('*, profiles(id, name, avatar_url)')
+            .select('*, profiles!user_id(id, name, avatar_url)')
             .eq('post_id', post.id)
             .order('created_at', { ascending: true });
         
@@ -201,7 +201,7 @@ const Post: React.FC<PostProps> = ({ post, index, addNotification, onAddPost, na
         const { data, error } = await supabase
             .from('comments')
             .insert({ post_id: post.id, user_id: user.id, text: newComment })
-            .select('*, profiles(id, name, avatar_url)')
+            .select('*, profiles!user_id(id, name, avatar_url)')
             .single();
         
         if (error) throw error;
