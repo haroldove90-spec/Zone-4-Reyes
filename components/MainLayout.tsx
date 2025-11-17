@@ -1,7 +1,4 @@
 
-
-
-
 import React, { useState, useEffect, useCallback, lazy, Suspense } from 'react';
 import Header from './Header';
 import LeftSidebar from './LeftSidebar';
@@ -12,6 +9,7 @@ import { FAKE_GROUPS, FAKE_EVENTS } from '../services/geminiService';
 import BottomNavBar from './BottomNavBar';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../services/supabaseClient';
+import ErrorBanner from './ErrorBanner';
 
 // Lazy load page components for code splitting
 const ProfilePage = lazy(() => import('../pages/ProfilePage'));
@@ -36,9 +34,16 @@ const LoadingSpinner: React.FC = () => (
     </div>
 );
 
+const POSTS_PER_PAGE = 5;
+
 const MainLayout: React.FC = () => {
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [pageToFetch, setPageToFetch] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+
   const [groups, setGroups] = useState<Group[]>(FAKE_GROUPS);
   const [events, setEvents] = useState<AppEvent[]>(FAKE_EVENTS);
   const [fanpages, setFanpages] = useState<Fanpage[]>([]);
@@ -62,7 +67,7 @@ const MainLayout: React.FC = () => {
           if (error) throw error;
           
           const requests = data
-              .filter((req: any) => req.profiles) // Filter out requests where user profile might be missing
+              .filter((req: any) => req.profiles)
               .map((req: any) => ({
                   id: req.profiles.id,
                   name: req.profiles.name,
@@ -72,6 +77,7 @@ const MainLayout: React.FC = () => {
           setFriendRequests(requests);
       } catch (error: any) {
           console.error("Error fetching friend requests:", error.message || error);
+          setError("No se pudieron cargar las solicitudes de amistad.");
       }
   }, [user]);
 
@@ -111,6 +117,7 @@ const MainLayout: React.FC = () => {
 
     } catch (error: any) {
       console.error("Error fetching friends:", error.message || error);
+      setError("No se pudieron cargar tus amigos.");
       setFriends([]);
     }
   }, [user]);
@@ -133,11 +140,7 @@ const MainLayout: React.FC = () => {
 
         const formattedNotifications: AppNotification[] = data.map((n: any) => ({
             id: n.id,
-            user: {
-                id: n.actor.id,
-                name: n.actor.name,
-                avatarUrl: n.actor.avatar_url,
-            },
+            user: { id: n.actor.id, name: n.actor.name, avatarUrl: n.actor.avatar_url },
             text: n.text,
             timestamp: new Date(n.created_at).toLocaleString(),
             read: n.read,
@@ -149,6 +152,7 @@ const MainLayout: React.FC = () => {
 
     } catch (err) {
         console.error("Error fetching notifications:", err);
+        setError("No se pudieron cargar las notificaciones.");
     }
   }, [user]);
 
@@ -158,15 +162,8 @@ const MainLayout: React.FC = () => {
     postId?: string
   ) => {
       if (!user || recipientId === user.id) return;
-
       try {
-          const { error } = await supabase.from('notifications').insert([{
-              user_id: recipientId,
-              actor_id: user.id,
-              text: text,
-              post_id: postId,
-          }]);
-
+          const { error } = await supabase.from('notifications').insert([{ user_id: recipientId, actor_id: user.id, text: text, post_id: postId }]);
           if (error) throw error;
       } catch (err: any) {
           console.error("Error creating notification:", err.message);
@@ -175,18 +172,12 @@ const MainLayout: React.FC = () => {
 
   const resetNotificationCount = async () => {
     if (!user || notificationCount === 0) return;
-    
     const unreadIds = notifications.filter(n => !n.read).map(n => n.id);
-    
     setNotificationCount(0);
     setNotifications(prev => prev.map(n => ({ ...n, read: true })));
-
     try {
         if (unreadIds.length > 0) {
-            const { error } = await supabase
-                .from('notifications')
-                .update({ read: true })
-                .in('id', unreadIds);
+            const { error } = await supabase.from('notifications').update({ read: true }).in('id', unreadIds);
             if (error) throw error;
         }
     } catch (err) {
@@ -195,154 +186,121 @@ const MainLayout: React.FC = () => {
   };
 
   useEffect(() => {
-    const handleHashChange = () => {
-        setCurrentPath(window.location.hash.substring(1) || 'feed');
-    };
+    const handleHashChange = () => setCurrentPath(window.location.hash.substring(1) || 'feed');
     window.addEventListener('hashchange', handleHashChange);
-    
-    if (window.location.hash === '' || window.location.hash === '#/') {
-        window.location.hash = 'feed';
-    }
+    if (window.location.hash === '' || window.location.hash === '#/') window.location.hash = 'feed';
     handleHashChange();
-    
     return () => window.removeEventListener('hashchange', handleHashChange);
   }, []);
 
-  const navigate = (path: string) => {
-    window.location.hash = path;
-  };
+  const navigate = (path: string) => window.location.hash = path;
 
-  const fetchPosts = useCallback(async () => {
-    setLoading(true);
-    try {
-        const { data: postsData, error: postsError } = await supabase
-            .from('posts')
-            .select('*, user:profiles!user_id(id, name, avatar_url), groups(id, name), fanpage:fanpages!fanpage_id(id, name, avatar_url), likes(count), comments(count)')
-            .order('created_at', { ascending: false })
-            .limit(20);
+  const loadMorePosts = useCallback(async (isInitial = false) => {
+      if ((loadingMore || !hasMore) && !isInitial) return;
 
-        if (postsError) throw postsError;
-        if (!postsData) {
-            setPosts([]);
-            setLoading(false);
-            return;
-        }
-        
-        const postIds = postsData.map(p => p.id);
-        let likedPostIds = new Set<string>();
+      const page = isInitial ? 1 : pageToFetch;
+      if (isInitial) {
+          setLoading(true);
+          setPosts([]); // Clear posts for initial load
+          setHasMore(true); // Reset hasMore
+      } else {
+          setLoadingMore(true);
+      }
 
-        if (user && postIds.length > 0) {
-            const { data: likesData, error: likesError } = await supabase
-                .from('likes')
-                .select('post_id')
-                .in('post_id', postIds)
-                .eq('user_id', user.id);
-            
-            if (likesError) console.error("Error fetching user likes:", likesError);
-            else if (likesData) likedPostIds = new Set(likesData.map(l => l.post_id));
-        }
+      const from = (page - 1) * POSTS_PER_PAGE;
+      const to = from + POSTS_PER_PAGE - 1;
 
-        const fetchedPosts: Post[] = postsData.map((p: any) => ({
-            id: p.id.toString(),
-            timestamp: new Date(p.created_at).toLocaleString(),
-            content: p.content,
-            media: p.media,
-            type: p.type,
-            format: p.format,
-            user: p.user 
-                ? { id: p.user.id, name: p.user.name, avatarUrl: p.user.avatar_url }
-                : { id: p.user_id || 'unknown', name: 'Usuario Desconocido', avatarUrl: 'https://static.vecteezy.com/system/resources/thumbnails/009/292/244/small/default-avatar-icon-of-social-media-user-vector.jpg' },
-            likes: p.likes[0]?.count ?? 0,
-            commentsCount: p.comments[0]?.count ?? 0,
-            comments: [],
-            group: p.groups ? { id: p.groups.id, name: p.groups.name } : undefined,
-            fanpage: p.fanpage ? { id: p.fanpage.id, name: p.fanpage.name, avatarUrl: p.fanpage.avatar_url } : undefined,
-            isLikedByCurrentUser: likedPostIds.has(p.id.toString()),
-        }));
-        setPosts(fetchedPosts);
+      try {
+          const { data: postsData, error: postsError } = await supabase
+              .from('posts')
+              .select('*, user:profiles!user_id(id, name, avatar_url), groups(id, name), fanpage:fanpages!fanpage_id(id, name, avatar_url), likes(count), comments(count)')
+              .order('created_at', { ascending: false })
+              .range(from, to);
 
-    } catch (error: any) {
-        console.error("Error fetching posts:", error.message || error);
-    } finally {
-        setLoading(false);
-    }
-  }, [user]);
-  
+          if (postsError) throw postsError;
+          if (!postsData) {
+              setHasMore(false);
+              return;
+          }
+
+          const postIds = postsData.map(p => p.id);
+          let likedPostIds = new Set<string>();
+
+          if (user && postIds.length > 0) {
+              const { data: likesData, error: likesError } = await supabase.from('likes').select('post_id').in('post_id', postIds).eq('user_id', user.id);
+              if (likesError) console.error("Error fetching user likes:", likesError);
+              else if (likesData) likedPostIds = new Set(likesData.map(l => l.post_id));
+          }
+
+          const fetchedPosts: Post[] = postsData.map((p: any) => ({
+              id: p.id.toString(),
+              timestamp: new Date(p.created_at).toLocaleString(),
+              content: p.content, media: p.media, type: p.type, format: p.format,
+              user: p.user ? { id: p.user.id, name: p.user.name, avatarUrl: p.user.avatar_url } : { id: p.user_id || 'unknown', name: 'Usuario Desconocido', avatarUrl: '...' },
+              likes: p.likes[0]?.count ?? 0, commentsCount: p.comments[0]?.count ?? 0, comments: [],
+              group: p.groups ? { id: p.groups.id, name: p.groups.name } : undefined,
+              fanpage: p.fanpage ? { id: p.fanpage.id, name: p.fanpage.name, avatarUrl: p.fanpage.avatar_url } : undefined,
+              isLikedByCurrentUser: likedPostIds.has(p.id.toString()),
+          }));
+
+          setPosts(prev => isInitial ? fetchedPosts : [...prev, ...fetchedPosts]);
+          setPageToFetch(page + 1);
+          if (fetchedPosts.length < POSTS_PER_PAGE) setHasMore(false);
+
+      } catch (error: any) {
+          console.error("Error fetching posts:", error.message || error);
+          setError("No se pudieron cargar las publicaciones. Inténtalo de nuevo.");
+      } finally {
+          if (isInitial) setLoading(false);
+          else setLoadingMore(false);
+      }
+  }, [user, pageToFetch, hasMore, loadingMore]);
+
   const fetchFanpages = useCallback(async () => {
       try {
           const { data, error } = await supabase.from('fanpages').select('*');
           if (error) throw error;
           const formattedPages = data.map((p: any) => ({
-              id: p.id,
-              name: p.name,
-              category: p.category,
-              avatarUrl: p.avatar_url,
-              coverUrl: p.cover_url,
-              bio: p.bio,
-              ownerId: p.owner_id,
-              is_active: p.is_active
+              id: p.id, name: p.name, category: p.category, avatarUrl: p.avatar_url,
+              coverUrl: p.cover_url, bio: p.bio, ownerId: p.owner_id, is_active: p.is_active
           }));
           setFanpages(formattedPages);
       } catch (err) {
           console.error("Error fetching fanpages:", err);
+          setError("No se pudieron cargar las páginas de negocio.");
       }
   }, []);
 
-
   useEffect(() => {
-    fetchPosts();
-    fetchFriendRequests();
-    fetchNotifications();
-    fetchFanpages();
-    fetchFriends();
-  }, [fetchPosts, fetchFriendRequests, fetchNotifications, fetchFanpages, fetchFriends]);
+    if (user) {
+        loadMorePosts(true);
+        fetchFriendRequests();
+        fetchNotifications();
+        fetchFanpages();
+        fetchFriends();
+    }
+  }, [user]);
 
   const handleAddPost = async (content: string, mediaFiles: File[], postType: 'standard' | 'report' = 'standard', options?: { group?: { id: string; name: string; }; fanpageId?: string; }, existingMedia?: Media[]) => {
-    if (!user) {
-        throw new Error("No estás autenticado. Por favor, inicia sesión de nuevo.");
-    }
-    
+    if (!user) throw new Error("No estás autenticado.");
     try {
-        let mediaToUpload: Media[] = [];
-
-        if (existingMedia && existingMedia.length > 0) {
-            mediaToUpload = existingMedia;
-        } else if (mediaFiles.length > 0) {
+        let mediaToUpload: Media[] = existingMedia || [];
+        if (!existingMedia && mediaFiles.length > 0) {
             for (const file of mediaFiles) {
-                const fileExt = file.name.split('.').pop();
-                const fileName = `${user.id}/${Date.now()}.${fileExt}`;
-                
-                const { error: uploadError } = await supabase.storage
-                    .from('media')
-                    .upload(fileName, file);
-                
+                const fileName = `${user.id}/${Date.now()}.${file.name.split('.').pop()}`;
+                const { error: uploadError } = await supabase.storage.from('media').upload(fileName, file);
                 if (uploadError) throw new Error(`Error al subir el archivo: ${uploadError.message}`);
-
                 const { data: { publicUrl } } = supabase.storage.from('media').getPublicUrl(fileName);
                 mediaToUpload.push({ type: file.type.startsWith('image/') ? 'image' : 'video', url: publicUrl });
             }
         }
-
-        const postData: { [key: string]: any } = { 
-            user_id: user.id, 
-            content,
-            media: mediaToUpload.length > 0 ? mediaToUpload : null,
-            type: postType,
-            format: 'post',
-            group_id: options?.group?.id,
-            fanpage_id: options?.fanpageId,
-        };
-
+        const postData = { user_id: user.id, content, media: mediaToUpload.length > 0 ? mediaToUpload : null, type: postType, format: 'post', group_id: options?.group?.id, fanpage_id: options?.fanpageId };
         const { error: insertError } = await supabase.from('posts').insert([postData]);
         if (insertError) throw new Error(`Error al guardar la publicación: ${insertError.message}`);
-
-        await fetchPosts();
-        
-        if (currentPath.startsWith('profile')) navigate(`profile/${user.id}`);
-        else if (!currentPath.startsWith('group/')) window.scrollTo(0, 0);
-
+        await loadMorePosts(true);
     } catch(error) {
         console.error("Error en handleAddPost:", error);
+        setError("No se pudo crear la publicación. Inténtalo de nuevo.");
         throw error;
     }
   };
@@ -356,7 +314,7 @@ const MainLayout: React.FC = () => {
       switch(path) {
           case 'profile':
               const profileId = param || user?.id;
-              if (!profileId) return <Feed posts={[]} onAddPost={handleAddPost} loading={true} addNotification={addNotification} navigate={navigate} />;
+              if (!profileId) return <LoadingSpinner />;
               return <ProfilePage key={profileId} userId={profileId} onAddPost={handleAddPost} navigate={navigate} addNotification={addNotification} />;
           case 'friends':
               return <FriendsPage navigate={navigate} addNotification={addNotification} />;
@@ -388,16 +346,17 @@ const MainLayout: React.FC = () => {
           case 'notifications':
               return <NotificationsPage notifications={notifications} navigate={navigate} />;
           case 'admin':
-              return user?.isAdmin ? <AdminDashboardPage /> : <Feed posts={posts.filter(p => p.type !== 'report' && p.format !== 'reel')} onAddPost={handleAddPost} loading={loading} addNotification={addNotification} navigate={navigate} />;
+              return user?.isAdmin ? <AdminDashboardPage /> : <Feed posts={[]} onAddPost={() => Promise.resolve()} loading={true} addNotification={() => Promise.resolve()} navigate={navigate} loadMorePosts={() => {}} hasMore={false} loadingMore={false} />;
           case 'feed':
           default:
               const isNewUser = user ? posts.filter(p => p.user && p.user.id === user.id).length === 0 && !loading : false;
-              return <Feed posts={posts.filter(p => p.type !== 'report' && p.format !== 'reel')} onAddPost={handleAddPost} loading={loading} addNotification={addNotification} isNewUser={isNewUser} navigate={navigate} />;
+              return <Feed posts={posts.filter(p => p.type !== 'report' && p.format !== 'reel')} onAddPost={handleAddPost} loading={loading} addNotification={addNotification} isNewUser={isNewUser} navigate={navigate} loadMorePosts={() => loadMorePosts(false)} hasMore={hasMore} loadingMore={loadingMore} />;
       }
   }
 
   return (
     <div className="min-h-screen bg-z-bg-primary dark:bg-z-bg-primary-dark animate-fadeIn">
+      <ErrorBanner message={error} onClose={() => setError(null)} />
       {currentPath !== 'reels' && <Header navigate={navigate} notificationCount={notificationCount} notifications={notifications} onNotificationsOpen={resetNotificationCount} friendRequests={friendRequests} onFriendRequestAction={fetchFriendRequests} />}
       <div className="flex">
         {currentPath !== 'reels' && <LeftSidebar navigate={navigate} />}

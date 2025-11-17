@@ -1,7 +1,6 @@
 
-
-import React, { useState } from 'react';
-import { Post as PostType, User, Media } from '../types';
+import React, { useState, useRef, useCallback } from 'react';
+import { Post as PostType, Media } from '../types';
 import CreatePost from './CreatePost';
 import Post, { PostSkeleton } from './Post';
 import AdBanner from './AdBanner';
@@ -15,10 +14,25 @@ interface FeedProps {
     addNotification: (recipientId: string, text: string, postId?: string) => Promise<void>;
     isNewUser?: boolean;
     navigate: (path: string) => void;
+    loadMorePosts: () => void;
+    hasMore: boolean;
+    loadingMore: boolean;
 }
 
-const Feed: React.FC<FeedProps> = ({ posts, onAddPost, loading, addNotification, isNewUser, navigate }) => {
+const Feed: React.FC<FeedProps> = ({ posts, onAddPost, loading, addNotification, isNewUser, navigate, loadMorePosts, hasMore, loadingMore }) => {
   const [activeFilter, setActiveFilter] = useState<'all' | 'pages'>('all');
+
+  const observer = useRef<IntersectionObserver>();
+  const lastPostElementRef = useCallback(node => {
+      if (loadingMore) return;
+      if (observer.current) observer.current.disconnect();
+      observer.current = new IntersectionObserver(entries => {
+          if (entries[0].isIntersecting && hasMore) {
+              loadMorePosts();
+          }
+      });
+      if (node) observer.current.observe(node);
+  }, [loadingMore, hasMore, loadMorePosts]);
 
   const filteredPosts = activeFilter === 'pages'
     ? posts.filter(p => !!p.fanpage)
@@ -33,7 +47,6 @@ const Feed: React.FC<FeedProps> = ({ posts, onAddPost, loading, addNotification,
           <CreatePost onAddPost={onAddPost} isNewUser={isNewUser} />
         </div>
 
-        {/* Feed Filters */}
         <div className="flex items-center space-x-2 mb-4 border-b dark:border-z-border-dark">
             <button 
                 onClick={() => setActiveFilter('all')}
@@ -56,16 +69,33 @@ const Feed: React.FC<FeedProps> = ({ posts, onAddPost, loading, addNotification,
                 <PostSkeleton />
             </div>
         ) : filteredPosts.length > 0 ? (
-          filteredPosts.map((post, index) => (
-            <React.Fragment key={post.id}>
-              <Post post={post} index={index} addNotification={addNotification} onAddPost={onAddPost} navigate={navigate} />
-              {index === 1 && <AdPost />}
-            </React.Fragment>
-          ))
+          filteredPosts.map((post, index) => {
+            const isLastElement = filteredPosts.length === index + 1;
+            return (
+              <React.Fragment key={post.id}>
+                 <div ref={isLastElement ? lastPostElementRef : null}>
+                    <Post post={post} index={index} addNotification={addNotification} onAddPost={onAddPost} navigate={navigate} />
+                 </div>
+                {index === 1 && <AdPost />}
+              </React.Fragment>
+            );
+          })
         ) : (
           <div className="text-center py-10 text-z-text-secondary dark:text-z-text-secondary-dark bg-z-bg-secondary dark:bg-z-bg-secondary-dark rounded-lg">
             No hay publicaciones en esta sección.
           </div>
+        )}
+
+        {loadingMore && (
+            <div className="flex justify-center items-center py-8">
+                <div className="w-8 h-8 border-4 border-z-primary/30 border-t-z-primary rounded-full animate-spin"></div>
+            </div>
+        )}
+
+        {!hasMore && !loading && posts.length > 0 && (
+             <div className="text-center py-10 text-z-text-secondary dark:text-z-text-secondary-dark">
+                Has llegado al final.
+            </div>
         )}
       </div>
     </main>

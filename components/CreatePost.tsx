@@ -1,7 +1,6 @@
 
-
 import React, { useState, useRef } from 'react';
-import { VideoIcon, PhotoIcon, SmileIcon } from './icons';
+import { VideoIcon, PhotoIcon, SmileIcon, UsersPlusIcon } from './icons';
 import { useAuth } from '../contexts/AuthContext';
 import { Media } from '../types';
 
@@ -120,6 +119,10 @@ const CreatePost: React.FC<CreatePostProps> = ({ onAddPost, postType, placeholde
                 <div onClick={() => !isSubmitting && previews.length < 4 && fileInputRef.current?.click()} className={`flex items-center space-x-2 p-2 rounded-lg ${previews.length < 4 && !isSubmitting ? 'hover:bg-gray-100 dark:hover:bg-z-hover-dark cursor-pointer' : 'opacity-50 cursor-not-allowed'} justify-center transition-colors group`}>
                     <PhotoIcon className="h-7 w-7 text-green-500" />
                     <span className="font-medium text-z-text-secondary dark:text-z-text-secondary-dark group-hover:text-z-text-primary dark:group-hover:text-z-text-primary-dark hidden sm:inline transition-colors">Foto/Video</span>
+                </div>
+                <div className="flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-z-hover-dark cursor-pointer justify-center transition-colors group">
+                    <UsersPlusIcon className="h-7 w-7 text-blue-500" />
+                    <span className="font-medium text-z-text-secondary dark:text-z-text-secondary-dark group-hover:text-z-text-primary dark:group-hover:text-z-text-primary-dark hidden sm:inline transition-colors">Etiquetar amigos</span>
                 </div>
                 <div className="flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-z-hover-dark cursor-pointer justify-center transition-colors group">
                     <SmileIcon className="h-7 w-7 text-yellow-500" />
