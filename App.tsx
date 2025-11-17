@@ -4,28 +4,9 @@ import { ThemeProvider } from './contexts/ThemeContext';
 import { useAuth } from './contexts/AuthContext';
 import LoginPage from './components/LoginPage';
 import MainLayout from './components/MainLayout';
-import UpdateAvailableBanner from './components/UpdateAvailableBanner';
 
 const App: React.FC = () => {
   const { user, loading } = useAuth();
-  const [showUpdateBanner, setShowUpdateBanner] = useState(false);
-  const [waitingWorker, setWaitingWorker] = useState<ServiceWorker | null>(null);
-
-  useEffect(() => {
-    const handleSWUpdate = (event: Event) => {
-        const registration = (event as CustomEvent).detail;
-        if (registration && registration.waiting) {
-            setWaitingWorker(registration.waiting);
-            setShowUpdateBanner(true);
-        }
-    };
-
-    window.addEventListener('swUpdate', handleSWUpdate);
-
-    return () => {
-        window.removeEventListener('swUpdate', handleSWUpdate);
-    };
-  }, []);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -36,14 +17,6 @@ const App: React.FC = () => {
       }
     }
   }, [user, loading]);
-
-  const handleRefresh = () => {
-    if (waitingWorker) {
-      waitingWorker.postMessage({ type: 'SKIP_WAITING' });
-      setShowUpdateBanner(false);
-    }
-  };
-
 
   if (loading) {
     return (
@@ -57,7 +30,6 @@ const App: React.FC = () => {
   return (
     <ThemeProvider>
       {user ? <MainLayout /> : <LoginPage />}
-      {showUpdateBanner && <UpdateAvailableBanner onRefresh={handleRefresh} />}
     </ThemeProvider>
   );
 };
