@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { Post as PostType, User, Media } from '../types';
 import CreatePost from './CreatePost';
 import Post, { PostSkeleton } from './Post';
-import StoryReel from './StoryReel';
+import AdBanner from './AdBanner';
 import MobileSearch from './MobileSearch';
 import AdPost from './AdPost';
 
@@ -28,7 +28,7 @@ const Feed: React.FC<FeedProps> = ({ posts, onAddPost, loading, addNotification,
     <main className="flex-grow pt-14 lg:ml-20 xl:ml-80 lg:mr-72 overflow-x-hidden pb-20 md:pb-0">
       <div className="max-w-xl lg:max-w-2xl xl:max-w-3xl mx-auto px-4">
         <MobileSearch />
-        <StoryReel loading={loading} />
+        <AdBanner />
         <div className="mb-6">
           <CreatePost onAddPost={onAddPost} isNewUser={isNewUser} />
         </div>

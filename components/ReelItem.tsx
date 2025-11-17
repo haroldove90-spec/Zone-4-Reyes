@@ -1,9 +1,11 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Post as PostType, User, Media } from '../types';
+// FIX: Import the 'Media' type to resolve the TypeScript error.
+import { Post as PostType, Media } from '../types';
 import { ThumbsUpIcon, MessageSquareIcon, Share2Icon } from './icons';
 import { useAuth } from '../contexts/AuthContext';
 import ShareModal from './modals/ShareModal';
+import { supabase } from '../services/supabaseClient';
 
 interface ReelItemProps {
   post: PostType;
@@ -14,10 +16,52 @@ interface ReelItemProps {
 
 const ReelItem: React.FC<ReelItemProps> = ({ post, addNotification, isVisible, onAddPost }) => {
   const [isLiked, setIsLiked] = useState(false);
-  const [likes, setLikes] = useState(post.likes);
+  const [likes, setLikes] = useState(0);
+  const [commentsCount, setCommentsCount] = useState(0);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const { user } = useAuth();
+
+  useEffect(() => {
+    const fetchReelDetails = async () => {
+        try {
+            // Fetch likes count and if user liked it
+            const { count: likesData, error: likesError } = await supabase
+                .from('likes')
+                .select('*', { count: 'exact' })
+                .eq('post_id', post.id);
+
+            if (likesError) throw likesError;
+            setLikes(likesData || 0);
+
+            if (user) {
+                const { data: userLike, error: userLikeError } = await supabase
+                    .from('likes')
+                    .select('*')
+                    .eq('post_id', post.id)
+                    .eq('user_id', user.id)
+                    .maybeSingle();
+                
+                if (userLikeError) throw userLikeError;
+                setIsLiked(!!userLike);
+            }
+
+            // Fetch comments count
+            const { count: commentsData, error: commentsError } = await supabase
+                .from('comments')
+                .select('*', { count: 'exact' })
+                .eq('post_id', post.id);
+
+            if (commentsError) throw commentsError;
+            setCommentsCount(commentsData || 0);
+
+        } catch (error) {
+            console.error(`Error fetching details for reel ${post.id}:`, (error as any).message || error);
+        }
+    };
+
+    fetchReelDetails();
+  }, [post.id, user]);
 
   useEffect(() => {
     const videoElement = videoRef.current;
@@ -33,11 +77,41 @@ const ReelItem: React.FC<ReelItemProps> = ({ post, addNotification, isVisible, o
     }
   }, [isVisible]);
   
-  const handleLike = () => {
-    setIsLiked(!isLiked);
-    setLikes(prev => isLiked ? prev - 1 : prev + 1);
-    if (!isLiked && user) {
-        addNotification(post.user.id, `le ha gustado tu reel`, post.id);
+  const handleLike = async () => {
+    if (!user) return;
+    const originalIsLiked = isLiked;
+
+    // Optimistic UI update
+    setIsLiked(!originalIsLiked);
+    setLikes(prev => originalIsLiked ? prev - 1 : prev + 1);
+
+    try {
+        if (originalIsLiked) {
+            // Unlike
+            const { error } = await supabase
+                .from('likes')
+                .delete()
+                .eq('post_id', post.id)
+                .eq('user_id', user.id);
+            
+            if (error) throw error;
+        } else {
+            // Like
+            const { error } = await supabase
+                .from('likes')
+                .insert([{ post_id: post.id, user_id: user.id }]);
+
+            if (error) throw error;
+            
+            if (user.id !== post.user.id) {
+                addNotification(post.user.id, `le ha gustado tu reel`, post.id);
+            }
+        }
+    } catch (error) {
+        console.error("Error handling like:", error);
+        // Revert UI on error
+        setIsLiked(originalIsLiked);
+        setLikes(prev => originalIsLiked ? prev + 1 : prev - 1);
     }
   };
 
@@ -112,7 +186,7 @@ const ReelItem: React.FC<ReelItemProps> = ({ post, addNotification, isVisible, o
               <div className="p-3 bg-black/40 rounded-full">
                   <MessageSquareIcon className="h-7 w-7" />
               </div>
-              <span className="text-sm font-semibold">{post.commentsCount}</span>
+              <span className="text-sm font-semibold">{commentsCount}</span>
           </div>
           <div className="flex flex-col items-center cursor-pointer" onClick={() => setIsShareModalOpen(true)}>
               <div className="p-3 bg-black/40 rounded-full">

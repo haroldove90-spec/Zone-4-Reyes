@@ -34,7 +34,7 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({ navigate }) => {
         {user && <SidebarItem avatarUrl={user.avatarUrl} title={user.name} Icon={UsersIcon} onClick={() => navigate('profile')} />}
         <SidebarItem Icon={UsersIcon} title="Amigos" onClick={() => navigate('friends')} />
         <SidebarItem Icon={AlertTriangleIcon} title="Denuncia Ciudadana" onClick={() => navigate('report')} />
-        <SidebarItem Icon={ClapperboardIcon} title="Reels" onClick={() => navigate('reels')} />
+        
         <SidebarItem Icon={UsersRoundIcon} title="Grupos" onClick={() => navigate('groups')} />
         <SidebarItem Icon={StoreIcon} title="Marketplace" onClick={() => navigate('marketplace')} />
         <SidebarItem Icon={CalendarIcon} title="Eventos" onClick={() => navigate('events')} />

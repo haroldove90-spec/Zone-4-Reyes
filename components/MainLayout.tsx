@@ -360,8 +360,9 @@ const MainLayout: React.FC = () => {
           case 'report':
               return <CitizenReportPage reportPosts={posts.filter(p => p.type === 'report')} onAddPost={handleAddPost} navigate={navigate} />;
           case 'reels':
-// FIX: Changed 'onAddPost' to 'handleAddPost' to pass the correct function prop.
-              return <ReelsPage reels={posts.filter(p => p.format === 'reel')} addNotification={addNotification} onAddPost={handleAddPost} />;
+              // Reels section is disabled, show feed instead.
+              const isNewUserForReelsFallback = user ? posts.filter(p => p.user && p.user.id === user.id).length === 0 && !loading : false;
+              return <Feed posts={posts.filter(p => p.type !== 'report' && p.format !== 'reel')} onAddPost={handleAddPost} loading={loading} addNotification={addNotification} isNewUser={isNewUserForReelsFallback} navigate={navigate} />;
           case 'marketplace':
               return <MarketplacePage />;
           case 'groups':

@@ -1,4 +1,5 @@
 
+
 import React from 'react';
 import { HomeIcon, UsersRoundIcon, ClapperboardIcon, AlertTriangleIcon, CalendarIcon } from './icons';
 
@@ -12,7 +13,7 @@ const BottomNavBar: React.FC<BottomNavBarProps> = ({ navigate, activePath }) => 
   const navItems = [
     { name: 'Inicio', path: 'feed', icon: HomeIcon },
     { name: 'Grupos', path: 'groups', icon: UsersRoundIcon },
-    { name: 'Reels', path: 'reels', icon: ClapperboardIcon },
+    
     { name: 'Eventos', path: 'events', icon: CalendarIcon },
     { name: 'Denuncia', path: 'report', icon: AlertTriangleIcon },
   ];
