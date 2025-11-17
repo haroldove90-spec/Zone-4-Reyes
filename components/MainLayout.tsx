@@ -15,6 +15,7 @@ import SettingsPage from '../pages/SettingsPage';
 import AdminDashboardPage from '../pages/AdminDashboardPage';
 import MyPages from '../pages/MyPages';
 import CreateFanpage from '../pages/CreateFanpage';
+import FanpageDetailPage from '../pages/FanpageDetailPage';
 import CitizenReportPage from '../pages/CitizenReportPage';
 import ReelsPage from '../pages/ReelsPage';
 import MarketplacePage from '../pages/MarketplacePage';
@@ -33,6 +34,7 @@ const MainLayout: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [groups, setGroups] = useState<Group[]>(FAKE_GROUPS);
   const [events, setEvents] = useState<AppEvent[]>(FAKE_EVENTS);
+  const [fanpages, setFanpages] = useState<Fanpage[]>([]);
   const [currentPath, setCurrentPath] = useState(window.location.hash.substring(1) || 'feed');
   const { user } = useAuth();
 
@@ -167,7 +169,7 @@ const MainLayout: React.FC = () => {
     try {
         const { data: postsData, error: postsError } = await supabase
             .from('posts')
-            .select('id, created_at, content, media, type, format, user_id, groups(id, name)')
+            .select('*, user:profiles!user_id(id, name, avatar_url), groups(id, name), fanpage:fanpages!fanpage_id(id, name, avatar_url)')
             .order('created_at', { ascending: false });
 
         if (postsError) throw postsError;
@@ -177,42 +179,22 @@ const MainLayout: React.FC = () => {
             return;
         }
 
-        const userIds = [...new Set(postsData.map(p => p.user_id).filter(Boolean))];
-
-        if (userIds.length === 0) {
-            setPosts([]);
-            setLoading(false);
-            return;
-        }
-
-        const { data: profilesData, error: profilesError } = await supabase
-            .from('profiles')
-            .select('id, name, avatar_url')
-            .in('id', userIds);
-
-        if (profilesError) throw profilesError;
-        const profilesMap = new Map<string, { id: string; name: string; avatar_url: string; }>((profilesData || []).map((profile: any) => [profile.id, profile]));
-
-        const fetchedPosts: Post[] = postsData.map((p: any) => {
-            const profile = profilesMap.get(p.user_id);
-            const postUser = profile
-                ? { id: profile.id, name: profile.name, avatarUrl: profile.avatar_url }
-                : { id: p.user_id || 'unknown', name: 'Usuario Desconocido', avatarUrl: 'https://static.vecteezy.com/system/resources/thumbnails/009/292/244/small/default-avatar-icon-of-social-media-user-vector.jpg' };
-
-            return {
-                id: p.id.toString(),
-                timestamp: new Date(p.created_at).toLocaleString(),
-                content: p.content,
-                media: p.media,
-                type: p.type,
-                format: p.format,
-                user: postUser,
-                likes: 0,
-                commentsCount: 0,
-                comments: [],
-                group: p.groups ? { id: p.groups.id, name: p.groups.name } : undefined,
-            };
-        });
+        const fetchedPosts: Post[] = postsData.map((p: any) => ({
+            id: p.id.toString(),
+            timestamp: new Date(p.created_at).toLocaleString(),
+            content: p.content,
+            media: p.media,
+            type: p.type,
+            format: p.format,
+            user: p.user 
+                ? { id: p.user.id, name: p.user.name, avatarUrl: p.user.avatar_url }
+                : { id: p.user_id || 'unknown', name: 'Usuario Desconocido', avatarUrl: 'https://static.vecteezy.com/system/resources/thumbnails/009/292/244/small/default-avatar-icon-of-social-media-user-vector.jpg' },
+            likes: 0,
+            commentsCount: 0,
+            comments: [],
+            group: p.groups ? { id: p.groups.id, name: p.groups.name } : undefined,
+            fanpage: p.fanpage ? { id: p.fanpage.id, name: p.fanpage.name, avatarUrl: p.fanpage.avatar_url } : undefined,
+        }));
         setPosts(fetchedPosts);
 
     } catch (error: any) {
@@ -221,15 +203,35 @@ const MainLayout: React.FC = () => {
         setLoading(false);
     }
   }, []);
+  
+  const fetchFanpages = useCallback(async () => {
+      try {
+          const { data, error } = await supabase.from('fanpages').select('*');
+          if (error) throw error;
+          const formattedPages = data.map((p: any) => ({
+              id: p.id,
+              name: p.name,
+              category: p.category,
+              avatarUrl: p.avatar_url,
+              coverUrl: p.cover_url,
+              bio: p.bio,
+              ownerId: p.owner_id
+          }));
+          setFanpages(formattedPages);
+      } catch (err) {
+          console.error("Error fetching fanpages:", err);
+      }
+  }, []);
 
 
   useEffect(() => {
     fetchPosts();
     fetchFriendRequests();
     fetchNotifications();
-  }, [fetchPosts, fetchFriendRequests, fetchNotifications]);
+    fetchFanpages();
+  }, [fetchPosts, fetchFriendRequests, fetchNotifications, fetchFanpages]);
 
-  const handleAddPost = async (content: string, mediaFiles: File[], postType: 'standard' | 'report' = 'standard', group?: { id: string; name: string }, existingMedia?: Media[]) => {
+  const handleAddPost = async (content: string, mediaFiles: File[], postType: 'standard' | 'report' = 'standard', options?: { group?: { id: string; name: string; }; fanpageId?: string; }, existingMedia?: Media[]) => {
     if (!user) {
         throw new Error("No estás autenticado. Por favor, inicia sesión de nuevo.");
     }
@@ -261,7 +263,8 @@ const MainLayout: React.FC = () => {
             media: mediaToUpload.length > 0 ? mediaToUpload : null,
             type: postType,
             format: 'post',
-            group_id: group?.id
+            group_id: options?.group?.id,
+            fanpage_id: options?.fanpageId,
         };
 
         const { error: insertError } = await supabase.from('posts').insert(postData).select().single();
@@ -299,6 +302,9 @@ const MainLayout: React.FC = () => {
               return <MyPages navigate={navigate} />;
           case 'create-fanpage':
               return <CreateFanpage navigate={navigate} />;
+          case 'fanpage':
+              const fanpage = fanpages.find(f => f.id === param);
+              return fanpage ? <FanpageDetailPage fanpage={fanpage} posts={posts.filter(p => p.fanpage?.id === param)} onAddPost={handleAddPost} navigate={navigate} addNotification={addNotification} /> : <div>Página no encontrada</div>;
           case 'report':
               return <CitizenReportPage reportPosts={posts.filter(p => p.type === 'report')} onAddPost={handleAddPost} navigate={navigate} />;
           case 'reels':

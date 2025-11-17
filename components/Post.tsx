@@ -44,7 +44,7 @@ interface PostProps {
   post: PostType;
   index: number;
   addNotification: (recipientId: string, text: string, postId?: string) => Promise<void>;
-  onAddPost: (content: string, mediaFiles: File[], postType?: 'standard' | 'report', group?: { id: string; name: string; }, existingMedia?: Media[]) => Promise<void>;
+  onAddPost: (content: string, mediaFiles: File[], postType?: 'standard' | 'report', options?: { group?: { id: string; name: string; }; fanpageId?: string; }, existingMedia?: Media[]) => Promise<void>;
   navigate: (path: string) => void;
 }
 
@@ -72,6 +72,7 @@ const Post: React.FC<PostProps> = ({ post, index, addNotification, onAddPost, na
   
   const mediaCount = post.media?.length || 0;
   const author = post.fanpage || post.user;
+  const authorId = post.fanpage ? post.user.id : author.id; // The user ID of the author, regardless of fanpage
 
   const formatComment = (c: any): CommentType => {
       const commentUser = c.profiles 
@@ -186,8 +187,8 @@ const Post: React.FC<PostProps> = ({ post, index, addNotification, onAddPost, na
 
             if (error) throw error;
             
-            if(user.id !== author.id) {
-                addNotification(author.id, `le ha gustado tu publicación`, post.id);
+            if(user.id !== authorId) {
+                addNotification(authorId, `le ha gustado tu publicación`, post.id);
             }
         }
     } catch (error) {
@@ -216,8 +217,8 @@ const Post: React.FC<PostProps> = ({ post, index, addNotification, onAddPost, na
             setComments(prev => [...prev, commentToAdd]);
             setCommentsCount(prev => prev + 1);
             setNewComment('');
-            if(user.id !== author.id) {
-                 addNotification(author.id, `ha comentado tu publicación: "${newComment}"`, post.id);
+            if(user.id !== authorId) {
+                 addNotification(authorId, `ha comentado tu publicación: "${newComment}"`, post.id);
             }
         }
     } catch (error) {
@@ -233,8 +234,8 @@ const Post: React.FC<PostProps> = ({ post, index, addNotification, onAddPost, na
 
     try {
         await onAddPost(sharedPostContent, [], 'standard', undefined, post.media);
-        if(user.id !== author.id) {
-            addNotification(author.id, `reposteó tu publicación`);
+        if(user.id !== authorId) {
+            addNotification(authorId, `reposteó tu publicación`);
         }
         setIsShareModalOpen(false);
     } catch(err) {
@@ -263,10 +264,11 @@ const Post: React.FC<PostProps> = ({ post, index, addNotification, onAddPost, na
   };
 
   const handleProfileClick = () => {
-      if (!('ownerEmail' in author)) { // It's a User, not a Fanpage
+      if ('category' in author) { // It's a Fanpage
+          navigate(`fanpage/${author.id}`);
+      } else { // It's a User
           navigate(`profile/${author.id}`);
       }
-      // Optional: handle click for Fanpage profile later
   };
 
 

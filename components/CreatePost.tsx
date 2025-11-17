@@ -1,4 +1,5 @@
 
+
 import React, { useState, useRef } from 'react';
 import { VideoIcon, PhotoIcon, SmileIcon } from './icons';
 import { useAuth } from '../contexts/AuthContext';
@@ -11,14 +12,15 @@ interface Preview {
 }
 
 interface CreatePostProps {
-  onAddPost: (content: string, mediaFiles: File[], postType?: 'standard' | 'report', group?: { id: string; name: string }, existingMedia?: Media[]) => Promise<void>;
+  onAddPost: (content: string, mediaFiles: File[], postType?: 'standard' | 'report', options?: { group?: { id: string; name: string; }; fanpageId?: string; }, existingMedia?: Media[]) => Promise<void>;
   postType?: 'standard' | 'report';
   placeholder?: string;
   group?: { id: string; name: string };
+  fanpageId?: string;
   isNewUser?: boolean;
 }
 
-const CreatePost: React.FC<CreatePostProps> = ({ onAddPost, postType, placeholder, group, isNewUser }) => {
+const CreatePost: React.FC<CreatePostProps> = ({ onAddPost, postType, placeholder, group, fanpageId, isNewUser }) => {
   const welcomeMessage = "¡Es hora de tomar tu trono digital! Disfruta la experiencia.\n\nTu Equipo de Zone4Reyes.";
   const [input, setInput] = useState(isNewUser ? welcomeMessage : '');
   const [previews, setPreviews] = useState<Preview[]>([]);
@@ -62,7 +64,7 @@ const CreatePost: React.FC<CreatePostProps> = ({ onAddPost, postType, placeholde
     const mediaFiles = previews.map(p => p.file);
 
     try {
-        await onAddPost(input, mediaFiles, postType, group);
+        await onAddPost(input, mediaFiles, postType, { group, fanpageId });
         setInput('');
         setPreviews([]);
         if (fileInputRef.current) {

@@ -76,7 +76,7 @@ const MyPages: React.FC<MyPagesProps> = ({ navigate }) => {
                         </>
                     ) : myPages.length > 0 ? (
                         myPages.map(p => (
-                            <div key={p.id} className="bg-z-bg-secondary dark:bg-z-bg-secondary-dark rounded-xl shadow-md p-4 flex items-center space-x-4 hover:shadow-lg transition-shadow cursor-pointer">
+                            <div key={p.id} onClick={() => navigate(`fanpage/${p.id}`)} className="bg-z-bg-secondary dark:bg-z-bg-secondary-dark rounded-xl shadow-md p-4 flex items-center space-x-4 hover:shadow-lg transition-shadow cursor-pointer">
                                 <img src={p.avatarUrl} alt={p.name} className="h-20 w-20 rounded-lg object-cover" loading="lazy" />
                                 <div>
                                     <h2 className="text-lg font-bold text-z-text-primary dark:text-z-text-primary-dark">{p.name}</h2>
