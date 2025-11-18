@@ -47,7 +47,6 @@ const MainLayout: React.FC = () => {
 
   const [groups, setGroups] = useState<Group[]>(FAKE_GROUPS);
   const [events, setEvents] = useState<AppEvent[]>(FAKE_EVENTS);
-  const [fanpages, setFanpages] = useState<Fanpage[]>([]);
   const [currentPath, setCurrentPath] = useState(window.location.hash.substring(1) || 'feed');
   const { user } = useAuth();
 
@@ -262,30 +261,14 @@ const MainLayout: React.FC = () => {
       }
   }, [user, pageToFetch, hasMore, loadingMore]);
 
-  const fetchFanpages = useCallback(async () => {
-      try {
-          const { data, error } = await supabase.from('fanpages').select('*');
-          if (error) throw error;
-          const formattedPages = data.map((p: any) => ({
-              id: p.id, name: p.name, category: p.category, avatarUrl: p.avatar_url,
-              coverUrl: p.cover_url, bio: p.bio, ownerId: p.owner_id, is_active: p.is_active
-          }));
-          setFanpages(formattedPages);
-      } catch (err) {
-          console.error("Error fetching fanpages:", err);
-          setError("No se pudieron cargar las páginas de negocio.");
-      }
-  }, []);
-
   useEffect(() => {
     if (user) {
         loadMorePosts(true);
         fetchFriendRequests();
         fetchNotifications();
-        fetchFanpages();
         fetchFriends();
     }
-  }, [user, fetchFriendRequests, fetchNotifications, fetchFanpages, fetchFriends]);
+  }, [user, fetchFriendRequests, fetchNotifications, fetchFriends]);
 
   const handleAddPost = async (content: string, mediaFiles: File[], postType: 'standard' | 'report' = 'standard', options?: { group?: { id: string; name: string; }; fanpageId?: string; }, existingMedia?: Media[]) => {
     if (!user) throw new Error("No estás autenticado.");
@@ -354,8 +337,8 @@ const MainLayout: React.FC = () => {
           case 'create-fanpage':
               return <CreateFanpage navigate={navigate} />;
           case 'fanpage':
-              const fanpage = fanpages.find(f => f.id === param);
-              return fanpage ? <FanpageDetailPage fanpage={fanpage} posts={posts.filter(p => p.fanpage?.id === param)} onAddPost={handleAddPost} navigate={navigate} addNotification={addNotification} /> : <div>Página no encontrada</div>;
+              if (!param) return <div>Página no encontrada</div>;
+              return <FanpageDetailPage fanpageId={param} posts={posts.filter(p => p.fanpage?.id === param)} onAddPost={handleAddPost} navigate={navigate} addNotification={addNotification} />;
           case 'report':
               return <CitizenReportPage reportPosts={posts.filter(p => p.type === 'report')} onAddPost={handleAddPost} navigate={navigate} />;
           case 'groups':

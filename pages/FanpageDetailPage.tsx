@@ -1,6 +1,6 @@
 
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Fanpage, Post as PostType, Media } from '../types';
 import Post from '../components/Post';
 import CreatePost from '../components/CreatePost';
@@ -10,21 +10,62 @@ import { supabase } from '../services/supabaseClient';
 
 
 interface FanpageDetailPageProps {
-  fanpage: Fanpage;
+  fanpageId: string;
   posts: PostType[];
   onAddPost: (content: string, mediaFiles: File[], postType?: 'standard' | 'report', options?: { group?: { id: string; name: string; }; fanpageId?: string; }, existingMedia?: Media[]) => Promise<void>;
   navigate: (path: string) => void;
   addNotification: (recipientId: string, text: string, postId?: string) => Promise<void>;
 }
 
-const FanpageDetailPage: React.FC<FanpageDetailPageProps> = ({ fanpage, posts, onAddPost, navigate, addNotification }) => {
+const FanpageDetailPage: React.FC<FanpageDetailPageProps> = ({ fanpageId, posts, onAddPost, navigate, addNotification }) => {
   const { user: currentUser } = useAuth();
-  const [currentPage, setCurrentPage] = useState<Fanpage>(fanpage);
+  const [currentPage, setCurrentPage] = useState<Fanpage | null>(null);
+  const [loading, setLoading] = useState(true);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
-  const isOwner = currentUser?.id === currentPage.ownerId;
+  useEffect(() => {
+    const fetchFanpage = async () => {
+      setLoading(true);
+      try {
+        const { data, error } = await supabase
+          .from('fanpages')
+          .select('*')
+          .eq('id', fanpageId)
+          .single();
+        
+        if (error) throw error;
+
+        if (data) {
+          const formattedPage: Fanpage = {
+            id: data.id,
+            name: data.name,
+            category: data.category,
+            avatarUrl: data.avatar_url,
+            coverUrl: data.cover_url,
+            bio: data.bio,
+            ownerId: data.owner_id,
+            ownerEmail: data.owner_email,
+            is_active: data.is_active,
+          };
+          setCurrentPage(formattedPage);
+        } else {
+          setCurrentPage(null);
+        }
+      } catch (err) {
+        console.error("Error fetching fanpage details:", err);
+        setCurrentPage(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchFanpage();
+  }, [fanpageId]);
+
+  const isOwner = currentUser?.id === currentPage?.ownerId;
 
   const handleUpdatePage = async (updatedData: { name: string; category: string; bio: string }) => {
+      if (!currentPage) return;
       const { data, error } = await supabase
           .from('fanpages')
           .update({ 
@@ -38,18 +79,39 @@ const FanpageDetailPage: React.FC<FanpageDetailPageProps> = ({ fanpage, posts, o
 
       if (error) {
           console.error("Error updating fanpage:", error);
-          // Aquí se podría mostrar un mensaje de error al usuario
       } else if (data) {
-          setCurrentPage(prev => ({
+          setCurrentPage(prev => prev ? ({
               ...prev,
               name: data.name,
               category: data.category,
               bio: data.bio,
-          }));
+          }) : null);
       }
   };
 
-  if (fanpage.is_active === false && !currentUser?.isAdmin) {
+   if (loading) {
+    return (
+        <main className="flex-grow pt-14 flex items-center justify-center" style={{ minHeight: 'calc(100vh - 3.5rem)' }}>
+            <div className="w-12 h-12 border-4 border-z-primary/30 border-t-z-primary rounded-full animate-spin"></div>
+        </main>
+    );
+  }
+
+  if (!currentPage) {
+     return (
+        <main className="flex-grow pt-14 flex items-center justify-center" style={{ minHeight: 'calc(100vh - 3.5rem)' }}>
+            <div className="text-center p-8 bg-z-bg-secondary dark:bg-z-bg-secondary-dark rounded-lg shadow-md">
+                <h2 className="text-2xl font-bold">Página no encontrada</h2>
+                <p className="mt-2 text-z-text-secondary dark:text-z-text-secondary-dark">La página que buscas no existe o fue eliminada.</p>
+                <button onClick={() => navigate('feed')} className="mt-4 bg-z-primary text-white font-semibold py-2 px-6 rounded-md hover:bg-z-dark-blue">
+                  Volver al inicio
+                </button>
+            </div>
+        </main>
+    );
+  }
+
+  if (currentPage.is_active === false && !currentUser?.isAdmin) {
     return (
         <main className="flex-grow pt-14 lg:ml-20 xl:ml-80 lg:mr-72 overflow-x-hidden flex items-center justify-center" style={{ minHeight: 'calc(100vh - 3.5rem)' }}>
             <div className="text-center p-8 bg-z-bg-secondary dark:bg-z-bg-secondary-dark rounded-lg shadow-md max-w-sm mx-auto">
@@ -97,7 +159,7 @@ const FanpageDetailPage: React.FC<FanpageDetailPageProps> = ({ fanpage, posts, o
                  )}
                 <div className="mt-6">
                     {posts.length > 0 ? (
-                        posts.map((post, index) => <Post key={post.id} post={post} index={index} addNotification={addNotification} onAddPost={onAddPost} navigate={navigate} />)
+                        posts.map((post, index) => <Post key={post.id} post={post} index={index} addNotification={addNotification} onAddPost={onAddPost} onUpdatePost={() => {}} navigate={navigate} />)
                     ) : (
                         <div className="text-center py-10 text-z-text-secondary dark:text-z-text-secondary-dark bg-z-bg-secondary dark:bg-z-bg-secondary-dark rounded-xl">
                             <p>Esta página aún no tiene publicaciones. ¡Sé el primero en ver su contenido!</p>
