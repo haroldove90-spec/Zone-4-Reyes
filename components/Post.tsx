@@ -1,5 +1,6 @@
 
 
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Post as PostType, Comment as CommentType, User, Media } from '../types';
 import { 
@@ -131,7 +132,7 @@ const Post: React.FC<PostProps> = ({ post, index, addNotification, onAddPost, on
 
     if (!originalIsLiked) {
       setIsAnimatingLike(true);
-      setTimeout(() => setIsAnimatingLike(false), 300);
+      setTimeout(() => setIsAnimatingLike(false), 400);
     }
 
     // Optimistic UI update
@@ -359,7 +360,7 @@ const Post: React.FC<PostProps> = ({ post, index, addNotification, onAddPost, on
             className="relative flex-1"
          >
             <div onClick={handleLike} className={`flex items-center justify-center space-x-2 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-z-hover-dark cursor-pointer transition-colors group ${isLiked ? 'text-z-primary' : ''}`}>
-                <ThumbsUpIcon className={`h-6 w-6 transform transition-transform duration-200 ${isAnimatingLike ? 'scale-125' : 'scale-100'}`} />
+                <ThumbsUpIcon className={`h-6 w-6 ${isAnimatingLike ? 'animate-likeBounce' : ''} ${isLiked ? 'fill-current' : ''}`} />
                 <span className={`font-medium group-hover:text-z-text-primary dark:group-hover:text-z-text-primary-dark transition-colors ${isLiked ? 'text-z-primary' : ''}`}>Me gusta</span>
             </div>
          </div>
