@@ -87,7 +87,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ userId, onAddPost, onUpdatePo
 
             const { data: postsData, error: postsError } = await supabase
                 .from('posts')
-                .select('*, user:profiles!user_id(id, name, avatar_url), groups(id, name), likes(count), comments(count)')
+                .select('*, user:profiles!user_id(id, name, avatar_url), likes(count), comments(count)')
                 .eq('user_id', userId)
                 .order('created_at', { ascending: false })
                 .limit(10);
