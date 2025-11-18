@@ -2,6 +2,8 @@
 
 
 
+
+
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Fanpage } from '../types';
 import { supabase } from '../services/supabaseClient';
@@ -38,8 +40,8 @@ const AdminDashboardPage: React.FC = () => {
     const fetchData = useCallback(async () => {
         setLoading(true);
         try {
-            const usersPromise = supabase.from('profiles').select('*');
-            const fanpagesPromise = supabase.from('fanpages').select('*, owner:profiles!owner_id(email)');
+            const usersPromise = supabase.from('profiles').select('*').limit(50).order('name', { ascending: true });
+            const fanpagesPromise = supabase.from('fanpages').select('*, owner:profiles!owner_id(email)').limit(50).order('name', { ascending: true });
 
             const [{ data: usersData, error: usersError }, { data: fanpagesData, error: fanpagesError }] = await Promise.all([usersPromise, fanpagesPromise]);
 
