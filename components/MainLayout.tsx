@@ -1,11 +1,9 @@
-
 import React, { useState, useEffect, useCallback, lazy, Suspense } from 'react';
 import Header from './Header';
 import LeftSidebar from './LeftSidebar';
 import Feed from './Feed';
 import RightSidebar from './RightSidebar';
-import { Post, Fanpage, AppNotification, User, Group, AppEvent, Media } from '../types';
-import { FAKE_GROUPS, FAKE_EVENTS } from '../services/geminiService';
+import { Post, Fanpage, AppNotification, User, Media } from '../types';
 import BottomNavBar from './BottomNavBar';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../services/supabaseClient';
@@ -17,12 +15,6 @@ const FriendsPage = lazy(() => import('../pages/FriendsPage'));
 const SettingsPage = lazy(() => import('../pages/SettingsPage'));
 const AdminDashboardPage = lazy(() => import('../pages/AdminDashboardPage'));
 const CitizenReportPage = lazy(() => import('../pages/CitizenReportPage'));
-const GroupsPage = lazy(() => import('../pages/GroupsPage'));
-const GroupDetailPage = lazy(() => import('../pages/GroupDetailPage'));
-const CreateGroupPage = lazy(() => import('../pages/CreateGroupPage'));
-const EventsPage = lazy(() => import('../pages/EventsPage'));
-const EventDetailPage = lazy(() => import('../pages/EventDetailPage'));
-const CreateEventPage = lazy(() => import('../pages/CreateEventPage'));
 const NotificationsPage = lazy(() => import('../pages/NotificationsPage'));
 
 const LoadingSpinner: React.FC = () => (
@@ -41,8 +33,6 @@ const MainLayout: React.FC = () => {
   const [pageToFetch, setPageToFetch] = useState(1);
   const [hasMore, setHasMore] = useState(true);
 
-  const [groups, setGroups] = useState<Group[]>(FAKE_GROUPS);
-  const [events, setEvents] = useState<AppEvent[]>(FAKE_EVENTS);
   const [currentPath, setCurrentPath] = useState(window.location.hash.substring(1) || 'feed');
   const { user } = useAuth();
 
@@ -312,9 +302,6 @@ const MainLayout: React.FC = () => {
         throw error; // Re-throw to inform the caller component
     }
   };
-
-  const handleAddGroup = (newGroup: Group) => setGroups(prev => [newGroup, ...prev]);
-  const handleAddEvent = (newEvent: AppEvent) => setEvents(prev => [newEvent, ...prev]);
   
   const renderPage = () => {
       const [path, param] = currentPath.split('/');
@@ -330,20 +317,6 @@ const MainLayout: React.FC = () => {
               return <SettingsPage />;
           case 'report':
               return <CitizenReportPage reportPosts={posts.filter(p => p.type === 'report')} onAddPost={handleAddPost} navigate={navigate} />;
-          case 'groups':
-              return <GroupsPage navigate={navigate} groups={groups} />;
-          case 'group':
-              const group = groups.find(g => g.id === param);
-              return group ? <GroupDetailPage group={group} posts={posts.filter(p => p.group?.id === param)} onAddPost={handleAddPost} navigate={navigate} /> : <div>Grupo no encontrado</div>;
-          case 'create-group':
-                return <CreateGroupPage onAddGroup={handleAddGroup} navigate={navigate} />;
-          case 'events':
-              return <EventsPage navigate={navigate} events={events} />;
-          case 'event':
-              const event = events.find(e => e.id === param);
-              return event ? <EventDetailPage event={event} /> : <div>Evento no encontrado</div>;
-          case 'create-event':
-              return <CreateEventPage onAddEvent={handleAddEvent} navigate={navigate} />;
           case 'notifications':
               return <NotificationsPage notifications={notifications} navigate={navigate} />;
           case 'admin':

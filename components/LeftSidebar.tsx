@@ -1,6 +1,5 @@
-
 import React from 'react';
-import { UsersIcon, StoreIcon, ShieldIcon, FlagIcon, AlertTriangleIcon, UsersRoundIcon, CalendarIcon } from './icons';
+import { UsersIcon, ShieldIcon, AlertTriangleIcon } from './icons';
 import { useAuth } from '../contexts/AuthContext';
 
 interface SidebarItemProps {
@@ -35,8 +34,6 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({ navigate }) => {
         <SidebarItem Icon={UsersIcon} title="Amigos" onClick={() => navigate('friends')} />
         <SidebarItem Icon={AlertTriangleIcon} title="Denuncia Ciudadana" onClick={() => navigate('report')} />
         
-        <SidebarItem Icon={UsersRoundIcon} title="Grupos" onClick={() => navigate('groups')} />
-        <SidebarItem Icon={CalendarIcon} title="Eventos" onClick={() => navigate('events')} />
         {user?.isAdmin && <SidebarItem Icon={ShieldIcon} title="Admin Dashboard" onClick={() => navigate('admin')} />}
          <div className="border-t border-gray-300 dark:border-z-border-dark my-2"></div>
         <h2 className="text-z-text-secondary dark:text-z-text-secondary-dark font-semibold text-lg pt-2 hidden xl:block">Tus Atajos</h2>
