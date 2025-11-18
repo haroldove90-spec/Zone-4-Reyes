@@ -1,17 +1,9 @@
 
-
-
-
-
-
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Fanpage } from '../types';
 import { supabase } from '../services/supabaseClient';
 import { AuthUser } from '../contexts/AuthContext';
-import { useTheme } from '../contexts/ThemeContext';
 import { UsersIcon, FlagIcon, UserCheckIcon, AlertTriangleIcon } from '../components/icons';
-
-declare const Chart: any;
 
 const StatCard: React.FC<{ icon: React.ElementType, title: string, value: string | number, color: string, delay: number }> = ({ icon: Icon, title, value, color, delay }) => (
     <div className="bg-z-bg-secondary dark:bg-z-bg-secondary-dark p-5 rounded-xl shadow flex items-center space-x-4 animate-slideInUp" style={{ animationDelay: `${delay}ms` }}>
@@ -29,13 +21,6 @@ const AdminDashboardPage: React.FC = () => {
     const [users, setUsers] = useState<AuthUser[]>([]);
     const [fanpages, setFanpages] = useState<Fanpage[]>([]);
     const [loading, setLoading] = useState(true);
-    const { theme } = useTheme();
-
-    const usersChartRef = useRef<HTMLCanvasElement>(null);
-    const categoriesChartRef = useRef<HTMLCanvasElement>(null);
-    const activeUsersChartRef = useRef<HTMLCanvasElement>(null);
-    const activePagesChartRef = useRef<HTMLCanvasElement>(null);
-    const chartInstances = useRef<any>({});
 
     const fetchData = useCallback(async () => {
         setLoading(true);
@@ -72,96 +57,27 @@ const AdminDashboardPage: React.FC = () => {
         fetchData();
     }, [fetchData]);
 
-    useEffect(() => {
-        if (loading || typeof Chart === 'undefined') return;
-
-        Object.values(chartInstances.current).forEach((chart: any) => chart.destroy());
-        chartInstances.current = {};
-
-        const gridColor = theme === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
-        const textColor = theme === 'dark' ? '#E4E6EB' : '#050505';
-
-        if (usersChartRef.current) {
-            const ctx = usersChartRef.current.getContext('2d');
-            chartInstances.current.usersChart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: ['Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'],
-                    datasets: [{
-                        label: 'Nuevos Usuarios',
-                        data: [12, 19, 32, 48, 55, 68],
-                        fill: true,
-                        borderColor: 'rgb(24, 119, 242)',
-                        backgroundColor: 'rgba(24, 119, 242, 0.2)',
-                        tension: 0.4
-                    }]
-                },
-                options: { responsive: true, plugins: { legend: { labels: { color: textColor } } }, scales: { x: { ticks: { color: textColor }, grid: { color: gridColor } }, y: { ticks: { color: textColor }, grid: { color: gridColor } } } }
-            });
-        }
-
-        if (categoriesChartRef.current) {
-            const ctx = categoriesChartRef.current.getContext('2d');
-            const categoryCounts = fanpages.reduce((acc, page) => { acc[page.category] = (acc[page.category] || 0) + 1; return acc; }, {} as Record<string, number>);
-            chartInstances.current.categoriesChart = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: Object.keys(categoryCounts),
-                    datasets: [{
-                        label: 'Páginas',
-                        data: Object.values(categoryCounts),
-                        backgroundColor: ['rgba(255, 99, 132, 0.7)', 'rgba(54, 162, 235, 0.7)', 'rgba(255, 206, 86, 0.7)', 'rgba(75, 192, 192, 0.7)', 'rgba(153, 102, 255, 0.7)', 'rgba(255, 159, 64, 0.7)'],
-                        borderWidth: 1
-                    }]
-                },
-                options: { indexAxis: 'y', responsive: true, plugins: { legend: { display: false } }, scales: { x: { ticks: { color: textColor }, grid: { color: gridColor } }, y: { ticks: { color: textColor }, grid: { display: false } } } }
-            });
-        }
-
-        if (activeUsersChartRef.current) {
-             const ctx = activeUsersChartRef.current.getContext('2d');
-             const activeUsers = users.filter(u => u.is_active !== false).length;
-             const inactiveUsers = users.length - activeUsers;
-              chartInstances.current.activeUsersChart = new Chart(ctx, {
-                type: 'doughnut',
-                data: { labels: ['Activos', 'Inactivos'], datasets: [{ data: [activeUsers, inactiveUsers], backgroundColor: ['rgba(75, 192, 192, 0.7)', 'rgba(255, 99, 132, 0.7)'], hoverOffset: 4 }] },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top', labels: { color: textColor } } } }
-              });
-        }
-
-        if (activePagesChartRef.current) {
-            const ctx = activePagesChartRef.current.getContext('2d');
-            const activePages = fanpages.filter(p => p.is_active !== false).length;
-            const inactivePages = fanpages.length - activePages;
-            chartInstances.current.activePagesChart = new Chart(ctx, {
-                type: 'pie',
-                data: { labels: ['Activas', 'Inactivas'], datasets: [{ data: [activePages, inactivePages], backgroundColor: ['rgba(54, 162, 235, 0.7)', 'rgba(255, 159, 64, 0.7)'], hoverOffset: 4 }] },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top', labels: { color: textColor } } } }
-            });
-        }
-        
-        return () => { Object.values(chartInstances.current).forEach((chart: any) => chart.destroy()); };
-    }, [loading, users, fanpages, theme]);
-
     const handleToggleUserStatus = async (userId: string, currentStatus: boolean | undefined) => {
-        const newStatus = currentStatus === false;
+        const newStatus = currentStatus === false; // Toggle status
         const { error } = await supabase.from('profiles').update({ is_active: newStatus }).eq('id', userId);
         if (error) {
             console.error("Error updating user status:", error);
             alert(`Error al actualizar el estado del usuario: ${error.message}`);
         } else {
-            fetchData();
+            // Update local state for immediate feedback
+            setUsers(prevUsers => prevUsers.map(u => u.id === userId ? { ...u, is_active: newStatus } : u));
         }
     };
 
     const handleToggleFanpageStatus = async (pageId: string, currentStatus: boolean | undefined) => {
-        const newStatus = currentStatus === false;
+        const newStatus = currentStatus === false; // Toggle status
         const { error } = await supabase.from('fanpages').update({ is_active: newStatus }).eq('id', pageId);
         if (error) {
             console.error("Error updating fanpage status:", error);
             alert(`Error al actualizar el estado de la página: ${error.message}`);
         } else {
-            fetchData();
+            // Update local state for immediate feedback
+            setFanpages(prevPages => prevPages.map(p => p.id === pageId ? { ...p, is_active: newStatus } : p));
         }
     };
 
@@ -175,13 +91,8 @@ const AdminDashboardPage: React.FC = () => {
                 <StatCard icon={UserCheckIcon} title="Usuarios Activos Hoy" value="12" color="bg-yellow-500" delay={300} />
                 <StatCard icon={AlertTriangleIcon} title="Reportes" value="3" color="bg-red-500" delay={400} />
             </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-                <div className="bg-z-bg-secondary dark:bg-z-bg-secondary-dark p-4 rounded-xl shadow"><h2 className="text-xl font-bold mb-4 text-z-text-primary dark:text-z-text-primary-dark">Nuevos Usuarios por Mes</h2><canvas ref={usersChartRef}></canvas></div>
-                <div className="bg-z-bg-secondary dark:bg-z-bg-secondary-dark p-4 rounded-xl shadow"><h2 className="text-xl font-bold mb-4 text-z-text-primary dark:text-z-text-primary-dark">Páginas por Categoría</h2><canvas ref={categoriesChartRef}></canvas></div>
-                <div className="bg-z-bg-secondary dark:bg-z-bg-secondary-dark p-4 rounded-xl shadow"><h2 className="text-xl font-bold mb-4 text-z-text-primary dark:text-z-text-primary-dark">Estado de Usuarios</h2><div className="h-64 flex justify-center"><canvas ref={activeUsersChartRef}></canvas></div></div>
-                <div className="bg-z-bg-secondary dark:bg-z-bg-secondary-dark p-4 rounded-xl shadow"><h2 className="text-xl font-bold mb-4 text-z-text-primary dark:text-z-text-primary-dark">Estado de Páginas</h2><div className="h-64 flex justify-center"><canvas ref={activePagesChartRef}></canvas></div></div>
-            </div>
+            
+            {/* Charts section has been removed to improve performance and stability */}
 
             <div className="bg-z-bg-secondary dark:bg-z-bg-secondary-dark p-4 rounded-xl shadow mb-6">
                 <h2 className="text-xl font-bold mb-4 text-z-text-primary dark:text-z-text-primary-dark">Páginas de Negocio</h2>
@@ -200,7 +111,7 @@ const AdminDashboardPage: React.FC = () => {
                                         <span className={`px-2 py-1 text-xs font-semibold rounded-full ${fp.is_active !== false ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>{fp.is_active !== false ? 'Activa' : 'Inactiva'}</span>
                                     </td>
                                     <td className="p-3">
-                                        <button onClick={() => handleToggleFanpageStatus(fp.id, fp.is_active)} disabled className={`text-sm font-medium ${fp.is_active !== false ? 'text-yellow-600 hover:text-yellow-800' : 'text-green-500 hover:text-green-700'} disabled:opacity-50 disabled:cursor-not-allowed`}>{fp.is_active !== false ? 'Desactivar' : 'Activar'}</button>
+                                        <button onClick={() => handleToggleFanpageStatus(fp.id, fp.is_active)} className={`text-sm font-medium ${fp.is_active !== false ? 'text-yellow-600 hover:text-yellow-800' : 'text-green-500 hover:text-green-700'}`}>{fp.is_active !== false ? 'Desactivar' : 'Activar'}</button>
                                     </td>
                                 </tr>)
                             )}
@@ -225,7 +136,7 @@ const AdminDashboardPage: React.FC = () => {
                                         <span className={`px-2 py-1 text-xs font-semibold rounded-full ${u.is_active !== false ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>{u.is_active !== false ? 'Activo' : 'Inactivo'}</span>
                                     </td>
                                     <td className="p-3">
-                                        <button onClick={() => handleToggleUserStatus(u.id, u.is_active)} disabled className={`text-sm font-medium ${u.is_active !== false ? 'text-yellow-600 hover:text-yellow-800' : 'text-green-500 hover:text-green-700'} disabled:opacity-50 disabled:cursor-not-allowed`}>{u.is_active !== false ? 'Desactivar' : 'Activar'}</button>
+                                        <button onClick={() => handleToggleUserStatus(u.id, u.is_active)} className={`text-sm font-medium ${u.is_active !== false ? 'text-yellow-600 hover:text-yellow-800' : 'text-green-500 hover:text-green-700'}`}>{u.is_active !== false ? 'Desactivar' : 'Activar'}</button>
                                     </td>
                                 </tr>)
                             )}
