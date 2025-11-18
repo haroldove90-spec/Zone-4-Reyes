@@ -117,18 +117,19 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const { data: authListener } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
         try {
-            setSession(session);
-            if (session?.user) {
-                const profile = await getUserProfile(session.user);
-                setUser(profile);
-            } else {
-                setUser(null);
-            }
-        } catch (error) {
-            console.error("Error on auth state change:", error);
+          if (session?.user) {
+            const profile = await getUserProfile(session.user);
+            setUser(profile);
+          } else {
             setUser(null);
+          }
+          setSession(session);
+        } catch (error) {
+          console.error("Error in auth state change listener:", error);
+          setUser(null);
+          setSession(null);
         } finally {
-            setLoading(false);
+          setLoading(false);
         }
       }
     );
