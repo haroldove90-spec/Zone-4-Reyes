@@ -1,5 +1,3 @@
-
-
 import React from 'react';
 import { Group, Post as PostType, Media } from '../types';
 import CreatePost from '../components/CreatePost';
@@ -8,7 +6,7 @@ import Post from '../components/Post';
 interface GroupDetailPageProps {
   group: Group;
   posts: PostType[];
-  onAddPost: (content: string, mediaFiles: File[], postType?: 'standard' | 'report', group?: { id: string; name: string }, existingMedia?: Media[]) => Promise<void>;
+  onAddPost: (content: string, mediaFiles: File[], postType?: 'standard' | 'report', options?: { group?: { id: string; name: string; }; fanpageId?: string; }, existingMedia?: Media[]) => Promise<void>;
   navigate: (path: string) => void;
 }
 
@@ -32,7 +30,8 @@ const GroupDetailPage: React.FC<GroupDetailPageProps> = ({ group, posts, onAddPo
                 />
                 <div className="mt-6">
                     {posts.length > 0 ? (
-                        posts.map((post, index) => <Post key={post.id} post={post} index={index} addNotification={() => {}} onAddPost={onAddPost} navigate={navigate} />)
+                        // FIX: Provided missing onUpdatePost prop and corrected addNotification to be an async function.
+                        posts.map((post, index) => <Post key={post.id} post={post} index={index} addNotification={async () => {}} onAddPost={onAddPost} onUpdatePost={async () => {}} navigate={navigate} />)
                     ) : (
                         <div className="text-center py-10 text-z-text-secondary dark:text-z-text-secondary-dark bg-z-bg-secondary dark:bg-z-bg-secondary-dark rounded-xl">
                             <p>Aún no hay publicaciones en este grupo. ¡Sé el primero!</p>

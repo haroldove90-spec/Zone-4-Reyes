@@ -1,6 +1,3 @@
-
-
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Post as PostType, Comment as CommentType, User, Media } from '../types';
 import { 

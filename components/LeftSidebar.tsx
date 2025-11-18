@@ -1,5 +1,4 @@
 
-
 import React from 'react';
 import { UsersIcon, StoreIcon, ShieldIcon, FlagIcon, AlertTriangleIcon, UsersRoundIcon, CalendarIcon } from './icons';
 import { useAuth } from '../contexts/AuthContext';
@@ -38,7 +37,6 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({ navigate }) => {
         
         <SidebarItem Icon={UsersRoundIcon} title="Grupos" onClick={() => navigate('groups')} />
         <SidebarItem Icon={CalendarIcon} title="Eventos" onClick={() => navigate('events')} />
-        <SidebarItem Icon={FlagIcon} title="Mis Páginas" onClick={() => navigate('my-pages')} />
         {user?.isAdmin && <SidebarItem Icon={ShieldIcon} title="Admin Dashboard" onClick={() => navigate('admin')} />}
          <div className="border-t border-gray-300 dark:border-z-border-dark my-2"></div>
         <h2 className="text-z-text-secondary dark:text-z-text-secondary-dark font-semibold text-lg pt-2 hidden xl:block">Tus Atajos</h2>

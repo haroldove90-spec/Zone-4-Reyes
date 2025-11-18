@@ -1,5 +1,3 @@
-
-
 import React from 'react';
 import { Post as PostType, User, Media } from '../types';
 import CreatePost from '../components/CreatePost';
@@ -8,7 +6,7 @@ import { AlertTriangleIcon } from '../components/icons';
 
 interface CitizenReportPageProps {
     reportPosts: PostType[];
-    onAddPost: (content: string, mediaFiles: File[], postType?: 'standard' | 'report', group?: { id: string; name: string }, existingMedia?: Media[]) => Promise<void>;
+    onAddPost: (content: string, mediaFiles: File[], postType?: 'standard' | 'report', options?: { group?: { id: string; name: string; }; fanpageId?: string; }, existingMedia?: Media[]) => Promise<void>;
     navigate: (path: string) => void;
 }
 
@@ -32,7 +30,8 @@ const CitizenReportPage: React.FC<CitizenReportPageProps> = ({ reportPosts, onAd
         </div>
         {reportPosts.length > 0 ? (
           reportPosts.map((post, index) => (
-            <Post key={post.id} post={post} index={index} addNotification={() => {}} onAddPost={onAddPost} navigate={navigate} />
+            // FIX: Provided missing onUpdatePost prop and corrected addNotification to be an async function.
+            <Post key={post.id} post={post} index={index} addNotification={async () => {}} onAddPost={onAddPost} onUpdatePost={async () => {}} navigate={navigate} />
           ))
         ) : (
           <div className="text-center py-10 text-z-text-secondary dark:text-z-text-secondary-dark bg-z-bg-secondary dark:bg-z-bg-secondary-dark rounded-xl">

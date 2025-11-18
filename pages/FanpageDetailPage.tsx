@@ -1,5 +1,3 @@
-
-
 import React, { useState, useEffect } from 'react';
 import { Fanpage, Post as PostType, Media } from '../types';
 import Post from '../components/Post';
@@ -159,7 +157,7 @@ const FanpageDetailPage: React.FC<FanpageDetailPageProps> = ({ fanpageId, posts,
                  )}
                 <div className="mt-6">
                     {posts.length > 0 ? (
-                        posts.map((post, index) => <Post key={post.id} post={post} index={index} addNotification={addNotification} onAddPost={onAddPost} onUpdatePost={() => {}} navigate={navigate} />)
+                        posts.map((post, index) => <Post key={post.id} post={post} index={index} addNotification={addNotification} onAddPost={onAddPost} onUpdatePost={async () => {}} navigate={navigate} />)
                     ) : (
                         <div className="text-center py-10 text-z-text-secondary dark:text-z-text-secondary-dark bg-z-bg-secondary dark:bg-z-bg-secondary-dark rounded-xl">
                             <p>Esta página aún no tiene publicaciones. ¡Sé el primero en ver su contenido!</p>

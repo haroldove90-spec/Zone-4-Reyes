@@ -1,7 +1,4 @@
 
-
-
-
 import React, { useState, useRef, useEffect } from 'react';
 import { BellIcon, SearchIcon, LogOutIcon, CogIcon, FlagIcon, UsersIcon, ShieldCheckIcon } from './icons';
 import ThemeToggle from './ThemeToggle';
@@ -93,10 +90,6 @@ const Header: React.FC<HeaderProps> = ({ navigate, notificationCount, notificati
 
       {/* Right Section */}
       <div className="flex items-center space-x-1 sm:space-x-2">
-        <button onClick={() => navigate('create-fanpage')} className="hidden md:flex items-center space-x-2 bg-gray-100 dark:bg-z-hover-dark text-z-text-primary dark:text-z-text-primary-dark font-semibold py-2 px-3 rounded-full hover:bg-gray-200 dark:hover:bg-z-border-dark transition-colors" title="Crear una Página de Negocio">
-            <FlagIcon className="h-5 w-5"/>
-            <span className="hidden xl:inline">Crear Página</span>
-        </button>
         <ThemeToggle />
 
         <div className="relative" ref={friendsRef}>

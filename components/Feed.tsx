@@ -1,5 +1,3 @@
-
-
 import React, { useState, useRef, useCallback } from 'react';
 import { Post as PostType, Media } from '../types';
 import CreatePost from './CreatePost';
@@ -11,7 +9,8 @@ import { AlertTriangleIcon } from './icons';
 
 interface FeedProps {
     posts: PostType[];
-    onAddPost: (content: string, mediaFiles: File[], postType?: 'standard' | 'report', group?: { id: string; name: string }, existingMedia?: Media[]) => Promise<void>;
+    // FIX: Standardized the onAddPost signature to accept an options object.
+    onAddPost: (content: string, mediaFiles: File[], postType?: 'standard' | 'report', options?: { group?: { id: string; name: string; }; fanpageId?: string; }, existingMedia?: Media[]) => Promise<void>;
     onUpdatePost: (postId: string, newContent: string) => Promise<void>;
     loading: boolean;
     addNotification: (recipientId: string, text: string, postId?: string) => Promise<void>;
@@ -25,9 +24,9 @@ interface FeedProps {
 }
 
 const Feed: React.FC<FeedProps> = ({ posts, onAddPost, onUpdatePost, loading, addNotification, isNewUser, navigate, loadMorePosts, hasMore, loadingMore, error, onRetry }) => {
-  const [activeFilter, setActiveFilter] = useState<'all' | 'pages'>('all');
-
-  const observer = useRef<IntersectionObserver>();
+  
+  // FIX: Initialized useRef with null to provide a correct initial value and fix the type error.
+  const observer = useRef<IntersectionObserver | null>(null);
   const lastPostElementRef = useCallback(node => {
       if (loadingMore) return;
       if (observer.current) observer.current.disconnect();
@@ -39,10 +38,6 @@ const Feed: React.FC<FeedProps> = ({ posts, onAddPost, onUpdatePost, loading, ad
       if (node) observer.current.observe(node);
   }, [loadingMore, hasMore, loadMorePosts]);
 
-  const filteredPosts = activeFilter === 'pages'
-    ? posts.filter(p => !!p.fanpage)
-    : posts;
-
   return (
     <main className="flex-grow pt-14 lg:ml-20 xl:ml-80 lg:mr-72 overflow-x-hidden pb-20 md:pb-0">
       <div className="max-w-xl lg:max-w-2xl xl:max-w-3xl mx-auto px-4">
@@ -50,21 +45,6 @@ const Feed: React.FC<FeedProps> = ({ posts, onAddPost, onUpdatePost, loading, ad
         <AdBanner />
         <div className="mb-6">
           <CreatePost onAddPost={onAddPost} isNewUser={isNewUser} />
-        </div>
-
-        <div className="flex items-center space-x-2 mb-4 border-b dark:border-z-border-dark">
-            <button 
-                onClick={() => setActiveFilter('all')}
-                className={`py-3 px-4 font-semibold transition-colors ${activeFilter === 'all' ? 'text-z-primary border-b-2 border-z-primary' : 'text-z-text-secondary dark:text-z-text-secondary-dark hover:bg-gray-100 dark:hover:bg-z-hover-dark rounded-t-md'}`}
-            >
-                Para ti
-            </button>
-            <button 
-                onClick={() => setActiveFilter('pages')}
-                className={`py-3 px-4 font-semibold transition-colors ${activeFilter === 'pages' ? 'text-z-primary border-b-2 border-z-primary' : 'text-z-text-secondary dark:text-z-text-secondary-dark hover:bg-gray-100 dark:hover:bg-z-hover-dark rounded-t-md'}`}
-            >
-                Páginas
-            </button>
         </div>
 
         {loading ? (
@@ -85,9 +65,9 @@ const Feed: React.FC<FeedProps> = ({ posts, onAddPost, onUpdatePost, loading, ad
                     Reintentar
                 </button>
             </div>
-        ) : filteredPosts.length > 0 ? (
-          filteredPosts.map((post, index) => {
-            const isLastElement = filteredPosts.length === index + 1;
+        ) : posts.length > 0 ? (
+          posts.map((post, index) => {
+            const isLastElement = posts.length === index + 1;
             return (
               <React.Fragment key={post.id}>
                  <div ref={isLastElement ? lastPostElementRef : null}>
@@ -99,7 +79,7 @@ const Feed: React.FC<FeedProps> = ({ posts, onAddPost, onUpdatePost, loading, ad
           })
         ) : (
           <div className="text-center py-10 text-z-text-secondary dark:text-z-text-secondary-dark bg-z-bg-secondary dark:bg-z-bg-secondary-dark rounded-lg">
-            No hay publicaciones en esta sección.
+            No hay publicaciones para mostrar.
           </div>
         )}
 

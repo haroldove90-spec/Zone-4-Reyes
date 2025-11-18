@@ -1,6 +1,3 @@
-
-
-
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useAuth, AuthUser } from '../contexts/AuthContext';
 import { Post as PostType, Media, User, FriendshipStatus } from '../types';
@@ -34,7 +31,7 @@ const ProfilePageSkeleton: React.FC = () => (
 
 interface ProfilePageProps {
     userId: string;
-    onAddPost: (content: string, mediaFiles: File[], postType?: 'standard' | 'report', group?: { id: string; name: string }, existingMedia?: Media[]) => Promise<void>;
+    onAddPost: (content: string, mediaFiles: File[], postType?: 'standard' | 'report', options?: { group?: { id: string; name: string; }; fanpageId?: string; }, existingMedia?: Media[]) => Promise<void>;
     onUpdatePost: (postId: string, newContent: string) => Promise<void>;
     navigate: (page: string) => void;
     addNotification: (recipientId: string, text: string, postId?: string) => Promise<void>;
@@ -231,11 +228,11 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ userId, onAddPost, onUpdatePo
         content: string,
         mediaFiles: File[],
         postType?: 'standard' | 'report',
-        group?: { id: string; name: string },
+        options?: { group?: { id: string; name: string; }; fanpageId?: string; },
         existingMedia?: Media[]
     ) => {
         try {
-            await onAddPost(content, mediaFiles, postType, group, existingMedia);
+            await onAddPost(content, mediaFiles, postType, options, existingMedia);
             await fetchProfileData();
         } catch (error) {
             console.error("Failed to add post and refresh profile:", error);
